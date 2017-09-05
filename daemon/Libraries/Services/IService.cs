@@ -9,5 +9,7 @@ namespace Spectero.daemon.Libraries.Services
     {
         void Start (IServiceConfig serviceConfig);
         void Stop();
+
+        Dictionary<String, String> getStatistics();
     }
 }
