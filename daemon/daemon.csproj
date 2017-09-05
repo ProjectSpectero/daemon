@@ -2,14 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    <RootNamespace>Spectero.daemon</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="Libraries\Services\ShadowSOCKS\" />
+    <Folder Include="Libraries\Services\OpenVPN\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
+    <PackageReference Include="Titanium.Web.Proxy" Version="3.0.130" />
   </ItemGroup>
 
   <ItemGroup>
