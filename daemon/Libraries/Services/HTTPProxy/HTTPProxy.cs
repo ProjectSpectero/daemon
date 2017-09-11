@@ -10,18 +10,18 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
     public class HTTPProxy : IService
     {
-        private HTTPConfig proxyConfig;
-        private ProxyServer proxyServer = new ProxyServer();
+        private HTTPConfig _proxyConfig;
+        private readonly ProxyServer _proxyServer = new ProxyServer();
 
         public void Start(IServiceConfig serviceConfig)
         {
-            this.proxyConfig = (HTTPConfig) serviceConfig;
+            this._proxyConfig = (HTTPConfig) serviceConfig;
             
             
             //Loop through and listen on all defined IP <-> port pairs
-            foreach (KeyValuePair<IPAddress, int> listener in proxyConfig.listeners)
+            foreach (var listener in _proxyConfig.listeners)
             {
-                proxyServer.AddEndPoint(new ExplicitProxyEndPoint(listener.Key, listener.Value, false));
+                _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(listener.Key, listener.Value, false));
             }
         }
 

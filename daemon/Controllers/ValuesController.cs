@@ -1,14 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Spectero.daemon.Libraries.Config;
 
-namespace daemon.Controllers
+namespace Spectero.daemon.Controllers
 {
-    [Route("api/[controller]")]
+    [Microsoft.AspNetCore.Mvc.Route("api/[controller]")]
     public class ValuesController : Controller
     {
+        private readonly AppConfig _appConfig;
+
+        public ValuesController(IOptions<AppConfig> appConfig)
+        {
+            _appConfig = appConfig.Value;
+        }
+        
         // GET api/values
         [HttpGet]
         public IEnumerable<string> Get()
