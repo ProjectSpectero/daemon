@@ -8,10 +8,6 @@ namespace Spectero.daemon
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
 
         public Startup(IHostingEnvironment env)
         {
@@ -23,7 +19,7 @@ namespace Spectero.daemon
             Configuration = builder.Build();
         }
 
-        public IConfiguration Configuration { get; }
+        private IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -31,6 +27,7 @@ namespace Spectero.daemon
             services.AddMvc();
             
             var appConfig = Configuration.GetSection("Daemon");
+            
             services.Configure<AppConfig>(appConfig);
         }
 
