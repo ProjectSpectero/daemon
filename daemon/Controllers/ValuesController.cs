@@ -11,7 +11,7 @@ namespace Spectero.daemon.Controllers
     {
         private readonly AppConfig _appConfig;
 
-        public ValuesController(IOptions<AppConfig> appConfig)
+        public ValuesController(IOptionsSnapshot<AppConfig> appConfig)
         {
             _appConfig = appConfig.Value;
         }
