@@ -30,7 +30,7 @@
                                             <dd>@parameter.Name,  (@parameter.Source.Id)</dd>
                                             <dt>Type</dt>
                                             <dd>@parameter.Type?.FullName</dd>
-                                            @if (parameter.RouteInfo != null)
+                                            if (parameter.RouteInfo != null)
                                             {
                                                 <dt>Constraints</dt>
                                                 <dd>@string.Join(",", parameter.RouteInfo.Constraints?.Select(c => c.GetType().Name).ToArray())</dd>
@@ -58,7 +58,7 @@
                                         <dt>Response Type</dt>
                                         <dd>@response.Type?.FullName</dd>
 
-                                        @foreach (var responseFormat in response.ApiResponseFormats)
+                                        foreach (var responseFormat in response.ApiResponseFormats)
                                         {
                                             <dt>Formatter</dt>
                                             <dd>@responseFormat.Formatter?.GetType().FullName</dd>

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ServiceStack.Data;
-using Spectero.daemon.Controllers;
 using Spectero.daemon.Libraries.Config;
 
 namespace Spectero.daemon.Controllers
