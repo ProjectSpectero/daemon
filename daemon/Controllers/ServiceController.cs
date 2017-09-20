@@ -12,6 +12,8 @@ using Spectero.daemon.Models;
 namespace Spectero.daemon.Controllers
 {
     [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
+    [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(ServiceController))]
+
     public class ServiceController : BaseController
     {
         public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger, IDbConnectionFactory dbConnectionFactory) : base (appConfig, logger, dbConnectionFactory)

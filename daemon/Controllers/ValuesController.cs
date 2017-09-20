@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 namespace Spectero.daemon.Controllers
 {
     [Microsoft.AspNetCore.Mvc.Route("api/[controller]")]
+    [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(ValuesController))]
+
     public class ValuesController : Controller
     {
         private readonly AppConfig _appConfig;
