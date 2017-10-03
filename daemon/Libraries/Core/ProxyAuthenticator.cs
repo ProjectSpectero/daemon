@@ -27,17 +27,24 @@ namespace Spectero.daemon.Libraries.Core
             if (authHeader.Value.Length <= 5)
                 throw new EAuthenticationFailed();
 
-            byte[] data = Convert.FromBase64String(authHeader.Value.Substring("Basic ".Length).Trim());
-            string authString = Encoding.UTF8.GetString(data);
-            string[] elements = authString.Split(':');
+            if (authHeader.Value.StartsWith("Basic"))
+            {
+                byte[] data = Convert.FromBase64String(authHeader.Value.Substring("Basic ".Length).Trim());
+                string authString = Encoding.UTF8.GetString(data);
+                string[] elements = authString.Split(':');
             
-            if (elements.Length != 2)
-                throw new EAuthenticationFailed();
+                if (elements.Length != 2)
+                    throw new EAuthenticationFailed();
             
-            string username = elements[0];
-            string password = elements[1];
+                string username = elements[0];
+                string password = elements[1];
 
-            return Verify(username, password, mode, null);
+                return Verify(username, password, mode, null);
+            }
+            else
+            {
+                throw new EAuthenticationFailed();
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Spectero.daemon.Libraries.Config;
@@ -13,7 +14,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
     {
         private HTTPConfig _proxyConfig;
         private readonly ProxyServer _proxyServer = new ProxyServer();
-        private AppConfig _appConfig;
+        private readonly AppConfig _appConfig;
+        
+        private readonly IDictionary<Guid, string> _requestBodyHistory 
+            = new ConcurrentDictionary<Guid, string>();
 
         public HTTPProxy(AppConfig appConfig)
         {
@@ -30,8 +34,39 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             {
                 _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(listener.Key, listener.Value, false));
             }
+
+            _proxyServer.BeforeRequest += OnRequest;
+            _proxyServer.BeforeResponse += OnResponse;
             
             _proxyServer.Start();
+        }
+
+        public async Task OnResponse(object sender, SessionEventArgs eventArgs)
+        {
+            //read response headers
+            var responseHeaders = eventArgs.WebSession.Response.ResponseHeaders;
+
+            //if (!e.ProxySession.Request.Host.Equals("medeczane.sgk.gov.tr")) return;
+            if (eventArgs.WebSession.Request.Method == "GET" || eventArgs.WebSession.Request.Method == "POST")
+            {
+                if (eventArgs.WebSession.Response.ResponseStatusCode == 200)
+                {
+                    if (eventArgs.WebSession.Response.ContentType!=null && eventArgs.WebSession.Response.ContentType.Trim().ToLower().Contains("text/html"))
+                    {
+                        byte[] bodyBytes = await eventArgs.GetResponseBody();
+                        await eventArgs.SetResponseBody(bodyBytes);
+
+                        string body = await eventArgs.GetResponseBodyAsString();
+                        await eventArgs.SetResponseBodyString(body);
+                    }
+                }
+            }
+    
+            //access request body/request headers etc by looking up using requestId
+            if(_requestBodyHistory.ContainsKey(eventArgs.Id))
+            {
+                var requestBody = _requestBodyHistory[eventArgs.Id];
+            }
         }
 
         public async Task OnRequest(object sender, SessionEventArgs eventArgs)
