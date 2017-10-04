@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Net;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ServiceStack.Data;
@@ -13,15 +12,16 @@ namespace Spectero.daemon.Libraries.Services
     public class ServiceManager : IServiceManager
     {
         private Dictionary<string, Dictionary<IService, ServiceState>> _services = new Dictionary<string, Dictionary<IService, ServiceState>>();
-        private AppConfig _appConfig;
+        private readonly AppConfig _appConfig;
 
-        public ServiceManager(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger, IDbConnectionFactory dbConnectionFactory)
+        public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceController> logger, IDbConnectionFactory dbConnectionFactory)
         {
-            _appConfig = appConfig.Value;
+            _appConfig = appConfig.CurrentValue;
         }
 
         public bool Process (string name, string action)
         {
+            bool returnValue = false;
             
             switch (name)
             {
@@ -30,14 +30,16 @@ namespace Spectero.daemon.Libraries.Services
                     switch (action)
                     {
                        case "start":
-                           var proxy = new HTTPProxy.HTTPProxy(new AppConfig());
+                           var proxy = new HTTPProxy.HTTPProxy(_appConfig);
                            proxy.Start(config);
+                           returnValue = true;
                            break;
-                        case "stop":
+                       case "stop":
                             break;
-                        case "restart":
+                       case "restart":
                             break;          
                     }
+                    return true;
                     break;
                 case "vpn":
                     break;
@@ -45,9 +47,9 @@ namespace Spectero.daemon.Libraries.Services
                     break;
                 default:
                     throw new EInvalidArguments();
-                    
             }
             
+            return returnValue;
         }
     }
 }

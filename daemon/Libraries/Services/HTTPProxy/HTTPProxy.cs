@@ -46,6 +46,17 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             
             _proxyServer.Start();
         }
+        
+        public void Stop()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ReStart(IServiceConfig serviceConfig = null)
+        {
+            Stop();
+            Start(serviceConfig ?? _proxyConfig);
+        }
 
         public async Task OnResponse(object sender, SessionEventArgs eventArgs)
         {
@@ -93,11 +104,6 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             }
             
             
-        }
-
-        public void Stop()
-        {
-            throw new NotImplementedException();
         }
 
         public Dictionary<String, String> getStatistics ()
