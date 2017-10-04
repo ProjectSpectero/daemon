@@ -24,6 +24,11 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             _appConfig = appConfig;
         }
 
+        public HTTPProxy()
+        {
+            
+        }
+
         public void Start(IServiceConfig serviceConfig)
         {
             this._proxyConfig = (HTTPConfig) serviceConfig;
@@ -32,6 +37,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             //Loop through and listen on all defined IP <-> port pairs
             foreach (var listener in _proxyConfig.listeners)
             {
+                Console.WriteLine("Now listening on " + listener.Key.ToString() + ":" + listener.Value.ToString());
                 _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(listener.Key, listener.Value, false));
             }
 

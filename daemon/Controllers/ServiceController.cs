@@ -1,13 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ServiceStack;
 using ServiceStack.Data;
 using ServiceStack.OrmLite;
+using ServiceStack.Text;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Errors;
+using Spectero.daemon.Libraries.Services;
+using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Models;
+using IService = ServiceStack.IService;
 
 namespace Spectero.daemon.Controllers
 {
@@ -16,17 +23,30 @@ namespace Spectero.daemon.Controllers
 
     public class ServiceController : BaseController
     {
-        public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger, IDbConnectionFactory dbConnectionFactory) : base (appConfig, logger, dbConnectionFactory)
+
+        private string[] validServices = new string[] { "proxy", "vpn", "ssh" };
+        private string[] validActions = new string[] { "start", "stop", "restart" };
+        private readonly IServiceManager _serviceManager;
+        
+        public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger, IDbConnectionFactory dbConnectionFactory, IServiceManager serviceManager) : base (appConfig, logger, dbConnectionFactory)
         {
-               
+            _serviceManager = serviceManager;
         }
         
-        // GET api/service
-        [HttpGet]
-        public IEnumerable<string> Get()
+        
+        [HttpGet("{name}/{task}", Name = "ManageServices")]
+        public IEnumerable<string> Manage (string name, string task)
         {
-            Logger.LogInformation("Getting records!");
-            return new string[] { Db.Select<User>().ToJson() };
+            Logger.LogDebug("Service manager n -> " + name + ", a -> " + task);
+
+            if (validServices.Any(s => name == s) &&
+                validActions.Any(s => task == s))
+            {
+                _serviceManager.Process(name, task);
+                return new string[] { name + " was " + task + "ed successfully" };
+            }
+            else
+               throw new EInvalidRequest();   
         }
         
         // POST api/service
