@@ -2,6 +2,6 @@
 {
     public interface IStatistician
     {
-        
+        bool Update<T>(double bytes) where T : new();
     }
 }
