@@ -18,6 +18,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         
         private readonly IDictionary<Guid, string> _requestBodyHistory 
             = new ConcurrentDictionary<Guid, string>();
+        
+        private ServiceState State = ServiceState.Halted;
 
         public HTTPProxy(AppConfig appConfig)
         {
@@ -45,15 +47,18 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             _proxyServer.BeforeResponse += OnResponse;
             
             _proxyServer.Start();
+            State = ServiceState.Running;
         }
         
         public void Stop()
         {
+            State = ServiceState.Halted;
             throw new NotImplementedException();
         }
 
         public void ReStart(IServiceConfig serviceConfig = null)
         {
+            State = ServiceState.Restarting;
             Stop();
             Start(serviceConfig ?? _proxyConfig);
         }

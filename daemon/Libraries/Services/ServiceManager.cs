@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ServiceStack.Data;
-using Spectero.daemon.Controllers;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
@@ -11,12 +11,14 @@ namespace Spectero.daemon.Libraries.Services
 {
     public class ServiceManager : IServiceManager
     {
-        private Dictionary<string, Dictionary<IService, ServiceState>> _services = new Dictionary<string, Dictionary<IService, ServiceState>>();
+        private readonly Dictionary<Type, IService> _services = new Dictionary<Type, IService>();
         private readonly AppConfig _appConfig;
+        private readonly ILogger<ServiceManager> _logger;
 
-        public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceController> logger, IDbConnectionFactory dbConnectionFactory)
+        public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger, IDbConnectionFactory dbConnectionFactory)
         {
             _appConfig = appConfig.CurrentValue;
+            _logger = logger;
         }
 
         public bool Process (string name, string action)
@@ -26,12 +28,12 @@ namespace Spectero.daemon.Libraries.Services
             switch (name)
             {
                 case "proxy":
-                    HTTPConfig config = (HTTPConfig) ServiceConfigManager.Generate<HTTPProxy.HTTPProxy>();
+                    var config = (HTTPConfig) ServiceConfigManager.Generate<HTTPProxy.HTTPProxy>();
+                    var service = GetOrCreateService<HTTPProxy.HTTPProxy>();
                     switch (action)
                     {
                        case "start":
-                           var proxy = new HTTPProxy.HTTPProxy(_appConfig);
-                           proxy.Start(config);
+                           service.Start(config);
                            returnValue = true;
                            break;
                        case "stop":
@@ -50,6 +52,20 @@ namespace Spectero.daemon.Libraries.Services
             }
             
             return returnValue;
+        }
+
+        private IService GetOrCreateService<T> () where T: new ()
+        {
+            var type = typeof(T);
+            
+            if (_services.ContainsKey(type))
+                return _services[type];
+            else
+            {
+                var service = (IService) Activator.CreateInstance(type, _appConfig);
+                _services.Add(type, service);
+                return service;
+            }
         }
     }
 }

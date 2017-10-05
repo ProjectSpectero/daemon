@@ -28,7 +28,9 @@ namespace Spectero.daemon.Controllers
         private string[] validActions = new string[] { "start", "stop", "restart" };
         private readonly IServiceManager _serviceManager;
         
-        public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger, IDbConnectionFactory dbConnectionFactory, IServiceManager serviceManager) : base (appConfig, logger, dbConnectionFactory)
+        public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger,
+            IDbConnectionFactory dbConnectionFactory, IServiceManager serviceManager)
+            : base (appConfig, logger, dbConnectionFactory)
         {
             _serviceManager = serviceManager;
         }
