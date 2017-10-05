@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -11,11 +12,12 @@ namespace Spectero.daemon.Libraries.Services
 {
     public class ServiceManager : IServiceManager
     {
-        private readonly Dictionary<Type, IService> _services = new Dictionary<Type, IService>();
+        private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
         private readonly AppConfig _appConfig;
         private readonly ILogger<ServiceManager> _logger;
 
-        public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger, IDbConnectionFactory dbConnectionFactory)
+        public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
+            IDbConnectionFactory dbConnectionFactory)
         {
             _appConfig = appConfig.CurrentValue;
             _logger = logger;
@@ -23,7 +25,7 @@ namespace Spectero.daemon.Libraries.Services
 
         public bool Process (string name, string action)
         {
-            bool returnValue = false;
+            bool returnValue = true;
             
             switch (name)
             {
@@ -34,12 +36,13 @@ namespace Spectero.daemon.Libraries.Services
                     {
                        case "start":
                            service.Start(config);
-                           returnValue = true;
                            break;
                        case "stop":
-                            break;
+                           service.Stop();
+                           break;
                        case "restart":
-                            break;          
+                           service.ReStart(config);
+                           break;          
                     }
                     return true;
                     break;
@@ -57,15 +60,20 @@ namespace Spectero.daemon.Libraries.Services
         private IService GetOrCreateService<T> () where T: new ()
         {
             var type = typeof(T);
-            
+
             if (_services.ContainsKey(type))
                 return _services[type];
             else
             {
-                var service = (IService) Activator.CreateInstance(type, _appConfig);
-                _services.Add(type, service);
+                var service = (IService) Activator.CreateInstance(type, _appConfig, _logger);
+                _services.TryAdd(type, service);
                 return service;
             }
+        }
+
+        public ConcurrentDictionary<Type, IService> GetServices ()
+        {
+            return _services;
         }
     }
 }

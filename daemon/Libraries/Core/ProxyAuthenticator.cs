@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Spectero.daemon.Libraries.Errors;
 using Titanium.Web.Proxy.Http;
@@ -12,21 +13,21 @@ namespace Spectero.daemon.Libraries.Core
         public static bool Verify(string username, string password,
             string mode, Dictionary<String, Object> args)
         {
-            return true;
+            return username.Equals("a") && password.Equals("b");
         }
 
         public static bool Verify(HeaderCollection headers, Uri uri, string mode)
         {
-            var authHttpHeaders = headers.GetHeaders("Proxy-Authorization");
-            
-            if (authHttpHeaders.Count != 1)
-                throw new EAuthenticationFailed();
-            
-            HttpHeader authHeader = authHttpHeaders[0];
-            
-            if (authHeader.Value.Length <= 5)
-                throw new EAuthenticationFailed();
+            var authHeader = ((IEnumerable<HttpHeader>) headers.ToArray<HttpHeader> ())
+                .FirstOrDefault<HttpHeader>((Func<HttpHeader, bool>) 
+                (
+                    t => t.Name == "Proxy-Authorization"
+                )
+            );
 
+            if (authHeader == null)
+                return false;
+           
             if (authHeader.Value.StartsWith("Basic"))
             {
                 byte[] data = Convert.FromBase64String(authHeader.Value.Substring("Basic ".Length).Trim());
@@ -42,9 +43,7 @@ namespace Spectero.daemon.Libraries.Core
                 return Verify(username, password, mode, null);
             }
             else
-            {
-                throw new EAuthenticationFailed();
-            }
+                return false;
         }
     }
 }

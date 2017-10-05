@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Titanium.Web.Proxy;
@@ -15,15 +16,17 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private HTTPConfig _proxyConfig;
         private readonly ProxyServer _proxyServer = new ProxyServer();
         private readonly AppConfig _appConfig;
+        private readonly ILogger<ServiceManager> _logger;
         
         private readonly IDictionary<Guid, string> _requestBodyHistory 
             = new ConcurrentDictionary<Guid, string>();
         
         private ServiceState State = ServiceState.Halted;
 
-        public HTTPProxy(AppConfig appConfig)
+        public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger)
         {
             _appConfig = appConfig;
+            _logger = logger;
         }
 
         public HTTPProxy()
@@ -33,34 +36,55 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         public void Start(IServiceConfig serviceConfig)
         {
-            this._proxyConfig = (HTTPConfig) serviceConfig;
-            
-            
-            //Loop through and listen on all defined IP <-> port pairs
-            foreach (var listener in _proxyConfig.listeners)
+            LogState("Start");
+            if (State != ServiceState.Running && State != ServiceState.Restarting)
             {
-                Console.WriteLine("Now listening on " + listener.Key.ToString() + ":" + listener.Value.ToString());
-                _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(listener.Key, listener.Value, false));
-            }
-
-            _proxyServer.BeforeRequest += OnRequest;
-            _proxyServer.BeforeResponse += OnResponse;
+                this._proxyConfig = (HTTPConfig) serviceConfig;
             
-            _proxyServer.Start();
-            State = ServiceState.Running;
+                //Loop through and listen on all defined IP <-> port pairs
+                foreach (var listener in _proxyConfig.listeners)
+                {
+                    _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(listener.Key, listener.Value, false));
+                    _logger.LogDebug("Now listening on " + listener.Key.ToString() + ":" + listener.Value.ToString());
+                }
+
+                _proxyServer.BeforeRequest += OnRequest;
+                _proxyServer.BeforeResponse += OnResponse;
+            
+                _proxyServer.Start();
+                State = ServiceState.Running;
+            }
+            LogState("Start");
         }
         
         public void Stop()
         {
-            State = ServiceState.Halted;
-            throw new NotImplementedException();
+            // TODO: fix stop, causes a crash atm.
+            LogState("Stop");
+            if (State == ServiceState.Running)
+            {
+                _proxyServer.ExceptionFunc = (x) => _logger.LogDebug(x.ToString());
+                _proxyServer.Stop();
+                State = ServiceState.Halted;
+            }
+            LogState("Stop");
         }
 
         public void ReStart(IServiceConfig serviceConfig = null)
         {
-            State = ServiceState.Restarting;
-            Stop();
-            Start(serviceConfig ?? _proxyConfig);
+            LogState("ReStart");
+            if (State == ServiceState.Running)
+            {
+                State = ServiceState.Restarting;
+                Stop();
+                Start(serviceConfig ?? _proxyConfig);
+            }
+            LogState("ReStart");
+        }
+
+        public void LogState(string caller)
+        {
+            _logger.LogDebug("[" + GetType().Name +"][" + caller + "] Current state is " + State);
         }
 
         public async Task OnResponse(object sender, SessionEventArgs eventArgs)
@@ -93,14 +117,14 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         public async Task OnRequest(object sender, SessionEventArgs eventArgs)
         {
-            Console.WriteLine(eventArgs.WebSession.Request.Url);
+            _logger.LogDebug("Processing request to " + eventArgs.WebSession.Request.Url);
             
             var requestHeaders = eventArgs.WebSession.Request.RequestHeaders;
             var requestMethod = eventArgs.WebSession.Request.Method.ToUpper();
             var requestUri = eventArgs.WebSession.Request.RequestUri;
 
             if (! ProxyAuthenticator.Verify(requestHeaders, requestUri, null)) // TODO: Add mode support
-                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, requestUri.ToString()));
+                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, Uri.EscapeDataString(requestUri.ToString())));
 
             foreach (var blockedUri in _proxyConfig.bannedDomains)
             {

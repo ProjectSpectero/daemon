@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Hosting;
 using ServiceStack.Text;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
+using Titanium.Web.Proxy;
+using Titanium.Web.Proxy.Models;
 
 namespace Spectero.daemon
 {
@@ -14,7 +16,6 @@ namespace Spectero.daemon
         public static void Main(string[] args)
         {
             BuildWebHost(args).Run();
-            
         }
 
         private static IWebHost BuildWebHost(string[] args) =>
