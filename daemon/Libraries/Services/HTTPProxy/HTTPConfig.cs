@@ -4,12 +4,6 @@ using System.Net;
 
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
-    public enum HTTPProxyModes
-    {
-        Normal,
-        ExclusiveAllow
-    }
-
     public class HTTPConfig : IServiceConfig
     {
         internal Dictionary<IPAddress, int> listeners { get; }

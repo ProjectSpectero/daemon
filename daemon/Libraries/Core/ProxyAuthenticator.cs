@@ -33,9 +33,9 @@ namespace Spectero.daemon.Libraries.Core
                 byte[] data = Convert.FromBase64String(authHeader.Value.Substring("Basic ".Length).Trim());
                 string authString = Encoding.UTF8.GetString(data);
                 string[] elements = authString.Split(':');
-            
+
                 if (elements.Length != 2)
-                    throw new EAuthenticationFailed();
+                    return false;
             
                 string username = elements[0];
                 string password = elements[1];
