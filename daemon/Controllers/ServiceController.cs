@@ -11,6 +11,7 @@ using ServiceStack.Data;
 using ServiceStack.OrmLite;
 using ServiceStack.Text;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
@@ -28,12 +29,15 @@ namespace Spectero.daemon.Controllers
         private string[] validServices = new string[] { "proxy", "vpn", "ssh" };
         private string[] validActions = new string[] { "start", "stop", "restart" };
         private readonly IServiceManager _serviceManager;
+        private readonly IStatistician _statistician;
         
         public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger,
-            IDbConnection db, IServiceManager serviceManager)
+            IDbConnection db, IServiceManager serviceManager,
+            IStatistician statistician)
             : base (appConfig, logger, db)
         {
             _serviceManager = serviceManager;
+            _statistician = statistician;
         }
         
         

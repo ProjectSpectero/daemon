@@ -15,7 +15,7 @@ using Titanium.Web.Proxy.Models;
 
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
-    public class HTTPProxy : IService
+    public class HTTPProxy : IService, IAuthenticator
     {
         private HTTPConfig _proxyConfig;
         private readonly ProxyServer _proxyServer = new ProxyServer();
@@ -112,10 +112,16 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 string username = elements[0];
                 string password = elements[1];
 
-                return username.Equals("a") && password.Equals("b");
+                return Authenticate(username, password);
+
             }
             else
                 return false;
+        }
+
+        public bool Authenticate(string username, string password)
+        {
+            return username.Equals("a") && password.Equals("b");
         }
         
         public async Task OnRequest(object sender, SessionEventArgs eventArgs)
