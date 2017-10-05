@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -29,8 +30,8 @@ namespace Spectero.daemon.Controllers
         private readonly IServiceManager _serviceManager;
         
         public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger,
-            IDbConnectionFactory dbConnectionFactory, IServiceManager serviceManager)
-            : base (appConfig, logger, dbConnectionFactory)
+            IDbConnection db, IServiceManager serviceManager)
+            : base (appConfig, logger, db)
         {
             _serviceManager = serviceManager;
         }
@@ -62,10 +63,7 @@ namespace Spectero.daemon.Controllers
                 Db.CreateTable<User>();
             
             Db.Insert(
-                    new User { Id = 1, Name = "A", CreatedDate = DateTime.Now },
-                    new User { Id = 2, Name = "B", CreatedDate = DateTime.Now },
-                    new User { Id = 3, Name = "C", CreatedDate = DateTime.Now },
-                    new User { Id = 4, Name = "C", CreatedDate = DateTime.Now }
+                    new User { Id = 1, AuthKey = "A", CreatedDate = DateTime.Now }                 
             );
 
             var rows = Db.Select<User>().Count;

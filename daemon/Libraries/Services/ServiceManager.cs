@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ServiceStack.Data;
@@ -15,12 +16,14 @@ namespace Spectero.daemon.Libraries.Services
         private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
         private readonly AppConfig _appConfig;
         private readonly ILogger<ServiceManager> _logger;
+        private readonly IDbConnection _db;
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
-            IDbConnectionFactory dbConnectionFactory)
+            IDbConnection db)
         {
             _appConfig = appConfig.CurrentValue;
             _logger = logger;
+            _db = db;
         }
 
         public bool Process (string name, string action)
@@ -65,7 +68,7 @@ namespace Spectero.daemon.Libraries.Services
                 return _services[type];
             else
             {
-                var service = (IService) Activator.CreateInstance(type, _appConfig, _logger);
+                var service = (IService) Activator.CreateInstance(type, _appConfig, _logger, _db);
                 _services.TryAdd(type, service);
                 return service;
             }

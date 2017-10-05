@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
+using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
@@ -17,16 +21,18 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly ProxyServer _proxyServer = new ProxyServer();
         private readonly AppConfig _appConfig;
         private readonly ILogger<ServiceManager> _logger;
+        private readonly IDbConnection _db;
         
         private readonly IDictionary<Guid, string> _requestBodyHistory 
             = new ConcurrentDictionary<Guid, string>();
         
         private ServiceState State = ServiceState.Halted;
 
-        public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger)
+        public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger, IDbConnection db)
         {
             _appConfig = appConfig;
             _logger = logger;
+            _db = db;
         }
 
         public HTTPProxy()
@@ -81,10 +87,54 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             }
             LogState("ReStart");
         }
-
-        public void LogState(string caller)
+        
+        public bool Authenticate (HeaderCollection headers, Uri uri, string mode)
         {
-            _logger.LogDebug("[" + GetType().Name +"][" + caller + "] Current state is " + State);
+            var authHeader = ((IEnumerable<HttpHeader>) headers.ToArray<HttpHeader> ())
+                .FirstOrDefault<HttpHeader>((Func<HttpHeader, bool>) 
+                    (
+                        t => t.Name == "Proxy-Authorization"
+                    )
+                );
+
+            if (authHeader == null)
+                return false;
+           
+            if (authHeader.Value.StartsWith("Basic"))
+            {
+                byte[] data = Convert.FromBase64String(authHeader.Value.Substring("Basic ".Length).Trim());
+                string authString = Encoding.UTF8.GetString(data);
+                string[] elements = authString.Split(':');
+
+                if (elements.Length != 2)
+                    return false;
+            
+                string username = elements[0];
+                string password = elements[1];
+
+                return username.Equals("a") && password.Equals("b");
+            }
+            else
+                return false;
+        }
+        
+        public async Task OnRequest(object sender, SessionEventArgs eventArgs)
+        {
+            _logger.LogDebug("Processing request to " + eventArgs.WebSession.Request.Url);
+
+            var requestHeaders = eventArgs.WebSession.Request.RequestHeaders;
+            var requestMethod = eventArgs.WebSession.Request.Method.ToUpper();
+            var requestUri = eventArgs.WebSession.Request.RequestUri;
+
+            if (! Authenticate(requestHeaders, requestUri, null)) // TODO: Add mode support
+                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri,
+                    Uri.EscapeDataString(requestUri.ToString())));
+
+            foreach (var blockedUri in _proxyConfig.bannedDomains)
+            {
+                if (requestUri.AbsoluteUri.Contains(blockedUri))
+                    await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, requestUri.ToString()));
+            }
         }
 
         public async Task OnResponse(object sender, SessionEventArgs eventArgs)
@@ -115,29 +165,14 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             }
         }
 
-        public async Task OnRequest(object sender, SessionEventArgs eventArgs)
-        {
-            _logger.LogDebug("Processing request to " + eventArgs.WebSession.Request.Url);
-            
-            var requestHeaders = eventArgs.WebSession.Request.RequestHeaders;
-            var requestMethod = eventArgs.WebSession.Request.Method.ToUpper();
-            var requestUri = eventArgs.WebSession.Request.RequestUri;
-
-            if (! ProxyAuthenticator.Verify(requestHeaders, requestUri, null)) // TODO: Add mode support
-                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, Uri.EscapeDataString(requestUri.ToString())));
-
-            foreach (var blockedUri in _proxyConfig.bannedDomains)
-            {
-                if (requestUri.AbsoluteUri.Contains(blockedUri))
-                    await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, requestUri.ToString()));
-            }
-            
-            
-        }
-
         public Dictionary<String, String> getStatistics ()
         {
             throw new NotImplementedException();
+        }
+        
+        public void LogState(string caller)
+        {
+            _logger.LogDebug("[" + GetType().Name +"][" + caller + "] Current state is " + State);
         }
     }
 }

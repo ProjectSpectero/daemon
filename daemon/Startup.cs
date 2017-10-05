@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Data;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,8 +38,8 @@ namespace Spectero.daemon
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-            services.AddSingleton<IDbConnectionFactory>(c => 
-                new OrmLiteConnectionFactory(":memory:", SqliteDialect.Provider)
+            services.AddSingleton<IDbConnection>(c => 
+                new OrmLiteConnectionFactory(":memory:", SqliteDialect.Provider).Open()
             );
 
             services.AddSingleton<IServiceManager, ServiceManager>();
