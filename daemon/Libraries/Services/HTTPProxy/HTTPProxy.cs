@@ -97,7 +97,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             var requestMethod = eventArgs.WebSession.Request.Method.ToUpper();
             var requestUri = eventArgs.WebSession.Request.RequestUri;
 
-            if (! _authenticator.Authenticate(requestHeaders, requestUri, null))
+            if (! await _authenticator.Authenticate(requestHeaders, requestUri, null))
                 await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri,
                     Uri.EscapeDataString(requestUri.ToString())));
 

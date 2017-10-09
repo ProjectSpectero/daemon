@@ -17,6 +17,6 @@ namespace Spectero.daemon.Models
             Spectero
         }
         public DateTime CreatedDate { get; set; }
-        public override string ToString() => AuthKey;
+        public override string ToString() => "AuthKey -> " + AuthKey + ", Password -> " + Password + ", Created At -> " + CreatedDate;
     }
 }

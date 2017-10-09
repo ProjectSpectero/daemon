@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Isopoh.Cryptography.Argon2;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -32,22 +33,26 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
             _cache = cache;
         }
 
-        public bool Authenticate(string username, string password)
+        public async Task<bool> Authenticate(string username, string password)
         {
-            _logger.LogDebug("UPV: Attempting to auth using u -> " + username + ", p -> " + password);
+            _logger.LogDebug("UPA: Attempting to auth using u -> " + username + ", p -> " + password);
             
-            var user = _db.Select<User>(x => x.AuthKey.Equals(username))
-                .FirstOrDefault();
+            var dbQuery = await _db.SelectAsync<User>( x => x.AuthKey == username );
+            var user = dbQuery.FirstOrDefault();
 
             if (user == null)
+            {
+                _logger.LogDebug("UPA: Couldn't find an user named " + username);
                 return false;
-
-            return (Argon2.Verify(user.Password, password)); // Hash first, pw second
+            }
+               
+            return Argon2.Verify(user.Password, password); // Hash first, pw second
         }
         
         // TODO: Add mode support
-        public bool Authenticate (HeaderCollection headers, Uri uri, string mode)
+        public async Task<bool> Authenticate (HeaderCollection headers, Uri uri, string mode)
         {
+            _logger.LogDebug("HUMA: Processing request to " + uri);
             var authHeader = ((IEnumerable<HttpHeader>) headers.ToArray<HttpHeader> ())
                 .FirstOrDefault<HttpHeader>((Func<HttpHeader, bool>) 
                     (
@@ -70,7 +75,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                 string username = elements[0];
                 string password = elements[1];
 
-                return Authenticate(username, password);
+                return await Authenticate(username, password);
 
             }
             else
