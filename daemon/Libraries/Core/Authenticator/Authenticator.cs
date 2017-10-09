@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Services;
-using Spectero.daemon.Models;
 using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 
@@ -16,15 +15,17 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 {
     public class Authenticator : IAuthenticator
     {
-        private ILogger<ServiceManager> _logger;
-        private IDbConnection _db;
-        private AppConfig _appConfig;
-
-        public Authenticator(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger, IDbConnection db)
+        private readonly ILogger<ServiceManager> _logger;
+        private readonly IDbConnection _db;
+        private readonly AppConfig _appConfig;
+        private readonly IMemoryCache _cache;
+        
+        public Authenticator(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger, IDbConnection db, IMemoryCache cache)
         {
             _logger = logger;
             _appConfig = appConfig.CurrentValue;
             _db = db;
+            _cache = cache;
         }
 
         public bool Authenticate(string username, string password)

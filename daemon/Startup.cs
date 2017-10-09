@@ -36,6 +36,7 @@ namespace Spectero.daemon
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+            services.AddMemoryCache();
             
             var appConfig = Configuration.GetSection("Daemon");
             services.Configure<AppConfig>(appConfig);
