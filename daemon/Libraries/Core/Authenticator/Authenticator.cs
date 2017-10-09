@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using Isopoh.Cryptography.Argon2;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Services;
+using Spectero.daemon.Models;
 using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 
@@ -20,7 +23,8 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
         private readonly AppConfig _appConfig;
         private readonly IMemoryCache _cache;
         
-        public Authenticator(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger, IDbConnection db, IMemoryCache cache)
+        public Authenticator(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
+            IDbConnection db, IMemoryCache cache)
         {
             _logger = logger;
             _appConfig = appConfig.CurrentValue;
@@ -30,7 +34,15 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
         public bool Authenticate(string username, string password)
         {
-            return username.Equals("a") && password.Equals("b");
+            _logger.LogDebug("UPV: Attempting to auth using u -> " + username + ", p -> " + password);
+            
+            var user = _db.Select<User>(x => x.AuthKey.Equals(username))
+                .FirstOrDefault();
+
+            if (user == null)
+                return false;
+
+            return (Argon2.Verify(user.Password, password)); // Hash first, pw second
         }
         
         // TODO: Add mode support
