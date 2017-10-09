@@ -4,6 +4,8 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Services;
 using Titanium.Web.Proxy.Http;
@@ -17,10 +19,10 @@ namespace Spectero.daemon.Libraries.Core
         private IDbConnection _db;
         private AppConfig _appConfig;
 
-        public Authenticator(AppConfig appConfig, ILogger<ServiceManager> logger, IDbConnection db)
+        public Authenticator(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger, IDbConnection db)
         {
             _logger = logger;
-            _appConfig = appConfig;
+            _appConfig = appConfig.CurrentValue;
             _db = db;
         }
 
