@@ -36,9 +36,22 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
         public async Task<bool> Authenticate(string username, string password)
         {
             _logger.LogDebug("UPA: Attempting to auth using u -> " + username + ", p -> " + password);
+            User user = null;
+
+            if (_cache.TryGetValue(GenerateCacheKey(username), out IEnumerable<User> cachedUsers))
+            {
+                _logger.LogDebug("UPA: Cache-hit for username -> " + username);
+                user = cachedUsers.FirstOrDefault();
+            }
+            else
+            {
+                _logger.LogDebug("UPA: Cache-miss for username -> " + username + ", doing SQLite lookup.");
+                var dbQuery = await _db.SelectAsync<User>( x => x.AuthKey == username );
+                user = dbQuery.FirstOrDefault();
+                if (user != null)
+                    _cache.Set(GenerateCacheKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
+            }
             
-            var dbQuery = await _db.SelectAsync<User>( x => x.AuthKey == username );
-            var user = dbQuery.FirstOrDefault();
 
             if (user == null)
             {
@@ -80,6 +93,11 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
             }
             else
                 return false;
+        }
+
+        private string GenerateCacheKey(string username)
+        {
+            return "auth.user." + username;
         }
         
         
