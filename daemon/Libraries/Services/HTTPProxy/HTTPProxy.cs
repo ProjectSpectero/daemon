@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
+using Spectero.daemon.Libraries.Core.Authenticator;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Http;
@@ -133,11 +134,6 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             {
                 var requestBody = _requestBodyHistory[eventArgs.Id];
             }
-        }
-
-        public Dictionary<String, String> getStatistics ()
-        {
-            throw new NotImplementedException();
         }
         
         public void LogState(string caller)

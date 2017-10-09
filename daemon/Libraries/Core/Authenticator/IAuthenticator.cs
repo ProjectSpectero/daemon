@@ -1,7 +1,7 @@
 ﻿using System;
 using Titanium.Web.Proxy.Http;
 
-namespace Spectero.daemon.Libraries.Core
+namespace Spectero.daemon.Libraries.Core.Authenticator
 {
     public interface IAuthenticator
     {

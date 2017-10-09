@@ -12,7 +12,5 @@ namespace Spectero.daemon.Libraries.Services
         void Stop();
 
         void LogState(string caller);
-
-        Dictionary<String, String> getStatistics();
     }
 }

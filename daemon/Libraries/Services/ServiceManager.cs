@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using ServiceStack.Data;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
+using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 

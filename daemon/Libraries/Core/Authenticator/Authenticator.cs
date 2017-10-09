@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Services;
@@ -13,7 +12,7 @@ using Spectero.daemon.Models;
 using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 
-namespace Spectero.daemon.Libraries.Core
+namespace Spectero.daemon.Libraries.Core.Authenticator
 {
     public class Authenticator : IAuthenticator
     {
@@ -26,12 +25,6 @@ namespace Spectero.daemon.Libraries.Core
             _logger = logger;
             _appConfig = appConfig.CurrentValue;
             _db = db;
-        }
-
-        private void Initialize()
-        {
-            if (_db.TableExists<User>())
-                _db.CreateTable<User>();
         }
 
         public bool Authenticate(string username, string password)

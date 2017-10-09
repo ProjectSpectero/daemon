@@ -11,8 +11,10 @@ using Microsoft.Extensions.Logging;
 using ServiceStack.Data;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Core;
+using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
+using Spectero.daemon.Migrations;
 
 namespace Spectero.daemon
 {
@@ -49,10 +51,14 @@ namespace Spectero.daemon
             services.AddSingleton<IStatistician, Statistician>();
 
             services.AddSingleton<IAuthenticator, Authenticator>();
+
+            services.AddSingleton<IMigration, Initialize>();
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env,
+            ILoggerFactory loggerFactory, IMigration migration)
         {
             if (env.IsDevelopment())
             {
@@ -64,6 +70,8 @@ namespace Spectero.daemon
             loggerFactory.AddNLog();
             loggerFactory.ConfigureNLog("nlog.config");
             app.AddNLogWeb();
+            
+            migration.Up();
         }
     }
 }
