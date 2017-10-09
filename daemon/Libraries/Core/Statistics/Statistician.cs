@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
 
 namespace Spectero.daemon.Libraries.Core.Statistics
@@ -10,9 +11,9 @@ namespace Spectero.daemon.Libraries.Core.Statistics
         private readonly ILogger<Statistician> _logger;
         private readonly IDbConnection _db;
         
-        public Statistician (AppConfig appConfig, ILogger<Statistician> logger, IDbConnection db)
+        public Statistician (IOptionsMonitor<AppConfig> appConfig, ILogger<Statistician> logger, IDbConnection db)
         {
-            _appConfig = appConfig;
+            _appConfig = appConfig.CurrentValue;
             _logger = logger;
             _db = db;
         }

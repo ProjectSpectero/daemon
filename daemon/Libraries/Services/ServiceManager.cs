@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ServiceStack.Data;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 
@@ -17,13 +18,15 @@ namespace Spectero.daemon.Libraries.Services
         private readonly AppConfig _appConfig;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IDbConnection _db;
+        private readonly IAuthenticator _authenticator;
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
-            IDbConnection db)
+            IDbConnection db, IAuthenticator authenticator)
         {
             _appConfig = appConfig.CurrentValue;
             _logger = logger;
             _db = db;
+            _authenticator = authenticator;
         }
 
         public bool Process (string name, string action)
@@ -68,7 +71,7 @@ namespace Spectero.daemon.Libraries.Services
                 return _services[type];
             else
             {
-                var service = (IService) Activator.CreateInstance(type, _appConfig, _logger, _db);
+                var service = (IService) Activator.CreateInstance(type, _appConfig, _logger, _db, _authenticator);
                 _services.TryAdd(type, service);
                 return service;
             }

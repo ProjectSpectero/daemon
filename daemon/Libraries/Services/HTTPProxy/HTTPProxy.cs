@@ -15,24 +15,26 @@ using Titanium.Web.Proxy.Models;
 
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
-    public class HTTPProxy : IService, IAuthenticator
+    public class HTTPProxy : IService
     {
         private HTTPConfig _proxyConfig;
         private readonly ProxyServer _proxyServer = new ProxyServer();
         private readonly AppConfig _appConfig;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IDbConnection _db;
+        private readonly IAuthenticator _authenticator;
         
         private readonly IDictionary<Guid, string> _requestBodyHistory 
             = new ConcurrentDictionary<Guid, string>();
         
         private ServiceState State = ServiceState.Halted;
 
-        public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger, IDbConnection db)
+        public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger, IDbConnection db, IAuthenticator authenticator)
         {
             _appConfig = appConfig;
             _logger = logger;
             _db = db;
+            _authenticator = authenticator;
         }
 
         public HTTPProxy()
@@ -43,7 +45,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         public void Start(IServiceConfig serviceConfig)
         {
             LogState("Start");
-            if (State != ServiceState.Running && State != ServiceState.Restarting)
+            if (State == ServiceState.Halted)
             {
                 this._proxyConfig = (HTTPConfig) serviceConfig;
             
@@ -69,7 +71,6 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             LogState("Stop");
             if (State == ServiceState.Running)
             {
-                _proxyServer.ExceptionFunc = (x) => _logger.LogDebug(x.ToString());
                 _proxyServer.Stop();
                 State = ServiceState.Halted;
             }
@@ -81,49 +82,12 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             LogState("ReStart");
             if (State == ServiceState.Running)
             {
-                State = ServiceState.Restarting;
                 Stop();
                 Start(serviceConfig ?? _proxyConfig);
             }
             LogState("ReStart");
         }
-        
-        public bool Authenticate (HeaderCollection headers, Uri uri, string mode)
-        {
-            var authHeader = ((IEnumerable<HttpHeader>) headers.ToArray<HttpHeader> ())
-                .FirstOrDefault<HttpHeader>((Func<HttpHeader, bool>) 
-                    (
-                        t => t.Name == "Proxy-Authorization"
-                    )
-                );
-
-            if (authHeader == null)
-                return false;
-           
-            if (authHeader.Value.StartsWith("Basic"))
-            {
-                byte[] data = Convert.FromBase64String(authHeader.Value.Substring("Basic ".Length).Trim());
-                string authString = Encoding.UTF8.GetString(data);
-                string[] elements = authString.Split(':');
-
-                if (elements.Length != 2)
-                    return false;
-            
-                string username = elements[0];
-                string password = elements[1];
-
-                return Authenticate(username, password);
-
-            }
-            else
-                return false;
-        }
-
-        public bool Authenticate(string username, string password)
-        {
-            return username.Equals("a") && password.Equals("b");
-        }
-        
+       
         public async Task OnRequest(object sender, SessionEventArgs eventArgs)
         {
             _logger.LogDebug("Processing request to " + eventArgs.WebSession.Request.Url);
@@ -132,7 +96,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             var requestMethod = eventArgs.WebSession.Request.Method.ToUpper();
             var requestUri = eventArgs.WebSession.Request.RequestUri;
 
-            if (! Authenticate(requestHeaders, requestUri, null)) // TODO: Add mode support
+            if (! _authenticator.Authenticate(requestHeaders, requestUri, null))
                 await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri,
                     Uri.EscapeDataString(requestUri.ToString())));
 

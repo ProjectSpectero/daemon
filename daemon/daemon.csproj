@@ -10,6 +10,9 @@
     <Folder Include="Logs\">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Folder>
+    <Folder Include="Database\">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Folder>
     <Folder Include="wwwroot\" />
   </ItemGroup>
   <ItemGroup>

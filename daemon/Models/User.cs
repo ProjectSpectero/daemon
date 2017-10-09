@@ -6,6 +6,7 @@ namespace Spectero.daemon.Models
     public class User
     {
         [Index]
+        [AutoIncrement]
         public long Id { get; set; }
     
         public string AuthKey { get; set; }
