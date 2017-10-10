@@ -22,5 +22,13 @@ namespace Spectero.daemon.Models
             Month,
             Year
         }
+
+        [EnumAsInt]
+        public enum Service
+        {
+            HTTPProxy,
+            VPN,
+            SSH
+        }
     }
 }
