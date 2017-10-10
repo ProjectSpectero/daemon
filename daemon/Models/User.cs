@@ -3,7 +3,7 @@ using ServiceStack.DataAnnotations;
 
 namespace Spectero.daemon.Models
 {
-    public class User
+    public class User : IModel
     {
         [Index]
         [AutoIncrement]

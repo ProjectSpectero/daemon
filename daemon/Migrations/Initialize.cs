@@ -17,6 +17,9 @@ namespace Spectero.daemon.Migrations
         {
             if (! _db.TableExists<User>())
                 _db.CreateTable<User>();
+            
+            if (! _db.TableExists<Statistic>())
+                _db.CreateTable<Statistic>();
         }
 
         public void Down()
