@@ -11,6 +11,8 @@ namespace Spectero.daemon.Models
     
         public string AuthKey { get; set; }
         public string Password { get; set; }
+        
+        [EnumAsInt]
         public enum Source
         {
             Local,

@@ -33,17 +33,13 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
             _cache = cache;
         }
 
-        public async Task<bool> Authenticate(string username, string password)
+        public async Task<bool> Authenticate (string username, string password)
         {
             _logger.LogDebug("UPA: Attempting to auth using u -> " + username + ", p -> " + password);
-            User user = null;
 
-            if (_cache.TryGetValue(GenerateCacheKey(username), out IEnumerable<User> cachedUsers))
-            {
-                _logger.LogDebug("UPA: Cache-hit for username -> " + username);
-                user = cachedUsers.FirstOrDefault();
-            }
-            else
+            User user = _cache.Get<User>(GenerateCacheKey(username));
+
+            if (user == null)
             {
                 _logger.LogDebug("UPA: Cache-miss for username -> " + username + ", doing SQLite lookup.");
                 var dbQuery = await _db.SelectAsync<User>( x => x.AuthKey == username );
@@ -58,6 +54,8 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                 _logger.LogDebug("UPA: Couldn't find an user named " + username);
                 return false;
             }
+            
+            _logger.LogDebug("UPA: Stored password was " + user.Password);
                
             return Argon2.Verify(user.Password, password); // Hash first, pw second
         }
