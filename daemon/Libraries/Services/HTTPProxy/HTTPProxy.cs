@@ -16,6 +16,13 @@ using Titanium.Web.Proxy.Models;
 
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
+    /*
+     *  TODO: a. Lan protection
+     *  TODO: b. Statistics
+     *  TODO: c. Service restart :V
+     *  TODO: d. Mode support
+     */
+    
     public class HTTPProxy : IService
     {
         private HTTPConfig _proxyConfig;
