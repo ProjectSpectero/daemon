@@ -1,5 +1,6 @@
 ﻿using System;
 using ServiceStack.DataAnnotations;
+using Spectero.daemon.Libraries.Core.Statistics;
 
 namespace Spectero.daemon.Models
 {
@@ -9,8 +10,7 @@ namespace Spectero.daemon.Models
         [AutoIncrement]
         public long Id { get; set; }
         
-        public long BytesIn { get; set; }
-        public long BytesOut { get; set; }
+        public long Bytes { get; set; }
         public DateTime CreationTime { get; set; }
 
         [EnumAsInt]
@@ -30,5 +30,8 @@ namespace Spectero.daemon.Models
             VPN,
             SSH
         }
+        
+        //Todo: check if this actually gets serialized properly
+        public DataFlowDirections Directions { get; set; }
     }
 }

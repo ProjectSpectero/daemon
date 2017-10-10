@@ -2,6 +2,6 @@
 {
     public interface IStatistician
     {
-        bool Update<T>(double bytes) where T : new();
+        bool Update<T> (double bytes, DataFlowDirections direction) where T : new();
     }
 }
