@@ -48,16 +48,13 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                     _cache.Set(GenerateCacheKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
             }
             
-
-            if (user == null)
+            if (user != null)
+                return Argon2.Verify(user.Password, password);
+            else
             {
                 _logger.LogDebug("UPA: Couldn't find an user named " + username);
                 return false;
-            }
-            
-            _logger.LogDebug("UPA: Stored password was " + user.Password);
-               
-            return Argon2.Verify(user.Password, password); // Hash first, pw second
+            }         
         }
         
         // TODO: Add mode support
