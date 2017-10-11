@@ -6,5 +6,6 @@
         public string BlockedRedirectUri { get; set; }
         public string DatabaseFile { get; set; }
         public double AuthCacheMinutes { get; set; }
+        public bool LocalSubnetBanEnabled { get; set; }
     }
 }
