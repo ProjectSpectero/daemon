@@ -100,42 +100,52 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             LogState("ReStart");
         }
        
-        public async Task OnRequest(object sender, SessionEventArgs eventArgs)
+        private async Task OnRequest(object sender, SessionEventArgs eventArgs)
         {
-            _logger.LogDebug("Processing request to " + eventArgs.WebSession.Request.Url);
+            _logger.LogDebug("SEO: Processing request to " + eventArgs.WebSession.Request.Url);
+
+            string failReason = null;
 
             var requestHeaders = eventArgs.WebSession.Request.RequestHeaders;
             var requestMethod = eventArgs.WebSession.Request.Method.ToUpper();
-            var requestUri = eventArgs.WebSession.Request.RequestUri;
+            var requestUri = eventArgs.WebSession.Request.RequestUri;            
+           
+            if (! await _authenticator.Authenticate(requestHeaders, requestUri, null))
+                failReason = BlockedReasons.AuthFailed;
             
             var host = requestUri.Host;
             var hostAddresses = Dns.GetHostAddresses(host);
-            if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length >= 0)
+            
+            if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length >= 0 && failReason == null)
             {
                 // TODO: Horribly inefficient (o(n^2)) impl, though may not matter since n is likely to be small for both local nets and resolved addrs
                 
                 foreach (var network in _localNetworks)
                 {
                     foreach (var address in hostAddresses)
-                    {
-                        _logger.LogDebug("SEO: Checking if " + address + " is in " + network);
-                        if (IPNetwork.Contains(network, address))
-                            await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri,
-                                BlockedReasons.LanProtection, Uri.EscapeDataString(requestUri.ToString())));
+                    {                        
+                        if (! IPNetwork.Contains(network, address)) continue;
+                        _logger.LogDebug("SEO: Found access attempt to LAN ( " + address + " is in " + network + ")");
+                        failReason = BlockedReasons.LanProtection;
+                        break;
                     } 
-                }
-                
+                }                
             }
-            
-            foreach (var blockedUri in _proxyConfig.bannedDomains)
+
+            if (failReason == null)
             {
-                if (requestUri.AbsoluteUri.Contains(blockedUri))
-                    await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, BlockedReasons.BlockedUri,
-                        Uri.EscapeDataString(requestUri.ToString())));
-            }
+                foreach (var blockedUri in _proxyConfig.bannedDomains)
+                {
+                    if (!requestUri.AbsoluteUri.Contains(blockedUri)) continue;
+                    _logger.LogDebug("SEO: Blocked URI " + blockedUri + " found in " + requestUri);
+                    failReason = BlockedReasons.BlockedUri;
+                    break;
+
+                }
+            }                      
             
-            if (! await _authenticator.Authenticate(requestHeaders, requestUri, null))
-                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, BlockedReasons.AuthFailed,
+            if (failReason != null)
+                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, failReason,
                     Uri.EscapeDataString(requestUri.ToString())));
             
         }
