@@ -127,17 +127,17 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 
             }
             
-            if (! await _authenticator.Authenticate(requestHeaders, requestUri, null))
-                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, BlockedReasons.AuthFailed,
-                    Uri.EscapeDataString(requestUri.ToString())));
-
-
             foreach (var blockedUri in _proxyConfig.bannedDomains)
             {
                 if (requestUri.AbsoluteUri.Contains(blockedUri))
                     await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, BlockedReasons.BlockedUri,
                         Uri.EscapeDataString(requestUri.ToString())));
             }
+            
+            if (! await _authenticator.Authenticate(requestHeaders, requestUri, null))
+                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, BlockedReasons.AuthFailed,
+                    Uri.EscapeDataString(requestUri.ToString())));
+            
         }
 
         public async Task OnResponse(object sender, SessionEventArgs eventArgs)
