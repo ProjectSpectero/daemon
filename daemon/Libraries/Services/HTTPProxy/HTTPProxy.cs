@@ -125,7 +125,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     foreach (var address in hostAddresses)
                     {                        
                         if (! IPNetwork.Contains(network, address)) continue;
-                        _logger.LogDebug("SEO: Found access attempt to LAN ( " + address + " is in " + network + ")");
+                        _logger.LogDebug("SEO: Found access attempt to LAN (" + address + " is in " + network + ")");
                         failReason = BlockedReasons.LanProtection;
                         break;
                     } 
@@ -136,7 +136,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             {
                 foreach (var blockedUri in _proxyConfig.bannedDomains)
                 {
-                    if (!requestUri.AbsoluteUri.Contains(blockedUri)) continue;
+                    if (! requestUri.AbsoluteUri.Contains(blockedUri)) continue;
                     _logger.LogDebug("SEO: Blocked URI " + blockedUri + " found in " + requestUri);
                     failReason = BlockedReasons.BlockedUri;
                     break;
