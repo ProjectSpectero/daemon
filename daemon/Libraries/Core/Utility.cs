@@ -15,7 +15,6 @@ namespace Spectero.daemon.Libraries.Core
             {
                 var ipProps = nic.GetIPProperties();
 
-                // We're only interested in IPv4 addresses for this example.
                 var ipAddresses = ipProps.UnicastAddresses;
 
                 foreach (var addr in ipAddresses)
@@ -37,6 +36,8 @@ namespace Spectero.daemon.Libraries.Core
             else if (ipString.StartsWith("fe80:"))
                 ret = false;
             else if (ipString.StartsWith("169.254"))
+                ret = false;
+            else if (ipString.StartsWith("::1"))
                 ret = false;
 
             return ret;
