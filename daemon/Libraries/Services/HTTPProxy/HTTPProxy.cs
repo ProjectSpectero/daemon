@@ -11,6 +11,7 @@ using NLog.Fluent;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.Statistics;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Http;
@@ -34,19 +35,20 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly IDbConnection _db;
         private readonly IAuthenticator _authenticator;
         private readonly IEnumerable<IPNetwork> _localNetworks;
-        
-        private readonly IDictionary<Guid, string> _requestBodyHistory 
-            = new ConcurrentDictionary<Guid, string>();
+        private readonly IStatistician _statistician;
         
         private ServiceState State = ServiceState.Halted;
 
-        public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger, IDbConnection db, IAuthenticator authenticator, IEnumerable<IPNetwork> localNetworks)
+        public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger,
+            IDbConnection db, IAuthenticator authenticator,
+            IEnumerable<IPNetwork> localNetworks, IStatistician statistician)
         {
             _appConfig = appConfig;
             _logger = logger;
             _db = db;
             _authenticator = authenticator;
             _localNetworks = localNetworks;
+            _statistician = statistician;
         }
 
         public HTTPProxy()
@@ -148,34 +150,14 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, failReason,
                     Uri.EscapeDataString(requestUri.ToString())));
             
+            await _statistician.Update<HTTPProxy>(Utility.GetObjectSize(eventArgs.WebSession.Request),
+                DataFlowDirections.Out);
         }
 
-        public async Task OnResponse(object sender, SessionEventArgs eventArgs)
+        private async Task OnResponse(object sender, SessionEventArgs eventArgs)
         {
-            //read response headers
-            var responseHeaders = eventArgs.WebSession.Response.ResponseHeaders;
-
-            //if (!e.ProxySession.Request.Host.Equals("medeczane.sgk.gov.tr")) return;
-            if (eventArgs.WebSession.Request.Method == "GET" || eventArgs.WebSession.Request.Method == "POST")
-            {
-                if (eventArgs.WebSession.Response.ResponseStatusCode == 200)
-                {
-                    if (eventArgs.WebSession.Response.ContentType!=null && eventArgs.WebSession.Response.ContentType.Trim().ToLower().Contains("text/html"))
-                    {
-                        byte[] bodyBytes = await eventArgs.GetResponseBody();
-                        await eventArgs.SetResponseBody(bodyBytes);
-
-                        string body = await eventArgs.GetResponseBodyAsString();
-                        await eventArgs.SetResponseBodyString(body);
-                    }
-                }
-            }
-    
-            //access request body/request headers etc by looking up using requestId
-            if(_requestBodyHistory.ContainsKey(eventArgs.Id))
-            {
-                var requestBody = _requestBodyHistory[eventArgs.Id];
-            }
+            await _statistician.Update<HTTPProxy>(Utility.GetObjectSize(eventArgs.WebSession.Response),
+                DataFlowDirections.Out);
         }
         
         public void LogState(string caller)

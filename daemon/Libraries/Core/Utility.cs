@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Spectero.daemon.Libraries.Core
 {
@@ -41,6 +43,15 @@ namespace Spectero.daemon.Libraries.Core
                 ret = false;
 
             return ret;
+        }
+
+        public static double GetObjectSize(object obj)
+        {
+            var bf = new BinaryFormatter();
+            var ms = new MemoryStream();
+            bf.Serialize(ms, obj);
+            var array = ms.ToArray();
+            return array.Length;
         }
     }
 }

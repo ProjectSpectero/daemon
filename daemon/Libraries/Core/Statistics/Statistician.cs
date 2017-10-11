@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
@@ -19,9 +20,10 @@ namespace Spectero.daemon.Libraries.Core.Statistics
             _db = db;
         }
 
-        public bool Update<T> (double bytes, DataFlowDirections direction) where T : new()
+        public async Task<bool> Update<T> (double bytes, DataFlowDirections direction) where T : new()
         {
-            _logger.LogDebug(String.Format("BDU: Logging {0} bytes in the {1} direction as requested by {2}", bytes, direction.ToString(), typeof(T)));
+            Console.WriteLine(string.Format("BDU: Logging {0} bytes in the {1} direction as requested by {2}", bytes, direction.ToString(), typeof(T)));
+            //_logger.LogDebug();
             return false;
         }
     }

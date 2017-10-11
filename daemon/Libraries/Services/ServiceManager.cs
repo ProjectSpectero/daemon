@@ -9,6 +9,7 @@ using ServiceStack.Data;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 
@@ -22,14 +23,17 @@ namespace Spectero.daemon.Libraries.Services
         private readonly IDbConnection _db;
         private readonly IAuthenticator _authenticator;
         private readonly IEnumerable<IPNetwork> _localNetworks = Utility.GetLocalRanges();
+        private readonly IStatistician _statistician;
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
-            IDbConnection db, IAuthenticator authenticator)
+            IDbConnection db, IAuthenticator authenticator,
+            IStatistician statistician)
         {
             _appConfig = appConfig.CurrentValue;
             _logger = logger;
             _db = db;
             _authenticator = authenticator;
+            _statistician = statistician;
         }
 
         public bool Process (string name, string action)
@@ -74,7 +78,7 @@ namespace Spectero.daemon.Libraries.Services
                 return _services[type];
             else
             {
-                var service = (IService) Activator.CreateInstance(type, _appConfig, _logger, _db, _authenticator, _localNetworks);
+                var service = (IService) Activator.CreateInstance(type, _appConfig, _logger, _db, _authenticator, _localNetworks, _statistician);
                 _services.TryAdd(type, service);
                 return service;
             }
