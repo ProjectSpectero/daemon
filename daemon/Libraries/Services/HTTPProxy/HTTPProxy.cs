@@ -3,9 +3,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using NLog.Fluent;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
@@ -17,7 +19,7 @@ using Titanium.Web.Proxy.Models;
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
     /*
-     *  TODO: a. Lan protection
+     *  TODO: a. Lan protection [DONE, basic]
      *  TODO: b. Statistics
      *  TODO: c. Service restart :V
      *  TODO: d. Mode support
@@ -31,18 +33,20 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly ILogger<ServiceManager> _logger;
         private readonly IDbConnection _db;
         private readonly IAuthenticator _authenticator;
+        private readonly IEnumerable<IPNetwork> _localNetworks;
         
         private readonly IDictionary<Guid, string> _requestBodyHistory 
             = new ConcurrentDictionary<Guid, string>();
         
         private ServiceState State = ServiceState.Halted;
 
-        public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger, IDbConnection db, IAuthenticator authenticator)
+        public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger, IDbConnection db, IAuthenticator authenticator, IEnumerable<IPNetwork> localNetworks)
         {
             _appConfig = appConfig;
             _logger = logger;
             _db = db;
             _authenticator = authenticator;
+            _localNetworks = localNetworks;
         }
 
         public HTTPProxy()
@@ -103,15 +107,36 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             var requestHeaders = eventArgs.WebSession.Request.RequestHeaders;
             var requestMethod = eventArgs.WebSession.Request.Method.ToUpper();
             var requestUri = eventArgs.WebSession.Request.RequestUri;
-
+            
+            var host = requestUri.Host;
+            var hostAddresses = Dns.GetHostAddresses(host);
+            if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length >= 0)
+            {
+                // TODO: Horribly inefficient (o(n^2)) impl, though may not matter since n is likely to be small for both local nets and resolved addrs
+                
+                foreach (var network in _localNetworks)
+                {
+                    foreach (var address in hostAddresses)
+                    {
+                        _logger.LogDebug("SEO: Checking if " + address + " is in " + network);
+                        if (IPNetwork.Contains(network, address))
+                            await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri,
+                                BlockedReasons.LanProtection, Uri.EscapeDataString(requestUri.ToString())));
+                    } 
+                }
+                
+            }
+            
             if (! await _authenticator.Authenticate(requestHeaders, requestUri, null))
-                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri,
+                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, BlockedReasons.AuthFailed,
                     Uri.EscapeDataString(requestUri.ToString())));
+
 
             foreach (var blockedUri in _proxyConfig.bannedDomains)
             {
                 if (requestUri.AbsoluteUri.Contains(blockedUri))
-                    await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, requestUri.ToString()));
+                    await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, BlockedReasons.BlockedUri,
+                        Uri.EscapeDataString(requestUri.ToString())));
             }
         }
 

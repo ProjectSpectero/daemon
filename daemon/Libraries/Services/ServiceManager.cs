@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Net;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ServiceStack.Data;
@@ -20,6 +21,7 @@ namespace Spectero.daemon.Libraries.Services
         private readonly ILogger<ServiceManager> _logger;
         private readonly IDbConnection _db;
         private readonly IAuthenticator _authenticator;
+        private readonly IEnumerable<IPNetwork> _localNetworks = Utility.GetLocalRanges();
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator)
@@ -72,7 +74,7 @@ namespace Spectero.daemon.Libraries.Services
                 return _services[type];
             else
             {
-                var service = (IService) Activator.CreateInstance(type, _appConfig, _logger, _db, _authenticator);
+                var service = (IService) Activator.CreateInstance(type, _appConfig, _logger, _db, _authenticator, _localNetworks);
                 _services.TryAdd(type, service);
                 return service;
             }
