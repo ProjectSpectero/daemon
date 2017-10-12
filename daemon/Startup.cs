@@ -50,6 +50,8 @@ namespace Spectero.daemon
 
             services.AddSingleton<IMigration, Initialize>();
 
+            services.AddSingleton<IServiceConfigManager, ServiceConfigManager>();
+
             services.AddSingleton<IServiceManager, ServiceManager>();
         }
 

@@ -62,8 +62,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 //Loop through and listen on all defined IP <-> port pairs
                 foreach (var listener in _proxyConfig.listeners)
                 {
-                    _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(listener.Key, listener.Value, false));
-                    _logger.LogDebug("Now listening on " + listener.Key + ":" + listener.Value);
+                    _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(IPAddress.Parse(listener.Item1), listener.Item2, false));
+                    _logger.LogDebug("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
                 }
 
                 _proxyServer.AuthenticateUserFunc += _authenticator.Authenticate;

@@ -23,16 +23,18 @@ namespace Spectero.daemon.Libraries.Services
         private readonly ILogger<ServiceManager> _logger;
         private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
         private readonly IStatistician _statistician;
+        private readonly IServiceConfigManager _serviceConfigManager;
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
-            IStatistician statistician)
+            IStatistician statistician, IServiceConfigManager serviceConfigManager)
         {
             _appConfig = appConfig.CurrentValue;
             _logger = logger;
             _db = db;
             _authenticator = authenticator;
             _statistician = statistician;
+            _serviceConfigManager = serviceConfigManager;
         }
 
         public bool Process(string name, string action)
@@ -42,7 +44,7 @@ namespace Spectero.daemon.Libraries.Services
             switch (name)
             {
                 case "proxy":
-                    var config = (HTTPConfig) ServiceConfigManager.Generate<HTTPProxy.HTTPProxy>();
+                    var config = (HTTPConfig) _serviceConfigManager.Generate<HTTPProxy.HTTPProxy>();
                     var service = GetOrCreateService<HTTPProxy.HTTPProxy>();
                     switch (action)
                     {
