@@ -44,14 +44,5 @@ namespace Spectero.daemon.Libraries.Core
 
             return ret;
         }
-
-        public static double GetObjectSize(object obj)
-        {
-            var bf = new BinaryFormatter();
-            var ms = new MemoryStream();
-            bf.Serialize(ms, obj);
-            var array = ms.ToArray();
-            return array.Length;
-        }
     }
 }

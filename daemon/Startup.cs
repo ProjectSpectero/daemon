@@ -8,9 +8,7 @@ using NLog.Extensions.Logging;
 using NLog.Web;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using ServiceStack.Data;
 using ServiceStack.OrmLite;
-using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
@@ -46,15 +44,15 @@ namespace Spectero.daemon
             services.AddSingleton<IDbConnection>(c => 
                 new OrmLiteConnectionFactory(appConfig["DatabaseFile"], SqliteDialect.Provider).Open()
             );
-
-            services.AddSingleton<IServiceManager, ServiceManager>();
-
+            
             services.AddSingleton<IStatistician, Statistician>();
 
             services.AddSingleton<IAuthenticator, Authenticator>();
 
             services.AddSingleton<IMigration, Initialize>();
             
+            services.AddSingleton<IServiceManager, ServiceManager>();
+                        
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

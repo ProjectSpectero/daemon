@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NLog.Fluent;
+using ServiceStack;
+using ServiceStack.Templates;
+using ServiceStack.Text;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
@@ -72,6 +75,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
                 _proxyServer.BeforeRequest += OnRequest;
                 _proxyServer.BeforeResponse += OnResponse;
+                _proxyServer.TunnelConnectRequest += OnTunnelConnectRequest;
+                _proxyServer.TunnelConnectResponse += OnTunnelConnectResponse;
             
                 _proxyServer.Start();
                 State = ServiceState.Running;
@@ -108,13 +113,19 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
             string failReason = null;
 
-            var requestHeaders = eventArgs.WebSession.Request.RequestHeaders;
-            var requestMethod = eventArgs.WebSession.Request.Method.ToUpper();
-            var requestUri = eventArgs.WebSession.Request.RequestUri;            
-           
-            if (! await _authenticator.Authenticate(requestHeaders, requestUri, null))
-                failReason = BlockedReasons.AuthFailed;
+            var request = eventArgs.WebSession.Request;
+            var requestHeaders = request.RequestHeaders;
+            var requestUri = request.RequestUri;
+
+            if (!request.IsHttps)
+            {
+                if (!await _authenticator.Authenticate(requestHeaders, requestUri, null))
+                    failReason = BlockedReasons.AuthFailed;
+            }
             
+            await _statistician.Update<HTTPProxy>(eventArgs.WebSession.Request.ContentLength,
+                DataFlowDirections.Out);
+
             var host = requestUri.Host;
             var hostAddresses = Dns.GetHostAddresses(host);
             
@@ -149,20 +160,33 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             if (failReason != null)
                 await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, failReason,
                     Uri.EscapeDataString(requestUri.ToString())));
-            
-            await _statistician.Update<HTTPProxy>(Utility.GetObjectSize(eventArgs.WebSession.Request),
-                DataFlowDirections.Out);
         }
 
         private async Task OnResponse(object sender, SessionEventArgs eventArgs)
         {
-            await _statistician.Update<HTTPProxy>(Utility.GetObjectSize(eventArgs.WebSession.Response),
-                DataFlowDirections.Out);
+            await _statistician.Update<HTTPProxy>(eventArgs.WebSession.Response.ContentLength,
+                DataFlowDirections.In);
+        }
+
+        private async Task OnTunnelConnectRequest(object sender, TunnelConnectSessionEventArgs eventArgs)
+        {
+            eventArgs.PrintDump();
+
+        }
+
+        private async Task OnTunnelConnectResponse(object sender, TunnelConnectSessionEventArgs eventArgs)
+        {
+            
         }
         
         public void LogState(string caller)
         {
             _logger.LogDebug("[" + GetType().Name +"][" + caller + "] Current state is " + State);
+        }
+
+        private double CalculateEventSize(Request request)
+        {
+            return Encoding.Default.GetBytes(request.AsString()).Length;
         }
     }
 }

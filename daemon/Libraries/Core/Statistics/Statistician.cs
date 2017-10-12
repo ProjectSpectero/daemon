@@ -20,11 +20,11 @@ namespace Spectero.daemon.Libraries.Core.Statistics
             _db = db;
         }
 
-        public async Task<bool> Update<T> (double bytes, DataFlowDirections direction) where T : new()
+        public async Task<bool> Update<T> (long bytes, DataFlowDirections direction) where T : new()
         {
-            Console.WriteLine(string.Format("BDU: Logging {0} bytes in the {1} direction as requested by {2}", bytes, direction.ToString(), typeof(T)));
-            //_logger.LogDebug();
+            _logger.LogDebug(string.Format("BDU: Logging {0} bytes in the {1} direction as requested by {2}", bytes, direction.ToString(), typeof(T)));
             return false;
+
         }
     }
 }
