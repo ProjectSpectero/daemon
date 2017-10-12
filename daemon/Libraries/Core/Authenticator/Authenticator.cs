@@ -47,49 +47,21 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                 if (user != null)
                     _cache.Set(GenerateCacheKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
             }
-            
+
             if (user != null)
-                return Argon2.Verify(user.Password, password);
+            {
+                var ret = Argon2.Verify(user.Password, password);
+                _logger.LogDebug("UPA: Argon2 said " + ret);
+                return ret;
+            }
+                
             else
             {
                 _logger.LogDebug("UPA: Couldn't find an user named " + username);
                 return false;
             }         
         }
-        
-        // TODO: Add mode support
-        public async Task<bool> Authenticate (HeaderCollection headers, Uri uri, string mode)
-        {
-            _logger.LogDebug("HUMA: Processing request to " + uri);
-            var authHeader = ((IEnumerable<HttpHeader>) headers.ToArray<HttpHeader> ())
-                .FirstOrDefault<HttpHeader>((Func<HttpHeader, bool>) 
-                    (
-                        t => t.Name == "Proxy-Authorization"
-                    )
-                );
-
-            if (authHeader == null)
-                return false;
-           
-            if (authHeader.Value.StartsWith("Basic"))
-            {
-                byte[] data = Convert.FromBase64String(authHeader.Value.Substring("Basic ".Length).Trim());
-                string authString = Encoding.UTF8.GetString(data);
-                string[] elements = authString.Split(':');
-
-                if (elements.Length != 2)
-                    return false;
-            
-                string username = elements[0];
-                string password = elements[1];
-
-                return await Authenticate(username, password);
-
-            }
-            else
-                return false;
-        }
-
+       
         private string GenerateCacheKey(string username)
         {
             return "auth.user." + username;

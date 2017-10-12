@@ -7,6 +7,5 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
     public interface IAuthenticator
     {
         Task<bool> Authenticate(string username, string password);
-        Task<bool> Authenticate(HeaderCollection headers, Uri uri, string mode);
     }
 }
