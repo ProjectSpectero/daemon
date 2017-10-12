@@ -20,6 +20,11 @@ namespace Spectero.daemon.Migrations
 
             if (!_db.TableExists<Statistic>())
                 _db.CreateTable<Statistic>();
+
+            if (!_db.TableExists<Configuration>())
+            {
+                _db.CreateTable<Configuration>();
+            }
         }
 
         public void Down()

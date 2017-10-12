@@ -7,7 +7,6 @@
     <Folder Include="Libraries\Core\Constants" />
     <Folder Include="Libraries\Services\ShadowSOCKS\" />
     <Folder Include="Libraries\Services\OpenVPN\" />
-    <Folder Include="Models\" />
     <Folder Include="Logs\">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Folder>
