@@ -5,20 +5,24 @@ namespace Spectero.daemon.Models
 {
     public class User : IModel
     {
-        [Index]
-        [AutoIncrement]
-        public long Id { get; set; }
-    
-        public string AuthKey { get; set; }
-        public string Password { get; set; }
-        
         [EnumAsInt]
         public enum Source
         {
             Local,
             Spectero
         }
+
+        [Index]
+        [AutoIncrement]
+        public long Id { get; set; }
+
+        public string AuthKey { get; set; }
+        public string Password { get; set; }
         public DateTime CreatedDate { get; set; }
-        public override string ToString() => "AuthKey -> " + AuthKey + ", Password -> " + Password + ", Created At -> " + CreatedDate;
+
+        public override string ToString()
+        {
+            return "AuthKey -> " + AuthKey + ", Password -> " + Password + ", Created At -> " + CreatedDate;
+        }
     }
 }

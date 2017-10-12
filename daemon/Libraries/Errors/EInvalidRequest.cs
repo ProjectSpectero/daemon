@@ -4,7 +4,6 @@
     {
         public EInvalidRequest() : base(400, "Invalid Request")
         {
-            
         }
     }
 }

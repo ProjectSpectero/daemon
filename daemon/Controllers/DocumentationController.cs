@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ServiceStack.Data;
 using Spectero.daemon.Libraries.Config;
 
 namespace Spectero.daemon.Controllers
@@ -13,17 +12,17 @@ namespace Spectero.daemon.Controllers
     {
         private readonly IApiDescriptionGroupCollectionProvider _apiExplorer;
 
-        
-        public DocumentationController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger, IDbConnection db, IApiDescriptionGroupCollectionProvider apiExplorer)
+
+        public DocumentationController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger,
+            IDbConnection db, IApiDescriptionGroupCollectionProvider apiExplorer)
             : base(appConfig, logger, db)
         {
             _apiExplorer = apiExplorer;
         }
-        
+
         public IActionResult Index()
         {
             return View(_apiExplorer);
         }
-        
     }
 }

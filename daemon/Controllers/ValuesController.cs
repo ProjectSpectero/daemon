@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
-using Microsoft.Extensions.Logging;
 
 namespace Spectero.daemon.Controllers
 {
-    [Microsoft.AspNetCore.Mvc.Route("api/[controller]")]
+    [Route("api/[controller]")]
     [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(ValuesController))]
-
     public class ValuesController : Controller
     {
         private readonly AppConfig _appConfig;
@@ -20,7 +18,7 @@ namespace Spectero.daemon.Controllers
             _appConfig = appConfig.Value;
             _logger = logger;
         }
-        
+
         // GET api/values
         [HttpGet]
         public IEnumerable<string> Get()
@@ -29,7 +27,7 @@ namespace Spectero.daemon.Controllers
             _logger.LogError("Log Error works!");
             _logger.LogWarning("Log Warning works!");
             _logger.LogCritical("Log Critical works!");
-            return new string[] { "value1", "value2", _appConfig.Key };
+            return new[] {"value1", "value2", _appConfig.Key};
         }
 
         // GET api/values/5
@@ -41,13 +39,13 @@ namespace Spectero.daemon.Controllers
 
         // POST api/values
         [HttpPost]
-        public void Post([FromBody]string value)
+        public void Post([FromBody] string value)
         {
         }
 
         // PUT api/values/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+        public void Put(int id, [FromBody] string value)
         {
         }
 

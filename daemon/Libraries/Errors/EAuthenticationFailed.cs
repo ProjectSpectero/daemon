@@ -1,12 +1,9 @@
-﻿using System;
-
-namespace Spectero.daemon.Libraries.Errors
+﻿namespace Spectero.daemon.Libraries.Errors
 {
     public class EAuthenticationFailed : BaseError
     {
         public EAuthenticationFailed() : base(403, "Access denied")
         {
-            
         }
     }
 }

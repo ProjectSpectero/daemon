@@ -16,12 +16,12 @@ namespace Spectero.daemon.Libraries.Services
 {
     public class ServiceManager : IServiceManager
     {
-        private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
         private readonly AppConfig _appConfig;
-        private readonly ILogger<ServiceManager> _logger;
-        private readonly IDbConnection _db;
         private readonly IAuthenticator _authenticator;
+        private readonly IDbConnection _db;
         private readonly IEnumerable<IPNetwork> _localNetworks = Utility.GetLocalRanges();
+        private readonly ILogger<ServiceManager> _logger;
+        private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
         private readonly IStatistician _statistician;
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
@@ -35,10 +35,10 @@ namespace Spectero.daemon.Libraries.Services
             _statistician = statistician;
         }
 
-        public bool Process (string name, string action)
+        public bool Process(string name, string action)
         {
-            bool returnValue = true;
-            
+            var returnValue = true;
+
             switch (name)
             {
                 case "proxy":
@@ -46,15 +46,15 @@ namespace Spectero.daemon.Libraries.Services
                     var service = GetOrCreateService<HTTPProxy.HTTPProxy>();
                     switch (action)
                     {
-                       case "start":
-                           service.Start(config);
-                           break;
-                       case "stop":
-                           service.Stop();
-                           break;
-                       case "restart":
-                           service.ReStart(config);
-                           break;          
+                        case "start":
+                            service.Start(config);
+                            break;
+                        case "stop":
+                            service.Stop();
+                            break;
+                        case "restart":
+                            service.ReStart(config);
+                            break;
                     }
                     return true;
                     break;
@@ -65,25 +65,25 @@ namespace Spectero.daemon.Libraries.Services
                 default:
                     throw new EInvalidArguments();
             }
-            
+
             return returnValue;
         }
 
-        private IService GetOrCreateService<T> () where T: new ()
+        private IService GetOrCreateService<T>() where T : new()
         {
             var type = typeof(T);
 
             if (_services.ContainsKey(type))
-                return _services[type];
-            else
             {
-                var service = (IService) Activator.CreateInstance(type, _appConfig, _logger, _db, _authenticator, _localNetworks, _statistician);
-                _services.TryAdd(type, service);
-                return service;
+                return _services[type];
             }
+            var service = (IService) Activator.CreateInstance(type, _appConfig, _logger, _db, _authenticator,
+                _localNetworks, _statistician);
+            _services.TryAdd(type, service);
+            return service;
         }
 
-        public ConcurrentDictionary<Type, IService> GetServices ()
+        public ConcurrentDictionary<Type, IService> GetServices()
         {
             return _services;
         }

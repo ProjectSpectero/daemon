@@ -2,7 +2,7 @@
 {
     public interface IMigration
     {
-        void Up ();
-        void Down ();
+        void Up();
+        void Down();
     }
 }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Titanium.Web.Proxy.Http;
+﻿using System.Threading.Tasks;
 
 namespace Spectero.daemon.Libraries.Core.Authenticator
 {

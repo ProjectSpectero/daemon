@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Spectero.daemon.Libraries.Core
 {
@@ -11,7 +9,7 @@ namespace Spectero.daemon.Libraries.Core
         public static IEnumerable<IPNetwork> GetLocalRanges()
         {
             var nics = NetworkInterface.GetAllNetworkInterfaces();
-            List<IPNetwork> ipNetworks = new List<IPNetwork>();
+            var ipNetworks = new List<IPNetwork>();
 
             foreach (var nic in nics)
             {
@@ -20,10 +18,8 @@ namespace Spectero.daemon.Libraries.Core
                 var ipAddresses = ipProps.UnicastAddresses;
 
                 foreach (var addr in ipAddresses)
-                {
                     if (CheckIPFilter(addr))
                         ipNetworks.Add(IPNetwork.Parse(addr.Address + "/" + addr.PrefixLength));
-                }
             }
             return ipNetworks;
         }

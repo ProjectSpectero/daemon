@@ -7,7 +7,7 @@ namespace Spectero.daemon.Migrations
     public class Initialize : IMigration
     {
         private readonly IDbConnection _db;
-        
+
         public Initialize(IDbConnection db)
         {
             _db = db;
@@ -15,16 +15,15 @@ namespace Spectero.daemon.Migrations
 
         public void Up()
         {
-            if (! _db.TableExists<User>())
+            if (!_db.TableExists<User>())
                 _db.CreateTable<User>();
-            
-            if (! _db.TableExists<Statistic>())
+
+            if (!_db.TableExists<Statistic>())
                 _db.CreateTable<Statistic>();
         }
 
         public void Down()
         {
-            
         }
     }
 }

@@ -4,7 +4,6 @@
     {
         public EInvalidArguments() : base(500, "Invalid arguments provided")
         {
-            
         }
     }
 }

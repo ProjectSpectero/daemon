@@ -1,7 +1,7 @@
-﻿@using Microsoft.AspNetCore.Mvc.ApiExplorer;
-@model IApiDescriptionGroupCollectionProvider
+﻿@using Microsoft.AspNetCore.Mvc.ApiExplorer
+@model Microsoft.AspNetCore.Mvc.ApiExplorer.IApiDescriptionGroupCollectionProvider
 
-<div id="body">  
+<div id="body">
     <section class="featured">
         <div class="content-wrapper">
             <hgroup class="title">
@@ -12,7 +12,7 @@
     <section class="content-wrapper main-content clear-fix">
         <h3>API Groups, version @Model.ApiDescriptionGroups.Version</h3>
         @foreach (var group in Model.ApiDescriptionGroups.Items)
-            {
+        {
             <h4>@group.GroupName</h4>
             <ul>
                 @foreach (var api in group.Items)
@@ -23,24 +23,24 @@
                             @if (api.ParameterDescriptions.Count > 0)
                             {
                                 <h6>Parameters</h6>
-                                    <dl class="dl-horizontal">
-                                        @foreach (var parameter in api.ParameterDescriptions)
+                                <dl class="dl-horizontal">
+                                    @foreach (var parameter in api.ParameterDescriptions)
+                                    {
+                                        <dt>Name</dt>
+                                        <dd>@parameter.Name, (@parameter.Source.Id)</dd>
+                                        <dt>Type</dt>
+                                        <dd>@parameter.Type?.FullName</dd>
+                                        if (parameter.RouteInfo != null)
                                         {
-                                            <dt>Name</dt>
-                                            <dd>@parameter.Name,  (@parameter.Source.Id)</dd>
-                                            <dt>Type</dt>
-                                            <dd>@parameter.Type?.FullName</dd>
-                                            if (parameter.RouteInfo != null)
-                                            {
-                                                <dt>Constraints</dt>
-                                                <dd>@string.Join(",", parameter.RouteInfo.Constraints?.Select(c => c.GetType().Name).ToArray())</dd>
-                                                <dt>DefaultValue</dt>
-                                                <dd>parameter.RouteInfo.DefaultValue</dd>
-                                                <dt>Is Optional</dt>
-                                                <dd>@parameter.RouteInfo.IsOptional</dd>
-                                            }
+                                            <dt>Constraints</dt>
+                                            <dd>@string.Join(",", parameter.RouteInfo.Constraints?.Select(c => c.GetType().Name).ToArray())</dd>
+                                            <dt>DefaultValue</dt>
+                                            <dd>parameter.RouteInfo.DefaultValue</dd>
+                                            <dt>Is Optional</dt>
+                                            <dd>@parameter.RouteInfo.IsOptional</dd>
                                         }
-                                    </dl>
+                                    }
+                                </dl>
                             }
                             else
                             {
@@ -53,18 +53,18 @@
                                 @foreach (var response in api.SupportedResponseTypes)
                                 {
                                     <dt>Status Code</dt>
-                                        <dd>@response.StatusCode</dd>
+                                    <dd>@response.StatusCode</dd>
 
-                                        <dt>Response Type</dt>
-                                        <dd>@response.Type?.FullName</dd>
+                                    <dt>Response Type</dt>
+                                    <dd>@response.Type?.FullName</dd>
 
-                                        foreach (var responseFormat in response.ApiResponseFormats)
-                                        {
-                                            <dt>Formatter</dt>
-                                            <dd>@responseFormat.Formatter?.GetType().FullName</dd>
-                                            <dt>Media Type</dt>
-                                            <dd>@responseFormat.MediaType</dd>
-                                        }
+                                    foreach (var responseFormat in response.ApiResponseFormats)
+                                    {
+                                        <dt>Formatter</dt>
+                                        <dd>@responseFormat.Formatter?.GetType().FullName</dd>
+                                        <dt>Media Type</dt>
+                                        <dd>@responseFormat.MediaType</dd>
+                                    }
                                 }
                             </dl>
 
@@ -74,4 +74,4 @@
             </ul>
         }
     </section>
-</div>  
+</div>
