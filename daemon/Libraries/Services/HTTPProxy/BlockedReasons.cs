@@ -5,5 +5,6 @@
         public static string AuthFailed = "AuthFailed";
         public static string LanProtection = "LanProtection";
         public static string BlockedUri = "BlockedUri";
+        public static string ExclusiveAllow = "ExclusiveAllow";
     }
 }

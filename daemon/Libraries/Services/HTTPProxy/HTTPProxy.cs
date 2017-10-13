@@ -16,7 +16,6 @@ using Titanium.Web.Proxy.Models;
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
     /*
-     *  TODO: b. Statistics
      *  TODO: c. Service restart :V
      *  TODO: d. Mode support
      */
@@ -104,36 +103,58 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         private async Task OnRequest(object sender, SessionEventArgs eventArgs)
         {
-            _logger.LogDebug("SEO: Processing request to " + eventArgs.WebSession.Request.Url);
+            _logger.LogDebug("ESO: Processing request to " + eventArgs.WebSession.Request.Url);
 
             string failReason = null;
 
             var request = eventArgs.WebSession.Request;
             var requestUri = request.RequestUri;
-
-            // TODO: Request size calculation is broken, fix is important for tracking uploads.
+            var host = requestUri.Host;
 
             await _statistician.Update<HTTPProxy>(CalculateObjectSize(request),
                 DataFlowDirections.Out);
 
-            var host = requestUri.Host;
+            if (_proxyConfig.proxyMode == HTTPProxyModes.ExclusiveAllow)
+            {
+                if (_proxyConfig.allowedDomains != null)
+                {
+                    bool matchFound = false;
+                    foreach (var allowedHost in _proxyConfig.allowedDomains)
+                    {
+                        if (host.Equals(allowedHost))
+                        {
+                            matchFound = true;
+                            break;
+                        }
+                    }
+                    if (!matchFound)
+                        failReason = BlockedReasons.ExclusiveAllow;
+                }
+                else
+                {
+                    _logger.LogError("ESO: Proxy is set to start in exclusive-allow mode, but list of domains is empty. This will mean that ALL traffic will be dropped.");
+                    failReason = BlockedReasons.ExclusiveAllow;
+                }
+                    
+            }
+          
             var hostAddresses = Dns.GetHostAddresses(host);
 
-            if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length >= 0)
+            if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length >= 0 && failReason != null)
                 foreach (var network in _localNetworks)
                 foreach (var address in hostAddresses)
                 {
                     if (!IPNetwork.Contains(network, address)) continue;
-                    _logger.LogDebug("SEO: Found access attempt to LAN (" + address + " is in " + network + ")");
+                    _logger.LogDebug("ESO: Found access attempt to LAN (" + address + " is in " + network + ")");
                     failReason = BlockedReasons.LanProtection;
                     break;
                 }
 
-            if (failReason == null)
+            if (failReason == null && _proxyConfig.bannedDomains != null)
                 foreach (var blockedUri in _proxyConfig.bannedDomains)
                 {
                     if (!requestUri.AbsoluteUri.Contains(blockedUri)) continue;
-                    _logger.LogDebug("SEO: Blocked URI " + blockedUri + " found in " + requestUri);
+                    _logger.LogDebug("ESO: Blocked URI " + blockedUri + " found in " + requestUri);
                     failReason = BlockedReasons.BlockedUri;
                     break;
                 }

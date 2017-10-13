@@ -29,13 +29,9 @@ namespace Spectero.daemon.Libraries.Core
             var ret = true;
             var ipString = ipAddressInformation.Address.ToString();
 
-            if (ipString.StartsWith("127"))
-                ret = false;
-            else if (ipString.StartsWith("fe80:"))
+            if (ipString.StartsWith("fe80:"))
                 ret = false;
             else if (ipString.StartsWith("169.254"))
-                ret = false;
-            else if (ipString.StartsWith("::1"))
                 ret = false;
 
             return ret;

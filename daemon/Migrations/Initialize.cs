@@ -2,6 +2,7 @@
 using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Core.Constants;
+using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Migrations
@@ -32,6 +33,21 @@ namespace Spectero.daemon.Migrations
                 {
                     Key = "http.listener",
                     Value = Defaults.HTTP.ToJson()
+                });
+                _db.Insert<Configuration>(new Configuration
+                {
+                    Key = "http.mode",
+                    Value = HTTPProxyModes.Normal.ToJson()
+                });
+                _db.Insert<Configuration>(new Configuration
+                {
+                    Key = "http.domains.allowed",
+                    Value = ""
+                });
+                _db.Insert<Configuration>(new Configuration
+                {
+                    Key = "http.domains.banned",
+                    Value = ""
                 });
             }
         }
