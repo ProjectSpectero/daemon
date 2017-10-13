@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using ServiceStack.Templates;
+using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Statistics;
@@ -114,7 +113,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
             // TODO: Request size calculation is broken, fix is important for tracking uploads.
 
-            await _statistician.Update<HTTPProxy>(eventArgs.WebSession.Request.ContentLength,
+            await _statistician.Update<HTTPProxy>(CalculateObjectSize(request),
                 DataFlowDirections.Out);
 
             var host = requestUri.Host;
@@ -146,13 +145,31 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         private async Task OnResponse(object sender, SessionEventArgs eventArgs)
         {
-            await _statistician.Update<HTTPProxy>(eventArgs.WebSession.Response.ContentLength,
+            await _statistician.Update<HTTPProxy>(CalculateObjectSize(eventArgs.WebSession.Response),
                 DataFlowDirections.In);
         }
 
-        private double CalculateEventSize(Request request)
+        private long CalculateObjectSize (Request request)
         {
-            return Encoding.Default.GetBytes(request.AsString()).Length;
+            long ret = 0;
+            if (request.ContentLength > 0)
+                ret += request.ContentLength;
+
+            ret += request.HeaderText.ToAsciiBytes().Length;
+            ret += request.RequestUri.ToString().ToAsciiBytes().Length;
+
+            return ret;
+        }
+
+        private long CalculateObjectSize(Response response)
+        {
+            long ret = 0;
+            if (response.ContentLength > 0)
+                ret += response.ContentLength;
+            else
+                ret = 64; // Assume a response is at least 64 bytes if a non 2-xx header was encountered
+
+            return ret;
         }
     }
 }
