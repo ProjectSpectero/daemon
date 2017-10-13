@@ -17,7 +17,6 @@ using Titanium.Web.Proxy.Models;
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
     /*
-     *  TODO: a. Lan protection [DONE, basic]
      *  TODO: b. Statistics
      *  TODO: c. Service restart :V
      *  TODO: d. Mode support
@@ -69,8 +68,6 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 _proxyServer.AuthenticateUserFunc += _authenticator.Authenticate;
                 _proxyServer.BeforeRequest += OnRequest;
                 _proxyServer.BeforeResponse += OnResponse;
-                _proxyServer.TunnelConnectRequest += OnTunnelConnectRequest;
-                _proxyServer.TunnelConnectResponse += OnTunnelConnectResponse;
 
                 _proxyServer.Start();
                 State = ServiceState.Running;
@@ -123,7 +120,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             var host = requestUri.Host;
             var hostAddresses = Dns.GetHostAddresses(host);
 
-            if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length >= 0 && failReason == null)
+            if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length >= 0)
                 foreach (var network in _localNetworks)
                 foreach (var address in hostAddresses)
                 {
@@ -151,14 +148,6 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         {
             await _statistician.Update<HTTPProxy>(eventArgs.WebSession.Response.ContentLength,
                 DataFlowDirections.In);
-        }
-
-        private async Task OnTunnelConnectRequest(object sender, TunnelConnectSessionEventArgs eventArgs)
-        {
-        }
-
-        private async Task OnTunnelConnectResponse(object sender, TunnelConnectSessionEventArgs eventArgs)
-        {
         }
 
         private double CalculateEventSize(Request request)
