@@ -31,7 +31,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
         public async Task<bool> Authenticate(string username, string password)
         {
-            _logger.LogDebug("UPA: Attempting to auth using u -> " + username + ", p -> " + password);
+            _logger.LogDebug("UPA: Attempting to verify auth for " + username);
 
             var user = _cache.Get<User>(GenerateCacheKey(username));
 
