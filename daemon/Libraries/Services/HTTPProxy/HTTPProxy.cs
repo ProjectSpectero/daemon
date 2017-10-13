@@ -59,7 +59,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 //Loop through and listen on all defined IP <-> port pairs
                 foreach (var listener in _proxyConfig.listeners)
                 {
-                    _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(IPAddress.Parse(listener.Item1), listener.Item2, false));
+                    _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(IPAddress.Parse(listener.Item1), listener.Item2,
+                        false));
                     _logger.LogDebug("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
                 }
 
@@ -115,29 +116,25 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 DataFlowDirections.Out);
 
             if (_proxyConfig.proxyMode == HTTPProxyModes.ExclusiveAllow)
-            {
                 if (_proxyConfig.allowedDomains != null)
                 {
-                    bool matchFound = false;
+                    var matchFound = false;
                     foreach (var allowedHost in _proxyConfig.allowedDomains)
-                    {
                         if (host.Equals(allowedHost))
                         {
                             matchFound = true;
                             break;
                         }
-                    }
                     if (!matchFound)
                         failReason = BlockedReasons.ExclusiveAllow;
                 }
                 else
                 {
-                    _logger.LogError("ESO: Proxy is set to start in exclusive-allow mode, but list of domains is empty. This will mean that ALL traffic will be dropped.");
+                    _logger.LogError(
+                        "ESO: Proxy is set to start in exclusive-allow mode, but list of domains is empty. This will mean that ALL traffic will be dropped.");
                     failReason = BlockedReasons.ExclusiveAllow;
                 }
-                    
-            }
-          
+
             var hostAddresses = Dns.GetHostAddresses(host);
 
             if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length >= 0 && failReason != null)
@@ -170,7 +167,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 DataFlowDirections.In);
         }
 
-        private long CalculateObjectSize (Request request)
+        private long CalculateObjectSize(Request request)
         {
             long ret = 0;
             if (request.ContentLength > 0)

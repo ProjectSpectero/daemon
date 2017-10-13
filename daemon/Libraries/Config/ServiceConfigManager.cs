@@ -19,7 +19,8 @@ namespace Spectero.daemon.Libraries.Config
         private readonly IDbConnection _db;
         private readonly ILogger<ServiceConfigManager> _logger;
 
-        public ServiceConfigManager(IOptionsMonitor<AppConfig> config, ILogger<ServiceConfigManager> logger, IDbConnection db)
+        public ServiceConfigManager(IOptionsMonitor<AppConfig> config, ILogger<ServiceConfigManager> logger,
+            IDbConnection db)
         {
             _appConfig = config.CurrentValue;
             _logger = logger;
@@ -36,13 +37,15 @@ namespace Spectero.daemon.Libraries.Config
                     {
                         var listeners = new List<Tuple<string, int>>();
 
-                        var serviceConfig =_db.Select<Configuration>( x => x.Key == "http.listener");
+                        var serviceConfig = _db.Select<Configuration>(x => x.Key == "http.listener");
 
                         if (serviceConfig.Count > 0)
                         {
                             foreach (var listener in serviceConfig)
                             {
-                                var lstDict = JsonConvert.DeserializeObject<List<Dictionary<string, dynamic>>>(listener.Value).FirstOrDefault();
+                                var lstDict = JsonConvert
+                                    .DeserializeObject<List<Dictionary<string, dynamic>>>(listener.Value)
+                                    .FirstOrDefault();
                                 if (lstDict != null && lstDict.ContainsKey("Item1") && lstDict.ContainsKey("Item2"))
                                 {
                                     var ip = (string) lstDict["Item1"];
@@ -50,15 +53,19 @@ namespace Spectero.daemon.Libraries.Config
                                     listeners.Add(Tuple.Create(ip, port));
                                 }
                                 else
-                                    _logger.LogError("TG: Could not extract a valid ip:port pair from at least one listener.");                           
+                                {
+                                    _logger.LogError(
+                                        "TG: Could not extract a valid ip:port pair from at least one listener.");
+                                }
                             }
                         }
                         else
                         {
-                            _logger.LogWarning("TG: No listeners could be retrieved from the DB for " + typeof(HTTPProxy) + ", using defaults.");
+                            _logger.LogWarning("TG: No listeners could be retrieved from the DB for " +
+                                               typeof(HTTPProxy) + ", using defaults.");
                             listeners = Defaults.HTTP;
                         }
-                            
+
 
                         return new HTTPConfig(listeners, HTTPProxyModes.Normal, null, null);
                     }
