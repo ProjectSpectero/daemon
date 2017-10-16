@@ -32,7 +32,7 @@ Full Unit Testing code coverage is planned, will likely integrate with a continu
 
 Import daemon.sln on VS2017, dedicated test builds are not yet available.
 
->>>End user software
+End user software
 
 Windows/OSX/Linux clients for VPN functionality
 Login/signup to their spectero.com accounts
