@@ -31,3 +31,10 @@ Full Unit Testing code coverage is planned, will likely integrate with a continu
 #### Deployment / Join the Fray
 
 Import daemon.sln on VS2017, dedicated test builds are not yet available.
+
+End user software
+
+Windows/OSX/Linux clients for VPN functionality
+Login/signup to their spectero.com accounts
+Enabling VPN connectivity to our free VPN options and user self-hosted options after login to spectero.com account
+Is still possible to bypass your spectero.com account and connect directly to your server
