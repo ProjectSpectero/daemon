@@ -53,7 +53,7 @@ namespace Spectero.daemon.Migrations
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.HttpMode,
-                    Value = HTTPProxyModes.Normal.ToJson()
+                    Value = HTTPProxyModes.Normal.ToString()
                 });
                 _db.Insert(new Configuration
                 {
