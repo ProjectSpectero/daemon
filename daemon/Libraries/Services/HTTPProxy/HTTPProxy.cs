@@ -137,7 +137,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
             var hostAddresses = Dns.GetHostAddresses(host);
 
-            if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length >= 0 && failReason != null)
+            if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length > 0 && failReason == null)
                 foreach (var network in _localNetworks)
                 foreach (var address in hostAddresses)
                 {

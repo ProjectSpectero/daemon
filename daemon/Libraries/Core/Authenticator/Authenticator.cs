@@ -45,7 +45,8 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
             if (user != null)
             {
-                var ret = BCrypt.Net.BCrypt.Verify(user.Password, password);
+                _logger.LogDebug("UPA: User " + username + " was found, executing auth flow.");
+                var ret = BCrypt.Net.BCrypt.Verify(password, user.Password);
                 _logger.LogDebug("UPA: Auth Backend said " + ret);
                 return ret;
             }
