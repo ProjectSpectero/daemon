@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace Spectero.daemon.Libraries.Core.Constants
+﻿namespace Spectero.daemon.Libraries.Core.Constants
 {
     public class ConfigKeys
     {

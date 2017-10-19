@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ServiceStack;
 using ServiceStack.OrmLite;
@@ -14,24 +15,36 @@ namespace Spectero.daemon.Migrations
     {
         private readonly AppConfig _config;
         private readonly IDbConnection _db;
+        private readonly ILogger<Initialize> _logger;
 
-        public Initialize(IOptionsMonitor<AppConfig> config, IDbConnection db)
+
+        public Initialize(IOptionsMonitor<AppConfig> config, ILogger<Initialize> logger, IDbConnection db)
         {
-            _db = db;
             _config = config.CurrentValue;
+            _logger = logger;
+            _db = db;
         }
 
         public void Up()
         {
             if (!_db.TableExists<User>())
+            {
+                _logger.LogDebug("Firstrun: Creating Users table");
                 _db.CreateTable<User>();
+            }
+
 
             if (!_db.TableExists<Statistic>())
+            {
+                _logger.LogDebug("Firstrun: Creating Statistics table");
                 _db.CreateTable<Statistic>();
+            }
+
 
             if (!_db.TableExists<Configuration>())
             {
                 _db.CreateTable<Configuration>();
+                _logger.LogDebug("Firstrun: Creating Configurations table and inserting default values");
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.HttpListener,

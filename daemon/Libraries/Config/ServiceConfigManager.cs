@@ -53,9 +53,10 @@ namespace Spectero.daemon.Libraries.Config
                                     listeners.Add(Tuple.Create(ip, port));
                                 }
                                 else
+                                {
                                     _logger.LogError(
                                         "TG: Could not extract a valid ip:port pair from at least one listener.");
-                                
+                                }
                             }
                         }
                         else
@@ -64,7 +65,6 @@ namespace Spectero.daemon.Libraries.Config
                                                typeof(HTTPProxy) + ", using defaults.");
                             listeners = Defaults.HTTP;
                         }
-
 
 
                         return new HTTPConfig(listeners, HTTPProxyModes.Normal);
