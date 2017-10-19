@@ -10,5 +10,7 @@ namespace Spectero.daemon.Libraries.Config
         public double AuthCacheMinutes { get; set; }
         public bool LocalSubnetBanEnabled { get; set; }
         public Dictionary<string, Dictionary<string, string>> Defaults { get; set; }
+        public int PasswordCostLowerThreshold { get; set; }
+        public int PasswordCostCalculationIterations { get; set; }
     }
 }
