@@ -2,10 +2,10 @@
 {
     public class ConfigKeys
     {
-        public static string HttpListener = "http.listener";
-        public static string HttpMode = "http.mode";
-        public static string HttpAllowedDomains = "http.domains.allowed";
-        public static string HttpBannedDomains = "http.domains.banned";
-        public static string PasswordHashingCost = "auth.password.cost";
+        public const string HttpListener = "http.listener";
+        public const string HttpMode = "http.mode";
+        public const string HttpAllowedDomains = "http.domains.allowed";
+        public const string HttpBannedDomains = "http.domains.banned";
+        public const string PasswordHashingCost = "auth.password.cost";
     }
 }

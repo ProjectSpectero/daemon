@@ -43,12 +43,12 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         public void ReStart(IServiceConfig serviceConfig)
         {
-            _vpnConfig = (OpenVPNConfig)serviceConfig;
+            _vpnConfig = (OpenVPNConfig) serviceConfig;
         }
 
         public void Reload(IServiceConfig serviceConfig)
         {
-            _vpnConfig = (OpenVPNConfig)serviceConfig;
+            _vpnConfig = (OpenVPNConfig) serviceConfig;
         }
 
         public void Stop()

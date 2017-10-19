@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using Spectero.daemon.Libraries.Core;
+using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 
 namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
@@ -10,7 +11,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         internal List<Tuple<string, int, TransportProtocols>> listeners;
         internal IPNetwork localSubnet;
         internal List<IPNetwork> pushedNetworks;
-        internal bool redirectGateway;
+        internal RedirectGatewayOptions redirectGateway;
 
         public OpenVPNConfig()
         {
