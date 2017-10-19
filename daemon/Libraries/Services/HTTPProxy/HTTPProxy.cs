@@ -97,6 +97,11 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             LogState("ReStart");
         }
 
+        public void Reload(IServiceConfig serviceConfig)
+        {
+            _proxyConfig = (HTTPConfig) serviceConfig;
+        }
+
         public void LogState(string caller)
         {
             _logger.LogDebug("[" + GetType().Name + "][" + caller + "] Current state is " + State);
@@ -188,6 +193,11 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 ret = 64; // Assume a response is at least 64 bytes if a non 2-xx header was encountered
 
             return ret;
+        }
+
+        public ServiceState GetState()
+        {
+            return State;
         }
     }
 }

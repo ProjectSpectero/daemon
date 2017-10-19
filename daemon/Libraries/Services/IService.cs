@@ -5,7 +5,9 @@
         void Start(IServiceConfig serviceConfig);
         void ReStart(IServiceConfig serviceConfig);
         void Stop();
+        void Reload(IServiceConfig serviceConfig);
 
         void LogState(string caller);
+        ServiceState GetState();
     }
 }
