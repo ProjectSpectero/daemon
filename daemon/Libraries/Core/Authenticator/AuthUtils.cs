@@ -4,7 +4,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 {
     public class AuthUtils
     {
-        public static long GenerateViableCost (string testPassword, double timeTarget = 100, int costThreshold = 10, int cost = 16)
+        public static long GenerateViableCost(string testPassword, int iterations = 50, double timeTarget = 100, int costThreshold = 10, int cost = 16)
         {
             long timeTaken;
             do
@@ -17,7 +17,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
                 cost -= 1;
 
-            } while ((timeTaken) >= timeTarget);
+            } while ((timeTaken) >= timeTarget && iterations > 0);
 
             if ((cost + 1) < costThreshold)
                 return costThreshold;

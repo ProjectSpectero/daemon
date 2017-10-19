@@ -36,7 +36,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
             if (user == null)
             {
-                _logger.LogDebug("UPA: Cache-miss for username -> " + username + ", doing SQLite lookup.");
+                _logger.LogDebug("UPA: Cache-miss for username -> " + username + ", doing SQL lookup.");
                 var dbQuery = await _db.SelectAsync<User>(x => x.AuthKey == username);
                 user = dbQuery.FirstOrDefault();
                 if (user != null)
@@ -45,7 +45,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
             if (user != null)
             {
-                var ret = Argon2.Verify(user.Password, password);
+                var ret = BCrypt.Net.BCrypt.Verify(user.Password, password);
                 _logger.LogDebug("UPA: Auth Backend said " + ret);
                 return ret;
             }
