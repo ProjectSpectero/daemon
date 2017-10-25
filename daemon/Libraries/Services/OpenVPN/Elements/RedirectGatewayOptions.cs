@@ -3,6 +3,7 @@
     public enum RedirectGatewayOptions
     {
         Local,
-        Def1
+        Def1,
+        BypassDhcp
     }
 }
