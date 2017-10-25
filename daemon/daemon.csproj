@@ -12,6 +12,9 @@
     <Folder Include="Database\">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Folder>
+    <Folder Include="Templates\">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Folder>
     <Folder Include="wwwroot\" />
   </ItemGroup>
   <ItemGroup>
@@ -19,6 +22,7 @@
     <PackageReference Include="IPNetwork2" Version="2.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="4.4.1" />
+    <PackageReference Include="RazorLight2" Version="2.0.0" />
     <PackageReference Include="ServiceStack.OrmLite.Sqlite.Core" Version="1.0.44" />
     <PackageReference Include="ServiceStack.Text.Core" Version="1.0.44" />
     <PackageReference Include="Titanium.Web.Proxy" Version="3.0.130" />

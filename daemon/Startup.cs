@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using NLog.Web;
+using RazorLight;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
@@ -53,6 +54,10 @@ namespace Spectero.daemon
             services.AddSingleton<IServiceConfigManager, ServiceConfigManager>();
 
             services.AddSingleton<IServiceManager, ServiceManager>();
+
+            services.AddSingleton(c => 
+                EngineFactory.CreatePhysical(appConfig["TemplateDirectory"])
+            );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
