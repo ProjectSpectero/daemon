@@ -5,7 +5,6 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Services;
@@ -74,28 +73,21 @@ namespace Spectero.daemon.Libraries.Config
                         var bannedDomains = _db.Select<Configuration>(x => x.Key == ConfigKeys.HttpBannedDomains)
                             .FirstOrDefault(); // JSON list of strings, but there is only one list
 
-                        HTTPProxyModes actualMode = HTTPProxyModes.Normal;
-                        List<string> actualAllowedDomains = new List<string>();
-                        List<string> actualBannedDomains = new List<string>();
+                        var actualMode = HTTPProxyModes.Normal;
+                        var actualAllowedDomains = new List<string>();
+                        var actualBannedDomains = new List<string>();
 
                         if (proxyMode != null)
-                        {
-                            // TODO: Make sure this comparison actually makes sense, it might be bogus.
                             if (proxyMode.Value == HTTPProxyModes.ExclusiveAllow.ToString())
                                 actualMode = HTTPProxyModes.ExclusiveAllow;
-                        }
 
                         if (allowedDomains != null)
-                        {
                             actualAllowedDomains = JsonConvert
                                 .DeserializeObject<List<string>>(allowedDomains.Value);
-                        }
 
                         if (bannedDomains != null)
-                        {
                             actualBannedDomains = JsonConvert
                                 .DeserializeObject<List<string>>(bannedDomains.Value);
-                        }
 
                         return new HTTPConfig(listeners, actualMode, actualAllowedDomains, actualBannedDomains);
                     }

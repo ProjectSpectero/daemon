@@ -4,7 +4,7 @@
 
 # Generated on @DateTime.Now by @Model.SourceDevice
 # Note: this config file contains inline private keys
-#       and therefore should be kept confidential!
+# and therefore should be kept confidential!
 # Note: this configuration is user-locked to the username below
 # SPECTERO_USERNAME=@Model.User.AuthKey
 
@@ -15,7 +15,10 @@ server-poll-timeout 4
 nobind
 @foreach (var listener in Model.listeners)
 {
-    remote listener.Item1 listener.Item2 listener.Item3
+    remote
+    listener.Item1
+    listener.Item2
+    listener.Item3
 }
 
 dev tun
@@ -33,20 +36,20 @@ verb 3
 setenv PUSH_PEER_INFO
 
 <ca>
-@Model.CACert
+    @Model.CACert
 </ca>
 
 <cert>
-@Model.UserCert
+    @Model.User.Cert
 </cert>
 
 <key>
-@Model.UserKey
+    @Model.User.CertKey
 </key>
 
 key-direction 1
 <tls-auth>
-@Model.TLSAuthStaticKey
+    @Model.TLSAuthStaticKey
 </tls-auth>
 
 # Extra user-defined configuration

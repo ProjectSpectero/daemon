@@ -17,11 +17,10 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
         private OpenVPNConfig _vpnConfig;
-        private ServiceState State = ServiceState.Halted;
+        private readonly ServiceState State = ServiceState.Halted;
 
         public OpenVPN()
         {
-            
         }
 
         public OpenVPN(AppConfig appConfig, ILogger<ServiceManager> logger,
@@ -53,8 +52,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         public void Stop()
         {
-            
         }
+
         public ServiceState GetState()
         {
             return State;
@@ -62,7 +61,6 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         public void LogState(string caller)
         {
-            
         }
     }
 }

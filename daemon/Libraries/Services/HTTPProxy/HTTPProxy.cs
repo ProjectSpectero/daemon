@@ -107,6 +107,11 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             _logger.LogDebug("[" + GetType().Name + "][" + caller + "] Current state is " + State);
         }
 
+        public ServiceState GetState()
+        {
+            return State;
+        }
+
         private async Task OnRequest(object sender, SessionEventArgs eventArgs)
         {
             _logger.LogDebug("ESO: Processing request to " + eventArgs.WebSession.Request.Url);
@@ -193,11 +198,6 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 ret = 64; // Assume a response is at least 64 bytes if a non 2-xx header was encountered
 
             return ret;
-        }
-
-        public ServiceState GetState()
-        {
-            return State;
         }
     }
 }

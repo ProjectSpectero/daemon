@@ -18,6 +18,9 @@ namespace Spectero.daemon.Models
 
         public string AuthKey { get; set; }
         public string Password { get; set; }
+
+        public string Cert { get; set; }
+        public string CertKey { get; set; }
         public DateTime CreatedDate { get; set; }
 
         public override string ToString()

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using Microsoft.AspNetCore.Razor.Language;
 using RazorLight;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
@@ -10,14 +9,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
     public class OpenVPNConfig : IServiceConfig
     {
-        public List<Tuple<string, int, TransportProtocols>> listeners;
-        public IPNetwork localSubnet;
-        public List<IPNetwork> pushedNetworks;
-        public List<RedirectGatewayOptions> redirectGateway;
-        public List<DhcpOptions> dhcpOptions;
         private readonly IRazorLightEngine _engine;
         private readonly string serviceName = "OpenVPN";
+        public List<DhcpOptions> dhcpOptions;
+        public List<Tuple<string, int, TransportProtocols>> listeners;
+        public IPNetwork localSubnet;
         public string Originator = "Spectero";
+        public List<IPNetwork> pushedNetworks;
+        public List<RedirectGatewayOptions> redirectGateway;
 
         /*
          * --push option

@@ -55,7 +55,7 @@ namespace Spectero.daemon
 
             services.AddSingleton<IServiceManager, ServiceManager>();
 
-            services.AddSingleton(c => 
+            services.AddSingleton(c =>
                 EngineFactory.CreatePhysical(appConfig["TemplateDirectory"])
             );
         }
