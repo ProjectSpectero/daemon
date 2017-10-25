@@ -1,1 +1,53 @@
-﻿
+﻿@model Spectero.daemon.Libraries.Services.OpenVPN.OpenVPNConfig
+
+# Automatically generated OpenVPN client config file by @Model.Originator
+
+# Generated on @DateTime.Now by @Model.SourceDevice
+# Note: this config file contains inline private keys
+#       and therefore should be kept confidential!
+# Note: this configuration is user-locked to the username below
+# SPECTERO_USERNAME=@Model.User.AuthKey
+
+setenv FORWARD_COMPATIBLE 1
+client
+proto udp
+server-poll-timeout 4
+nobind
+@foreach (var listener in Model.listeners)
+{
+    remote listener.Item1 listener.Item2 listener.Item3
+}
+
+dev tun
+dev-type tun
+ns-cert-type server
+reneg-sec 604800
+sndbuf 100000
+rcvbuf 100000
+max-routes 200
+
+# NOTE: LZO commands are pushed by the Access Server at connect time.
+# NOTE: The below line doesn't disable LZO.
+comp-lzo no
+verb 3
+setenv PUSH_PEER_INFO
+
+<ca>
+@Model.CACert
+</ca>
+
+<cert>
+@Model.UserCert
+</cert>
+
+<key>
+@Model.UserKey
+</key>
+
+key-direction 1
+<tls-auth>
+@Model.TLSAuthStaticKey
+</tls-auth>
+
+# Extra user-defined configuration
+cipher AES-256-CBC

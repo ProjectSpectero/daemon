@@ -10,12 +10,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
     public class OpenVPNConfig : IServiceConfig
     {
-        internal List<Tuple<string, int, TransportProtocols>> listeners;
-        internal IPNetwork localSubnet;
-        internal List<IPNetwork> pushedNetworks;
-        internal List<RedirectGatewayOptions> redirectGateway;
-        internal List<DhcpOptions> dhcpOptions;
+        public List<Tuple<string, int, TransportProtocols>> listeners;
+        public IPNetwork localSubnet;
+        public List<IPNetwork> pushedNetworks;
+        public List<RedirectGatewayOptions> redirectGateway;
+        public List<DhcpOptions> dhcpOptions;
         private readonly IRazorLightEngine _engine;
+        private readonly string serviceName = "OpenVPN";
+        public string Originator = "Spectero";
 
         /*
          * --push option
@@ -35,7 +37,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         public override string ToString()
         {
-            return _engine.Parse("OpenVPN", this);
+            if (_engine == null) return "RazorEngine is missing, can't convert.";
+            return _engine.Parse(serviceName, this);
         }
     }
 }
