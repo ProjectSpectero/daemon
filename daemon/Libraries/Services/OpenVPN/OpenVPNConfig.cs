@@ -5,6 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 using Org.BouncyCastle.Crypto.Parameters;
 using RazorLight;
 using Spectero.daemon.Libraries.Core;
+using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 
 namespace Spectero.daemon.Libraries.Services.OpenVPN
@@ -25,6 +26,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public List<Tuple<DhcpOptions, string>> dhcpOptions;
         public bool ClientToClient;
         public bool AllowMultipleConnectionsFromSameClient;
+        public int MaxClients;
+        public IIdentityProvider _identity;
 
 
         /*
@@ -38,9 +41,10 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
          * 
          */
 
-        public OpenVPNConfig(IRazorLightEngine engine)
+        public OpenVPNConfig(IRazorLightEngine engine, IIdentityProvider identity)
         {
             _engine = engine;
+            _identity = identity;
         }
 
         public override string ToString()
