@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace Spectero.daemon.Libraries.Config
 {
@@ -14,5 +15,11 @@ namespace Spectero.daemon.Libraries.Config
         public int PasswordCostCalculationIterations { get; set; }
         public string PasswordCostCalculationTestTarget { get; set; }
         public double PasswordCostTimeThreshold { get; set; }
+
+        public bool isWindows => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        public bool isLinux => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+        public bool isMac => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+        public bool isUnix => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
+            System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
     }
 }

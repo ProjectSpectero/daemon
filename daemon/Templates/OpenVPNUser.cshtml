@@ -15,10 +15,7 @@ server-poll-timeout 4
 nobind
 @foreach (var listener in Model.listeners)
 {
-    remote
-    listener.Item1
-    listener.Item2
-    listener.Item3
+    @:remote listener.Item1 listener.Item2 listener.Item3
 }
 
 dev tun

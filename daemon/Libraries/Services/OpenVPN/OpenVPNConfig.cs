@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
+using Org.BouncyCastle.Crypto.Parameters;
 using RazorLight;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
@@ -9,14 +11,21 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
     public class OpenVPNConfig : IServiceConfig
     {
+        public string Originator = "Spectero";
         private readonly IRazorLightEngine _engine;
         private readonly string serviceName = "OpenVPN";
-        public List<DhcpOptions> dhcpOptions;
+        public X509Certificate2 CACert;
+        public X509Certificate2 ServerCert;
+        public DHParameters DHParams;
         public List<Tuple<string, int, TransportProtocols>> listeners;
-        public IPNetwork localSubnet;
-        public string Originator = "Spectero";
+        public Tuple<string, int, TransportProtocols> chosenListener;
+        public IPNetwork localSubnet;        
         public List<IPNetwork> pushedNetworks;
         public List<RedirectGatewayOptions> redirectGateway;
+        public List<Tuple<DhcpOptions, string>> dhcpOptions;
+        public bool ClientToClient;
+        public bool AllowMultipleConnectionsFromSameClient;
+
 
         /*
          * --push option
