@@ -12,23 +12,21 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
     public class OpenVPNConfig : IServiceConfig
     {
-        public string Originator = "Spectero";
         private readonly IRazorLightEngine _engine;
         private readonly string serviceName = "OpenVPN";
+        public IIdentityProvider _identity;
+        public bool AllowMultipleConnectionsFromSameClient;
         public X509Certificate2 CACert;
-        public X509Certificate2 ServerCert;
+        public Tuple<string, int, TransportProtocols> chosenListener;
+        public bool ClientToClient;
+        public List<Tuple<DhcpOptions, string>> dhcpOptions;
         public DHParameters DHParams;
         public List<Tuple<string, int, TransportProtocols>> listeners;
-        public Tuple<string, int, TransportProtocols> chosenListener;
-        public IPNetwork localSubnet;        
+        public IPNetwork localSubnet;
+        public int MaxClients;
         public List<IPNetwork> pushedNetworks;
         public List<RedirectGatewayOptions> redirectGateway;
-        public List<Tuple<DhcpOptions, string>> dhcpOptions;
-        public bool ClientToClient;
-        public bool AllowMultipleConnectionsFromSameClient;
-        public int MaxClients;
-        public IIdentityProvider _identity;
-
+        public X509Certificate2 ServerCert;
 
         /*
          * --push option
