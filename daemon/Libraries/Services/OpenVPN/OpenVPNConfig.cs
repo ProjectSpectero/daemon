@@ -49,7 +49,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         public override string ToString()
         {
-            if (_engine == null) return "RazorEngine is missing, can't convert.";
+            if (_engine == null) return "# RazorEngine is missing, can't convert.";
             return _engine.Parse(serviceName, this);
         }
     }
