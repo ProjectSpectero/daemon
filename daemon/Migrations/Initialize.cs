@@ -2,6 +2,7 @@
 using System.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Org.BouncyCastle.Asn1.X509;
 using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
@@ -88,32 +89,43 @@ namespace Spectero.daemon.Migrations
                 });
                 // Password Hashing
                 _logger.LogDebug("Firstrun: Calculating optimal password hashing cost.");
-                _db.Insert(new Configuration
-                {
-                    Key = ConfigKeys.PasswordHashingCost,
-                    Value = AuthUtils.GenerateViableCost(_config.PasswordCostCalculationTestTarget,
-                            _config.PasswordCostCalculationIterations,
-                            _config.PasswordCostTimeThreshold, _config.PasswordCostLowerThreshold)
-                        .ToString()
-                });
+
 
                 // Crypto
                 // 48 characters len with 12 non-alpha-num characters
                 // Ought to be good enough for everyone. -- The IPv4 working group, 1996
                 var caPassword = PasswordUtils.GeneratePassword(48, 12);
+                var serverPassword = PasswordUtils.GeneratePassword(48, 12);
+                var ca = _cryptoService.CreateCertificateAuthorityCertificate("CN=" + instanceId + ".ca.instance.spectero.io",
+                    null, null, caPassword);
+                var serverCertificate = _cryptoService.IssueCertificate("CN=" + instanceId + ".instance.spectero.io",
+                    ca, null, new[] {KeyPurposeID.IdKPServerAuth}, serverPassword);
+
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.CeritificationAuthorityPassword,
                     Value = caPassword
                 });
+
+                _db.Insert(new Configuration
+                {
+                    Key = ConfigKeys.ServerCertificatePassword,
+                    Value = serverPassword
+                });
+
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.CertificationAuthority,
-                    Value = Convert.ToBase64String(_cryptoService.CreateCertificateAuthority
-                    (
-                            "CN=" + instanceId + ".ca.instance.spectero.io", null, null, caPassword
-                    ))
+                    Value = Convert.ToBase64String(_cryptoService.GetCertificateBytes(ca, caPassword))
                 });
+
+                _db.Insert(new Configuration
+                {
+                    Key = ConfigKeys.ServerCertificate,
+                    Value = Convert.ToBase64String(_cryptoService.GetCertificateBytes(serverCertificate, serverPassword))
+                });
+
+
             }
         }
 
