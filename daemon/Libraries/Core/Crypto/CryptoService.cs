@@ -99,6 +99,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
         public SecureRandom GetSecureRandom()
         {
+            // TODO: Figure out if CryptoAPI actually works on Unix
             // Since we're on Windows, we'll use the CryptoAPI one (on the assumption
             // that it might have access to better sources of entropy than the built-in
             // Bouncy Castle ones):
