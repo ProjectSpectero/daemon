@@ -89,6 +89,14 @@ namespace Spectero.daemon.Migrations
                 });
                 // Password Hashing
                 _logger.LogDebug("Firstrun: Calculating optimal password hashing cost.");
+                _db.Insert(new Configuration
+                {
+                    Key = ConfigKeys.PasswordHashingCost,
+                    Value = AuthUtils.GenerateViableCost(_config.PasswordCostCalculationTestTarget,
+                            _config.PasswordCostCalculationIterations,
+                            _config.PasswordCostTimeThreshold, _config.PasswordCostLowerThreshold)
+                        .ToString()
+                });
 
 
                 // Crypto
