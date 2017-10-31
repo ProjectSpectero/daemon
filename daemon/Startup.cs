@@ -11,6 +11,7 @@ using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Crypto;
+using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Migrations;
@@ -49,6 +50,8 @@ namespace Spectero.daemon
             services.AddSingleton<IStatistician, Statistician>();
 
             services.AddSingleton<IAuthenticator, Authenticator>();
+
+            services.AddSingleton<IIdentityProvider, IdentityProvider>();
 
             services.AddSingleton<ICryptoService, CryptoService>();
 

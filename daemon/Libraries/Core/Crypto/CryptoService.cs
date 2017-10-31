@@ -36,29 +36,29 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             
         }
 
-        public X509Certificate2 LoadCertificate(string issuerFileName, string password = "password")
+        public X509Certificate2 LoadCertificate(string issuerFileName, string password = null)
         {
             // We need to pass 'Exportable', otherwise we can't get the private key.
             return new X509Certificate2(issuerFileName, password, X509KeyStorageFlags.Exportable);
         }
 
-        public X509Certificate2 LoadCertificate(byte[] certBytes, string password = "password")
+        public X509Certificate2 LoadCertificate(byte[] certBytes, string password = null)
         {
             return new X509Certificate2(certBytes, password, X509KeyStorageFlags.Exportable);
         }
 
-        public byte[] GetCertificateBytes(X509Certificate2 certificate, string password = "password")
+        public byte[] GetCertificateBytes(X509Certificate2 certificate, string password = null)
         {
-            return certificate.Export(X509ContentType.Pfx, password);
+            return certificate.Export(X509ContentType.Pkcs12, password);
         }
 
-        public void WriteCertificate(X509Certificate2 certificate, string outputFileName, string password = "password")
+        public void WriteCertificate(X509Certificate2 certificate, string outputFileName, string password = null)
         {
             // This password is the one attached to the PFX file. Use 'null' for no password.
-            File.WriteAllBytes(outputFileName, GetCertificateBytes(certificate));
+            File.WriteAllBytes(outputFileName, GetCertificateBytes(certificate, password));
         }
 
-        public X509Certificate2 IssueCertificate(string subjectName, X509Certificate2 issuerCertificate, string[] subjectAlternativeNames, KeyPurposeID[] usages)
+        public X509Certificate2 IssueCertificate(string subjectName, X509Certificate2 issuerCertificate, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null)
         {
             // It's self-signed, so these are the same.
             var issuerName = issuerCertificate.Subject;
@@ -76,10 +76,20 @@ namespace Spectero.daemon.Libraries.Core.Crypto
                                                   subjectAlternativeNames, issuerName, issuerKeyPair,
                                                   issuerSerialNumber, isCertificateAuthority,
                                                   usages);
-            return ConvertCertificate(certificate, subjectKeyPair, random);
+            return ConvertCertificate(certificate, subjectKeyPair, random, password);
         }
 
-        public X509Certificate2 CreateCertificateAuthorityCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages)
+        public byte[] CreateCertificateAuthority(string subjectName, string[] alternativeNames,
+            KeyPurposeID[] usages, string password = null)
+        {
+            return GetCertificateBytes(
+                CreateCertificateAuthorityCertificate(
+                    subjectName, alternativeNames, usages, password
+                ),
+                password);
+        }
+
+        public X509Certificate2 CreateCertificateAuthorityCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null)
         {
             // It's self-signed, so these are the same.
             var issuerName = subjectName;
@@ -98,10 +108,10 @@ namespace Spectero.daemon.Libraries.Core.Crypto
                                                   subjectAlternativeNames, issuerName, issuerKeyPair,
                                                   issuerSerialNumber, isCertificateAuthority,
                                                   usages);
-            return ConvertCertificate(certificate, subjectKeyPair, random);
+            return ConvertCertificate(certificate, subjectKeyPair, random, password);
         }
 
-        public X509Certificate2 CreateSelfSignedCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages)
+        public X509Certificate2 CreateSelfSignedCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null)
         {
             // It's self-signed, so these are the same.
             var issuerName = subjectName;
@@ -120,7 +130,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
                                                   subjectAlternativeNames, issuerName, issuerKeyPair,
                                                   issuerSerialNumber, isCertificateAuthority,
                                                   usages);
-            return ConvertCertificate(certificate, subjectKeyPair, random);
+            return ConvertCertificate(certificate, subjectKeyPair, random, password);
         }
 
         public SecureRandom GetSecureRandom()
@@ -300,7 +310,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
         public X509Certificate2 ConvertCertificate(X509Certificate certificate,
                                                            AsymmetricCipherKeyPair subjectKeyPair,
-                                                           SecureRandom random)
+                                                           SecureRandom random, string password)
         {
             // Now to convert the Bouncy Castle certificate to a .NET certificate.
             // See http://web.archive.org/web/20100504192226/http://www.fkollmann.de/v2/post/Creating-certificates-using-BouncyCastle.aspx
@@ -319,7 +329,6 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
             // Convert it to an X509Certificate2 object by saving/loading it from a MemoryStream.
             // It needs a password. Since we'll remove this later, it doesn't particularly matter what we use.
-            const string password = "password";
             var stream = new MemoryStream();
             store.Save(stream, password.ToCharArray(), random);
 

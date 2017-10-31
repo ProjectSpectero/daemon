@@ -6,9 +6,14 @@ namespace Spectero.daemon.Libraries.Core.Identity
     {
         private Guid identifier;
 
+        public IdentityProvider ()
+        {
+            
+        }
+
         public Guid GetGuid()
         {
-            return identifier;
+            return Guid.NewGuid();
         }
     }
 }

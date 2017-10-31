@@ -7,15 +7,21 @@ using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 
-
 namespace Spectero.daemon.Libraries.Core.Crypto
 {
     public interface ICryptoService
     {
-        X509Certificate2 LoadCertificate(string issuerFileName, string password);
-        X509Certificate2 IssueCertificate(string subjectName, X509Certificate2 issuerCertificate, string[] subjectAlternativeNames, KeyPurposeID[] usages);
-        X509Certificate2 CreateCertificateAuthorityCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages);
-        X509Certificate2 CreateSelfSignedCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages);
+        X509Certificate2 LoadCertificate(string issuerFileName, string password = "password");
+        X509Certificate2 LoadCertificate(byte[] certBytes, string password = "password");
+        byte[] GetCertificateBytes(X509Certificate2 certificate, string password = "password");
+        void WriteCertificate(X509Certificate2 certificate, string outputFileName, string password = "password");
+        X509Certificate2 IssueCertificate(string subjectName, X509Certificate2 issuerCertificate, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null);
+
+        byte[] CreateCertificateAuthority(string subjectName, string[] alternativeNames,
+            KeyPurposeID[] usages, string password = null);
+
+        X509Certificate2 CreateCertificateAuthorityCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null);
+        X509Certificate2 CreateSelfSignedCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null);
         SecureRandom GetSecureRandom();
 
         X509Certificate GenerateCertificate(SecureRandom random,
@@ -96,12 +102,6 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
         X509Certificate2 ConvertCertificate(X509Certificate certificate,
             AsymmetricCipherKeyPair subjectKeyPair,
-            SecureRandom random);
-
-        void WriteCertificate(X509Certificate2 certificate, string outputFileName, string password = "password");
-
-        X509Certificate2 LoadCertificate(byte[] certBytes, string password = "password");
-
-        byte[] GetCertificateBytes(X509Certificate2 certificate, string password = "password");
+            SecureRandom random, string password);
     }
 }
