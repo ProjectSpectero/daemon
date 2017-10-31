@@ -173,7 +173,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
             // Our certificate needs valid from/to values.
             var notBefore = DateTime.UtcNow.Date;
-            var notAfter = notBefore.AddYears(2);
+            var notAfter = notBefore.AddYears(10);
 
             certificateGenerator.SetNotBefore(notBefore);
             certificateGenerator.SetNotAfter(notAfter);
