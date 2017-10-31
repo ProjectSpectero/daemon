@@ -99,5 +99,9 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             SecureRandom random);
 
         void WriteCertificate(X509Certificate2 certificate, string outputFileName, string password = "password");
+
+        X509Certificate2 LoadCertificate(byte[] certBytes, string password = "password");
+
+        byte[] GetCertificateBytes(X509Certificate2 certificate, string password = "password");
     }
 }

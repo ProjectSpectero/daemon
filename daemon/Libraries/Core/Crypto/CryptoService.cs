@@ -31,11 +31,31 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
     public class CryptoService : ICryptoService
     {
-        public X509Certificate2 LoadCertificate(string issuerFileName, string password)
+        public CryptoService()
+        {
+            
+        }
+
+        public X509Certificate2 LoadCertificate(string issuerFileName, string password = "password")
         {
             // We need to pass 'Exportable', otherwise we can't get the private key.
-            var issuerCertificate = new X509Certificate2(issuerFileName, password, X509KeyStorageFlags.Exportable);
-            return issuerCertificate;
+            return new X509Certificate2(issuerFileName, password, X509KeyStorageFlags.Exportable);
+        }
+
+        public X509Certificate2 LoadCertificate(byte[] certBytes, string password = "password")
+        {
+            return new X509Certificate2(certBytes, password, X509KeyStorageFlags.Exportable);
+        }
+
+        public byte[] GetCertificateBytes(X509Certificate2 certificate, string password = "password")
+        {
+            return certificate.Export(X509ContentType.Pfx, password);
+        }
+
+        public void WriteCertificate(X509Certificate2 certificate, string outputFileName, string password = "password")
+        {
+            // This password is the one attached to the PFX file. Use 'null' for no password.
+            File.WriteAllBytes(outputFileName, GetCertificateBytes(certificate));
         }
 
         public X509Certificate2 IssueCertificate(string subjectName, X509Certificate2 issuerCertificate, string[] subjectAlternativeNames, KeyPurposeID[] usages)
@@ -308,13 +328,6 @@ namespace Spectero.daemon.Libraries.Core.Crypto
                                      password,
                                      X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
             return convertedCertificate;
-        }
-
-        public void WriteCertificate(X509Certificate2 certificate, string outputFileName, string password = "password")
-        {
-            // This password is the one attached to the PFX file. Use 'null' for no password.
-            var bytes = certificate.Export(X509ContentType.Pfx, password);
-            File.WriteAllBytes(outputFileName, bytes);
         }
     }
 }

@@ -10,6 +10,7 @@ using RazorLight;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Migrations;
@@ -58,6 +59,8 @@ namespace Spectero.daemon
             services.AddSingleton(c =>
                 EngineFactory.CreatePhysical(appConfig["TemplateDirectory"])
             );
+
+            services.AddSingleton<ICryptoService, CryptoService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
