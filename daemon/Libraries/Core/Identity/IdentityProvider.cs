@@ -13,6 +13,7 @@ namespace Spectero.daemon.Libraries.Core.Identity
 
         public Guid GetGuid()
         {
+            // Todo: fetch identity from the Spectero cloud
             return Guid.NewGuid();
         }
     }
