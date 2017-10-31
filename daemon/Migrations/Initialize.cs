@@ -57,6 +57,14 @@ namespace Spectero.daemon.Migrations
             {
                 _db.CreateTable<Configuration>();
                 _logger.LogDebug("Firstrun: Creating Configurations table and inserting default values");
+
+                // Identity
+                _db.Insert(new Configuration
+                {
+                    Key = ConfigKeys.SystemIdentity,
+                    Value = _identityProvider.GetGuid().ToString()
+                });
+
                 // HTTP proxy
                 _db.Insert(new Configuration
                 {
