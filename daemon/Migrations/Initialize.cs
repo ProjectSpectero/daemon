@@ -45,6 +45,7 @@ namespace Spectero.daemon.Migrations
             {
                 _db.CreateTable<Configuration>();
                 _logger.LogDebug("Firstrun: Creating Configurations table and inserting default values");
+                // HTTP proxy
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.HttpListener,
@@ -65,6 +66,7 @@ namespace Spectero.daemon.Migrations
                     Key = ConfigKeys.HttpBannedDomains,
                     Value = ""
                 });
+                // Password Hashing
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.PasswordHashingCost,
@@ -73,6 +75,15 @@ namespace Spectero.daemon.Migrations
                             _config.PasswordCostTimeThreshold, _config.PasswordCostLowerThreshold)
                         .ToString()
                 });
+
+                // Crypto
+                _db.Insert(new Configuration
+                {
+                    Key = ConfigKeys.CeritificationAuthorityPassword,
+                    Value = "hunter2"
+                });
+
+
             }
         }
 

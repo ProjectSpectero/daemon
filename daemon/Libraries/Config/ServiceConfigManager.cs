@@ -7,8 +7,10 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Core.Constants;
+using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
+using Spectero.daemon.Libraries.Services.OpenVPN;
 using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Libraries.Config
@@ -18,13 +20,15 @@ namespace Spectero.daemon.Libraries.Config
         private readonly AppConfig _appConfig;
         private readonly IDbConnection _db;
         private readonly ILogger<ServiceConfigManager> _logger;
+        private readonly ICryptoService _cryptoService;
 
         public ServiceConfigManager(IOptionsMonitor<AppConfig> config, ILogger<ServiceConfigManager> logger,
-            IDbConnection db)
+            IDbConnection db, ICryptoService cryptoService)
         {
             _appConfig = config.CurrentValue;
             _logger = logger;
             _db = db;
+            _cryptoService = cryptoService;
         }
 
         public IServiceConfig Generate<T>() where T : new()
@@ -90,6 +94,12 @@ namespace Spectero.daemon.Libraries.Config
                                 .DeserializeObject<List<string>>(bannedDomains.Value);
 
                         return new HTTPConfig(listeners, actualMode, actualAllowedDomains, actualBannedDomains);
+                    }
+                },
+                {
+                    typeof(OpenVPN), delegate
+                    {
+                        return new OpenVPNConfig(null, null);
                     }
                 }
             };

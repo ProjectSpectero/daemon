@@ -7,5 +7,7 @@
         public const string HttpAllowedDomains = "http.domains.allowed";
         public const string HttpBannedDomains = "http.domains.banned";
         public const string PasswordHashingCost = "auth.password.cost";
+        public const string CertificationAuthority = "crypto.ca.blob";
+        public const string CeritificationAuthorityPassword = "crypto.ca.password";
     }
 }

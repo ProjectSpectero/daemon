@@ -26,12 +26,11 @@ namespace Spectero.daemon.Libraries.Services
         private readonly IServiceConfigManager _serviceConfigManager;
         private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
         private readonly IStatistician _statistician;
-        private readonly ICryptoService _cryptoService;
+
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
-            IStatistician statistician, IServiceConfigManager serviceConfigManager,
-            ICryptoService cryptoService)
+            IStatistician statistician, IServiceConfigManager serviceConfigManager)
         {
             _appConfig = appConfig.CurrentValue;
             _logger = logger;
@@ -39,7 +38,6 @@ namespace Spectero.daemon.Libraries.Services
             _authenticator = authenticator;
             _statistician = statistician;
             _serviceConfigManager = serviceConfigManager;
-            _cryptoService = cryptoService;
         }
 
         public bool Process(string name, string action)
