@@ -8,9 +8,11 @@ using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
+using Spectero.daemon.Libraries.Services.OpenVPN;
 
 namespace Spectero.daemon.Libraries.Services
 {
@@ -24,10 +26,12 @@ namespace Spectero.daemon.Libraries.Services
         private readonly IServiceConfigManager _serviceConfigManager;
         private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
         private readonly IStatistician _statistician;
+        private readonly ICryptoService _cryptoService;
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
-            IStatistician statistician, IServiceConfigManager serviceConfigManager)
+            IStatistician statistician, IServiceConfigManager serviceConfigManager,
+            ICryptoService cryptoService)
         {
             _appConfig = appConfig.CurrentValue;
             _logger = logger;
@@ -35,40 +39,52 @@ namespace Spectero.daemon.Libraries.Services
             _authenticator = authenticator;
             _statistician = statistician;
             _serviceConfigManager = serviceConfigManager;
+            _cryptoService = cryptoService;
         }
 
         public bool Process(string name, string action)
         {
-            var returnValue = true;
+            IService service;
+            IServiceConfig config;
 
             switch (name)
             {
                 case "proxy":
-                    var config = (HTTPConfig) _serviceConfigManager.Generate<HTTPProxy.HTTPProxy>();
-                    var service = GetOrCreateService<HTTPProxy.HTTPProxy>();
-                    switch (action)
-                    {
-                        case "start":
-                            service.Start(config);
-                            break;
-                        case "stop":
-                            service.Stop();
-                            break;
-                        case "restart":
-                            service.ReStart(config);
-                            break;
-                    }
-                    return true;
+                    config = (HTTPConfig) _serviceConfigManager.Generate<HTTPProxy.HTTPProxy>();
+                    service = GetOrCreateService<HTTPProxy.HTTPProxy>();
                     break;
                 case "vpn":
+                    config = (OpenVPNConfig) _serviceConfigManager.Generate<OpenVPN.OpenVPN>();
+                    service = GetOrCreateService<OpenVPN.OpenVPN>();
                     break;
                 case "ssh":
+                    config = null;
+                    service = null;
                     break;
                 default:
                     throw new EInvalidArguments();
             }
 
-            return returnValue;
+            if (service == null || config == null)
+            {
+                _logger.LogError("NAP: Resolved service or its config was null when processing name -> " + name + ", action -> " + action);
+                return false;
+            }                
+
+            switch (action)
+            {
+                case "start":
+                    service.Start(config);
+                    break;
+                case "stop":
+                    service.Stop();
+                    break;
+                case "restart":
+                    service.ReStart(config);
+                    break;
+            }
+
+            return true;
         }
 
         private IService GetOrCreateService<T>() where T : new()
