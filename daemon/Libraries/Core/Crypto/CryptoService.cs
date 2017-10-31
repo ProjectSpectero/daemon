@@ -23,6 +23,12 @@ namespace Spectero.daemon.Libraries.Core.Crypto
      * Further adopted into a injectable service by Paul <paul@spectero.com>
      */
 
+    /*
+     * Howto use:
+     *      var ca = CreateCertificateAuthorityCertificate("CN=ca.spectero.com", null, null);
+     *      var crt = IssueCertificate("CN=svr.spectero.com", ca, null, new[] { KeyPurposeID.IdKPServerAuth });
+     */
+
     public class CryptoService : ICryptoService
     {
         public X509Certificate2 LoadCertificate(string issuerFileName, string password)
