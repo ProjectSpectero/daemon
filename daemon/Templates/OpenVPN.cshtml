@@ -50,9 +50,8 @@ dev tun
 # Diffie hellman parameters.
 # Generate your own with:
 #   openssl dhparam -out dh2048.pem 2048
-<dh>
-    @Model.DHParams
-</dh>
+# This file will be shipped in, not generated.
+dh dh2048.params
 
 # Network topology
 # Should be subnet (addressing via IP)

@@ -87,6 +87,7 @@ namespace Spectero.daemon.Migrations
                     Key = ConfigKeys.HttpBannedDomains,
                     Value = ""
                 });
+
                 // Password Hashing
                 _logger.LogDebug("Firstrun: Calculating optimal password hashing cost.");
                 _db.Insert(new Configuration

@@ -20,7 +20,6 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public Tuple<string, int, TransportProtocols> chosenListener;
         public bool ClientToClient;
         public List<Tuple<DhcpOptions, string>> dhcpOptions;
-        public DHParameters DHParams;
         public List<Tuple<string, int, TransportProtocols>> listeners;
         public IPNetwork localSubnet;
         public int MaxClients;
