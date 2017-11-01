@@ -11,6 +11,8 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 {
     public interface ICryptoService
     {
+        byte[] ExportCertificateChain(X509Certificate2 cert, X509Certificate2 ca);
+
         X509Certificate2 LoadCertificate(string issuerFileName, string password = "password");
         X509Certificate2 LoadCertificate(byte[] certBytes, string password = "password");
         byte[] GetCertificateBytes(X509Certificate2 certificate, string password = "password");

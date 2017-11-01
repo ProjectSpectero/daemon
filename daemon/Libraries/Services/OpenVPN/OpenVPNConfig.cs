@@ -30,6 +30,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public List<IPNetwork> pushedNetworks;
         public List<RedirectGatewayOptions> redirectGateway;
         public X509Certificate2 ServerCert;
+        public string PKCS12Certificate;
 
         /*
          * --push option

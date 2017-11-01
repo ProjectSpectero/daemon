@@ -134,6 +134,12 @@ namespace Spectero.daemon.Migrations
                     Value = Convert.ToBase64String(_cryptoService.GetCertificateBytes(serverCertificate, serverPassword))
                 });
 
+                _db.Insert(new Configuration
+                {
+                    Key = ConfigKeys.ServerPFXChain,
+                    Value = Convert.ToBase64String(_cryptoService.ExportCertificateChain(serverCertificate, ca))
+                });
+
 
             }
         }

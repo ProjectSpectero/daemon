@@ -35,23 +35,28 @@ dev tun
 # OpenVPN can also use a PKCS #12 formatted key file
 # (see "pkcs12" directive in man page).
 
-<ca>
-    -----BEGIN CERTIFICATE-----
-    @Model.CACert.PublicKey
-    -----END CERTIFICATE-----
-</ca>
+<pkcs12>
+    @Model.PKCS12Certificate
+</pkcs12>
 
-<cert>
-    -----BEGIN CERTIFICATE-----
-    @Model.ServerCert.PublicKey
-    -----END CERTIFICATE-----
-</cert>
 
-<key>
-    -----BEGIN PRIVATE KEY-----
-    @Model.ServerCert.PrivateKey
-    -----END PRIVATE KEY-----
-</key>
+# <ca>
+#     -----BEGIN CERTIFICATE-----
+#     @Model.CACert.PublicKey
+#     -----END CERTIFICATE-----
+# </ca>
+# 
+# <cert>
+#     -----BEGIN CERTIFICATE-----
+#     @Model.ServerCert.PublicKey
+#     -----END CERTIFICATE-----
+# </cert>
+# 
+# <key>
+#     -----BEGIN PRIVATE KEY-----
+#     @Model.ServerCert.PrivateKey
+#     -----END PRIVATE KEY-----
+# </key>
 
 # Diffie hellman parameters.
 # Generate your own with:

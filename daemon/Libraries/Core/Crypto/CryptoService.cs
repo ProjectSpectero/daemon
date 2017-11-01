@@ -36,6 +36,14 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             
         }
 
+        public byte[] ExportCertificateChain(X509Certificate2 cert, X509Certificate2 ca)
+        {
+            var collection = new X509Certificate2Collection();
+            collection.Add(new X509Certificate2(ca.RawData));
+            collection.Add(cert);
+            return collection.Export(X509ContentType.Pfx, null);
+        }
+
         public X509Certificate2 LoadCertificate(string issuerFileName, string password = null)
         {
             // We need to pass 'Exportable', otherwise we can't get the private key.
