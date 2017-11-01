@@ -99,6 +99,7 @@ namespace Spectero.daemon.Libraries.Config
                 {
                     typeof(OpenVPN), delegate
                     {
+
                         return new OpenVPNConfig(null, null);
                     }
                 }

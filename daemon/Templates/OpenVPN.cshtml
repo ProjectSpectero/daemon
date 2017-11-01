@@ -74,7 +74,7 @@ topology subnet
 # on 10.8.0.1. Comment this line out if you are
 # ethernet bridging. See the man page for more info.
 
-server @Model.localSubnet.Network @Model.localSubnet.Netmask
+server @Model.listener.Item4.Network @Model.listener.Item4.Netmask
 
 # Maintain a record of client - virtual IP address
 # associations in this file.  If OpenVPN goes down or
@@ -287,3 +287,5 @@ verb 3
 # sequential messages of the same message
 # category will be output to the log.
 mute 5
+
+management 127.0.0.1 52412

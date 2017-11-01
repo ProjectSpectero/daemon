@@ -17,10 +17,15 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public IIdentityProvider _identity;
         public bool AllowMultipleConnectionsFromSameClient;
         public X509Certificate2 CACert;
-        public Tuple<string, int, TransportProtocols> listener;
+        /*
+         * string = IP address
+         * int = port
+         * Transportproto = tcp/udp server
+         * IPNetwork = Local subnet
+         */
+        public Tuple<string, int, TransportProtocols, IPNetwork> listener;
         public bool ClientToClient;
         public List<Tuple<DhcpOptions, string>> dhcpOptions;
-        public IPNetwork localSubnet;
         public int MaxClients;
         public List<IPNetwork> pushedNetworks;
         public List<RedirectGatewayOptions> redirectGateway;
