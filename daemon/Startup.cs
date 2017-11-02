@@ -20,6 +20,8 @@ namespace Spectero.daemon
 {
     public class Startup
     {
+        private string _currentDirectory = System.IO.Directory.GetCurrentDirectory();
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -61,8 +63,9 @@ namespace Spectero.daemon
 
             services.AddSingleton<IServiceManager, ServiceManager>();
 
-            services.AddSingleton(c =>
-                EngineFactory.CreatePhysical(appConfig["TemplateDirectory"])
+            services.AddSingleton<IRazorLightEngine>(c =>
+                new EngineFactory()
+                    .ForFileSystem(System.IO.Path.Combine(_currentDirectory, appConfig["TemplateDirectory"]))
             );
             
         }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using Org.BouncyCastle.Crypto.Parameters;
 using RazorLight;
 using Spectero.daemon.Libraries.Core;
@@ -49,10 +50,11 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _identity = identity;
         }
 
-        public override string ToString()
+        public async Task<string> GetStringConfig()
         {
             if (_engine == null) return "# RazorEngine is missing, can't convert.";
-            return _engine.Parse(serviceName, this);
+            var renderedTemplate = await _engine.CompileRenderAsync(serviceName, this);
+            return renderedTemplate;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
@@ -18,5 +19,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         internal List<string> allowedDomains { get; }
         internal List<string> bannedDomains { get; }
         internal HTTPProxyModes proxyMode { get; }
+
+        public async Task<string> GetStringConfig()
+        {
+            return ToString();
+        }
     }
 }

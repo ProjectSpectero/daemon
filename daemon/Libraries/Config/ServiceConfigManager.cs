@@ -5,9 +5,11 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using RazorLight;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
+using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
@@ -21,14 +23,19 @@ namespace Spectero.daemon.Libraries.Config
         private readonly IDbConnection _db;
         private readonly ILogger<ServiceConfigManager> _logger;
         private readonly ICryptoService _cryptoService;
+        private readonly IRazorLightEngine _engine;
+        private readonly IIdentityProvider _identity;
 
         public ServiceConfigManager(IOptionsMonitor<AppConfig> config, ILogger<ServiceConfigManager> logger,
-            IDbConnection db, ICryptoService cryptoService)
+            IDbConnection db, ICryptoService cryptoService,
+            IRazorLightEngine razorLightEngine, IIdentityProvider identityProvider)
         {
             _appConfig = config.CurrentValue;
             _logger = logger;
             _db = db;
             _cryptoService = cryptoService;
+            _engine = razorLightEngine;
+            _identity = identityProvider;
         }
 
         public IServiceConfig Generate<T>() where T : new()
@@ -99,8 +106,8 @@ namespace Spectero.daemon.Libraries.Config
                 {
                     typeof(OpenVPN), delegate
                     {
-
-                        return new OpenVPNConfig(null, null);
+                        var config = new OpenVPNConfig(_engine, _identity);
+                        return config;
                     }
                 }
             };

@@ -12,7 +12,7 @@ namespace Spectero.daemon.Controllers
         protected readonly IDbConnection Db;
         protected readonly ILogger<BaseController> Logger;
 
-        public BaseController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger,
+        public BaseController(IOptionsSnapshot<AppConfig> appConfig, ILogger<BaseController> logger,
             IDbConnection db)
         {
             AppConfig = appConfig.Value;
