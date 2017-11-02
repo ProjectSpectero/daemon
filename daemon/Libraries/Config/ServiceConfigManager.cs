@@ -2,17 +2,20 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RazorLight;
 using ServiceStack.OrmLite;
+using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
+using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Libraries.Config
@@ -106,7 +109,94 @@ namespace Spectero.daemon.Libraries.Config
                 {
                     typeof(OpenVPN), delegate
                     {
+                        var storedOpenVPNConfig = _db.Select<Configuration>(x => x.Key.Contains("vpn.openvpn."));
+                        var storedCryptoConfig = _db.Select<Configuration>(x => x.Key.Contains("crypto."));
+
+                        if (storedOpenVPNConfig == null || storedCryptoConfig == null)
+                            _logger.LogError("TG: Could not fetch OpenVPN or Crypto config from the database. Please re-install, no defaults are possible for the CA/PKI.");
+
                         var config = new OpenVPNConfig(_engine, _identity);
+
+                        var base64CAPKCS12 = "";
+                        var base64ServerPKCS12 = "";
+                        var base64ServerChainPKCS12 = "";
+                        var caPass = "";
+                        var serverCertPass = "";
+
+                        foreach (var cryptoConfig in storedCryptoConfig)
+                        {
+                            switch (cryptoConfig.Key)
+                            {
+                                    case ConfigKeys.ServerPFXChain:
+                                        base64ServerChainPKCS12 = cryptoConfig.Value;
+                                    break;
+                                    case ConfigKeys.ServerCertificate:
+                                        base64ServerPKCS12 = cryptoConfig.Value;
+                                    break;
+                                    case ConfigKeys.ServerCertificatePassword:
+                                        serverCertPass = cryptoConfig.Value;
+                                    break;
+                                    case ConfigKeys.CertificationAuthority:
+                                        base64CAPKCS12 = cryptoConfig.Value;
+                                    break;
+                                    case ConfigKeys.CeritificationAuthorityPassword:
+                                        caPass = cryptoConfig.Value;
+                                    break;
+                            }
+                        }
+
+                        bool AllowClientToClient;
+                        bool AllowMultipleConnectionsFromSameClient;
+                        int MaxClients;
+                        List<Tuple<DhcpOptions, string>> dhcpOptions = new List<Tuple<DhcpOptions, string>>();
+                        List<Tuple<string, int, TransportProtocols, IPNetwork>> listeners = new List<Tuple<string, int, TransportProtocols, IPNetwork>>();
+                        List<IPNetwork> pushedNetworks = new List<IPNetwork>();
+                        List<RedirectGatewayOptions> redirectGatewayOptions = new List<RedirectGatewayOptions>();
+
+                        foreach (var ovpnConfig in storedOpenVPNConfig)
+                        {
+                            switch (ovpnConfig.Key)
+                            {
+                                    case ConfigKeys.OpenVPNAllowClientToClient:
+                                        AllowClientToClient = Boolean.Parse(ovpnConfig.Value);
+                                    break;
+                                    case ConfigKeys.OpenVPNAllowMultipleConnectionsFromSameClient:
+                                        AllowMultipleConnectionsFromSameClient = Boolean.Parse(ovpnConfig.Value);
+                                    break;
+                                    case ConfigKeys.OpenVPNDHCPOptions:
+                                        //TODO: Validate that this conversion is proper [1]
+                                        var options = JsonConvert.DeserializeObject<List<Tuple<DhcpOptions, string>>>(ovpnConfig.Value);
+                                        if (options != null)
+                                            dhcpOptions = options;
+                                        break;
+                                    case ConfigKeys.OpenVPNListeners:
+                                        //TODO: Validate that this conversion is proper [2]
+                                        var networkListeners = JsonConvert.DeserializeObject<List<Tuple<string, int, TransportProtocols, IPNetwork>>>(ovpnConfig.Value);
+                                        if (networkListeners != null)
+                                            listeners = networkListeners;
+                                    break;
+                                    case ConfigKeys.OpenVPNMaxClients:
+                                        int.TryParse(ovpnConfig.Value, out MaxClients);
+                                    break;
+                                    case ConfigKeys.OpenVPNPushedNetworks:
+                                        //TODO: Validate that this conversion is proper [3]
+                                        var networks = JsonConvert.DeserializeObject<List<IPNetwork>>(ovpnConfig.Value);
+                                        if (networks != null)
+                                            pushedNetworks = networks;
+
+                                        //IPNetwork.TryParse(ovpnConfig.Value, out var tmpNetwork);
+                                        //if (tmpNetwork != null)
+                                        //    pushedNetworks.Add(tmpNetwork);
+                                    break;
+                                    case ConfigKeys.OpenVPNRedirectGatewayOptions:
+                                        //TODO: Validate that this conversion is proper [4]
+                                        var redirectOptions = JsonConvert.DeserializeObject<List<RedirectGatewayOptions>>(ovpnConfig.Value);
+                                        if (redirectOptions != null)
+                                            redirectGatewayOptions = redirectOptions;
+                                    break;
+                            }
+                        }
+
                         return config;
                     }
                 }
