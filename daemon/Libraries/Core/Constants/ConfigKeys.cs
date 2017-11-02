@@ -12,7 +12,7 @@
         public const string CeritificationAuthorityPassword = "crypto.ca.password";
         public const string ServerCertificate = "crypto.server.blob";
         public const string ServerCertificatePassword = "crypto.server.password";
-        public const string ServerPFXChain = "crypto.server.concat";
+        public const string ServerPFXChain = "crypto.server.chain";
 
         //OpenVPN
         public const string OpenVPNAllowMultipleConnectionsFromSameClient = "vpn.openvpn.allow_multiple_connections";
