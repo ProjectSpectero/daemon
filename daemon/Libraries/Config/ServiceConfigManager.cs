@@ -116,7 +116,11 @@ namespace Spectero.daemon.Libraries.Config
                         var storedCryptoConfig = _db.Select<Configuration>(x => x.Key.Contains("crypto."));
 
                         if (storedOpenVPNConfig == null || storedCryptoConfig == null)
+                        {
                             _logger.LogError("TG: Could not fetch OpenVPN or Crypto config from the database. Please re-install, no defaults are possible for the CA/PKI.");
+                            return null;
+                        }
+                            
 
                         var config = new OpenVPNConfig(_engine, _identity);
 
@@ -155,6 +159,10 @@ namespace Spectero.daemon.Libraries.Config
                             _logger.LogError("TG: One or more crypto parameters are invalid, please re-install.");
                             return null;
                         }
+
+                        var ca = _cryptoService.LoadCertificate(Convert.FromBase64String(base64CAPKCS12), caPass);
+                        var serverCert = _cryptoService.LoadCertificate(Convert.FromBase64String(base64ServerPKCS12),
+                            serverCertPass);
 
                         bool AllowClientToClient = Defaults.OpenVPN.ClientToClient;
                         bool AllowMultipleConnectionsFromSameClient = Defaults.OpenVPN.AllowMultipleConnectionsFromSameClient;
@@ -218,6 +226,8 @@ namespace Spectero.daemon.Libraries.Config
 
                         foreach (var cfg in configs)
                         {
+                            cfg.CACert = ca;
+                            cfg.ServerCert = serverCert;
                             cfg.PKCS12Certificate = base64ServerChainPKCS12;
                             cfg.AllowMultipleConnectionsFromSameClient = AllowMultipleConnectionsFromSameClient;
                             cfg.ClientToClient = AllowClientToClient;
