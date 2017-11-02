@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RazorLight;
+using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
@@ -109,6 +110,8 @@ namespace Spectero.daemon.Libraries.Config
                 {
                     typeof(OpenVPN), delegate
                     {
+                        List<OpenVPNConfig> configs = new List<OpenVPNConfig>();
+
                         var storedOpenVPNConfig = _db.Select<Configuration>(x => x.Key.Contains("vpn.openvpn."));
                         var storedCryptoConfig = _db.Select<Configuration>(x => x.Key.Contains("crypto."));
 
@@ -145,13 +148,22 @@ namespace Spectero.daemon.Libraries.Config
                             }
                         }
 
-                        bool AllowClientToClient;
-                        bool AllowMultipleConnectionsFromSameClient;
-                        int MaxClients;
-                        List<Tuple<DhcpOptions, string>> dhcpOptions = new List<Tuple<DhcpOptions, string>>();
-                        List<Tuple<string, int, TransportProtocols, IPNetwork>> listeners = new List<Tuple<string, int, TransportProtocols, IPNetwork>>();
-                        List<IPNetwork> pushedNetworks = new List<IPNetwork>();
-                        List<RedirectGatewayOptions> redirectGatewayOptions = new List<RedirectGatewayOptions>();
+                        if (base64ServerChainPKCS12.IsNullOrEmpty() || base64CAPKCS12.IsNullOrEmpty() ||
+                            base64ServerPKCS12.IsNullOrEmpty() || caPass.IsNullOrEmpty() ||
+                            serverCertPass.IsNullOrEmpty())
+                        {
+                            _logger.LogError("TG: One or more crypto parameters are invalid, please re-install.");
+                            return null;
+                        }
+
+                        bool AllowClientToClient = Defaults.OpenVPN.ClientToClient;
+                        bool AllowMultipleConnectionsFromSameClient = Defaults.OpenVPN.AllowMultipleConnectionsFromSameClient;
+                        int MaxClients = Defaults.OpenVPN.MaxClients;
+
+                        var dhcpOptions = Defaults.OpenVPN.dhcpOptions;
+                        var listeners = new List<Tuple<string, int, TransportProtocols, IPNetwork>>();
+                        var pushedNetworks = Defaults.OpenVPN.pushedNetworks;
+                        var redirectGatewayOptions = Defaults.OpenVPN.redirectGateway;
 
                         foreach (var ovpnConfig in storedOpenVPNConfig)
                         {
@@ -197,7 +209,26 @@ namespace Spectero.daemon.Libraries.Config
                             }
                         }
 
-                        return config;
+                        foreach (var listener in listeners)
+                        {
+                            var localConfig = new OpenVPNConfig(_engine, _identity);
+                            localConfig.listener = listener;
+                            configs.Add(localConfig);
+                        }
+
+                        foreach (var cfg in configs)
+                        {
+                            cfg.PKCS12Certificate = base64ServerChainPKCS12;
+                            cfg.AllowMultipleConnectionsFromSameClient = AllowMultipleConnectionsFromSameClient;
+                            cfg.ClientToClient = AllowClientToClient;
+                            cfg.MaxClients = MaxClients;
+                            cfg.dhcpOptions = dhcpOptions;
+                            cfg.redirectGateway = redirectGatewayOptions;
+                            cfg.pushedNetworks = pushedNetworks;
+                        }
+
+                        // TODO: Expand API to allow exporting an IEnurable<IServiceConfig> instead
+                        return configs.First();
                     }
                 }
             };
