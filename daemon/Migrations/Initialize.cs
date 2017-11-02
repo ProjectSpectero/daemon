@@ -140,6 +140,7 @@ namespace Spectero.daemon.Migrations
                     Value = Convert.ToBase64String(_cryptoService.ExportCertificateChain(serverCertificate, ca))
                 });
 
+                //TODO: Insert sensible OpenVPN defaults into the DB at firstrun
 
             }
         }
