@@ -64,6 +64,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     _logger.LogDebug("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
                 }
 
+                _proxyServer.ProxyRealm = "Spectero";
                 _proxyServer.AuthenticateUserFunc += _authenticator.Authenticate;
                 _proxyServer.BeforeRequest += OnRequest;
                 _proxyServer.BeforeResponse += OnResponse;
