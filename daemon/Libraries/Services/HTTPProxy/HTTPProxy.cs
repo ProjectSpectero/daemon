@@ -167,9 +167,13 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     break;
                 }
 
+
+
             if (failReason != null)
                 await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, failReason,
                     Uri.EscapeDataString(requestUri.ToString())));
+
+
         }
 
         private async Task OnResponse(object sender, SessionEventArgs eventArgs)

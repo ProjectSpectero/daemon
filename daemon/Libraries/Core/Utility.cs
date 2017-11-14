@@ -23,13 +23,41 @@ namespace Spectero.daemon.Libraries.Core
                 var ipAddresses = ipProps.UnicastAddresses;
 
                 foreach (var addr in ipAddresses)
-                    if (CheckIPFilter(addr))
+                    if (CheckIPFilter(addr, IPComparisonReasons.FOR_LOCAL_NETWORK_PROTECTION))
                         ipNetworks.Add(IPNetwork.Parse(addr.Address + "/" + addr.PrefixLength));
             }
             return ipNetworks;
         }
 
-        private static bool CheckIPFilter(UnicastIPAddressInformation ipAddressInformation)
+        public static IEnumerable<IPAddress> GetLocalIPs()
+        {
+            var output = new List<IPAddress>();
+            foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                var properties = nic.GetIPProperties();
+                var addresses = properties.UnicastAddresses;
+                var selection = addresses
+                    .Where<UnicastIPAddressInformation>((Func<UnicastIPAddressInformation, bool>)
+                        (
+                            t => CheckIPFilter(t, IPComparisonReasons.FOR_PROXY_OUTGOING)
+                        )
+                    );
+                foreach (var unicastIpAddressInformation in selection)
+                {
+                    output.Add(unicastIpAddressInformation.Address);
+                }
+            }
+
+            return output;
+        }
+
+        public enum IPComparisonReasons
+        {
+            FOR_PROXY_OUTGOING,
+            FOR_LOCAL_NETWORK_PROTECTION
+        }
+
+        private static bool CheckIPFilter(UnicastIPAddressInformation ipAddressInformation, IPComparisonReasons reason)
         {
             var ret = true;
             var ipString = ipAddressInformation.Address.ToString();
@@ -38,6 +66,14 @@ namespace Spectero.daemon.Libraries.Core
                 ret = false;
             else if (ipString.StartsWith("169.254"))
                 ret = false;
+
+            if (ret && reason == IPComparisonReasons.FOR_PROXY_OUTGOING)
+            {
+                if (ipString.StartsWith("127"))
+                    ret = false;
+                else if (ipString.Equals("::1"))
+                    ret = false;
+            }
 
             return ret;
         }
