@@ -1,6 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using Titanium.Web.Proxy.Http;
+using Titanium.Web.Proxy.Models;
 
 namespace Spectero.daemon.Libraries.Core
 {
@@ -35,6 +40,16 @@ namespace Spectero.daemon.Libraries.Core
                 ret = false;
 
             return ret;
+        }
+
+        public static IEnumerable<HttpHeader> ExtractHeader(HeaderCollection headers, string headerName)
+        {
+           return ((IEnumerable<HttpHeader>) headers.ToArray<HttpHeader>())
+                .Where<HttpHeader>((Func<HttpHeader, bool>)
+                    (
+                        t => t.Name == headerName
+                    )
+                );
         }
     }
 }
