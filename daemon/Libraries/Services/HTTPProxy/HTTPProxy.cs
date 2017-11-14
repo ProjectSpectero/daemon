@@ -26,6 +26,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly IAuthenticator _authenticator;
         private readonly IDbConnection _db;
         private readonly IEnumerable<IPNetwork> _localNetworks;
+        private readonly IEnumerable<IPAddress> _localAddresses;
         private readonly ILogger<ServiceManager> _logger;
         private readonly ProxyServer _proxyServer = new ProxyServer();
         private readonly IStatistician _statistician;
@@ -35,13 +36,15 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
-            IEnumerable<IPNetwork> localNetworks, IStatistician statistician)
+            IEnumerable<IPNetwork> localNetworks, IEnumerable<IPAddress> localAddresses,
+            IStatistician statistician)
         {
             _appConfig = appConfig;
             _logger = logger;
             _db = db;
             _authenticator = authenticator;
             _localNetworks = localNetworks;
+            _localAddresses = localAddresses;
             _statistician = statistician;
         }
 

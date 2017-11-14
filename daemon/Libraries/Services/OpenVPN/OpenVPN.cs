@@ -14,6 +14,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly IAuthenticator _authenticator;
         private readonly IDbConnection _db;
         private readonly IEnumerable<IPNetwork> _localNetworks;
+        private readonly IEnumerable<IPAddress> _localAddresses;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
         private OpenVPNConfig _vpnConfig;
@@ -25,7 +26,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         public OpenVPN(AppConfig appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
-            IEnumerable<IPNetwork> localNetworks, IStatistician statistician)
+            IEnumerable<IPNetwork> localNetworks, IEnumerable<IPAddress> localAddresses,
+            IStatistician statistician)
         {
             _appConfig = appConfig;
             _logger = logger;
@@ -33,6 +35,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _authenticator = authenticator;
             _localNetworks = localNetworks;
             _statistician = statistician;
+            _localAddresses = localAddresses;
         }
 
         public void Start(IServiceConfig serviceConfig)

@@ -22,6 +22,7 @@ namespace Spectero.daemon.Libraries.Services
         private readonly IAuthenticator _authenticator;
         private readonly IDbConnection _db;
         private readonly IEnumerable<IPNetwork> _localNetworks = Utility.GetLocalRanges();
+        private readonly IEnumerable<IPAddress> _localAddresses = Utility.GetLocalIPs();
         private readonly ILogger<ServiceManager> _logger;
         private readonly IServiceConfigManager _serviceConfigManager;
         private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
@@ -92,7 +93,7 @@ namespace Spectero.daemon.Libraries.Services
             if (_services.ContainsKey(type))
                 return _services[type];
             var service = (IService) Activator.CreateInstance(type, _appConfig, _logger, _db, _authenticator,
-                _localNetworks, _statistician);
+                _localNetworks, _localAddresses, _statistician);
             _services.TryAdd(type, service);
             return service;
         }
