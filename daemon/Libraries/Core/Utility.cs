@@ -51,7 +51,7 @@ namespace Spectero.daemon.Libraries.Core
             return output;
         }
 
-        public enum IPComparisonReasons
+        private enum IPComparisonReasons
         {
             FOR_PROXY_OUTGOING,
             FOR_LOCAL_NETWORK_PROTECTION
