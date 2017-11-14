@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using ServiceStack;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Titanium.Web.Proxy;
@@ -183,6 +185,33 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         {
             await _statistician.Update<HTTPProxy>(CalculateObjectSize(eventArgs.WebSession.Response),
                 DataFlowDirections.In);
+        }
+
+        private void SetUpstreamAddress(ref SessionEventArgs eventArgs)
+        {
+            var requestedUpstream =
+                Utility.ExtractHeader(eventArgs.WebSession.Request.RequestHeaders, "X-SPECTERO-UPSTREAM-IP")
+                    .FirstOrDefault();
+
+            if (requestedUpstream != null)
+            {
+                IPAddress requestedAddress;
+                // TODO: Validate that the app doesn't fall on its face due to things like "0.0.0.3" being parsed successfully.
+                if (IPAddress.TryParse(requestedUpstream.Value, out requestedAddress))
+                {
+                    _logger.LogDebug("ES: Proxy request received with upstream request of " + requestedAddress);
+                    if (_localAddresses.Contains(requestedAddress))
+                    {
+                        _logger.LogDebug("ES: Requested address is valid (" + requestedAddress + ")");
+                        eventArgs.WebSession.UpStreamEndPoint = new IPEndPoint(requestedAddress, 0);
+                    }
+                    else
+                        _logger.LogDebug("ES: Requested address is NOT valid for this system (" + requestedAddress + ")");
+                        
+                }
+                else
+                    _logger.LogDebug("ES: Invalid X-SPECTERO-UPSTREAM-IP header.");
+            }
         }
 
         private long CalculateObjectSize(Request request)
