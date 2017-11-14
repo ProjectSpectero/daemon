@@ -172,6 +172,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     break;
                 }
 
+            SetUpstreamAddress(ref eventArgs);
 
 
             if (failReason != null)
@@ -212,6 +213,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 else
                     _logger.LogDebug("ES: Invalid X-SPECTERO-UPSTREAM-IP header.");
             }
+            else
+                _logger.LogDebug("ES: No special upstream was requested, using system default.");
         }
 
         private long CalculateObjectSize(Request request)
