@@ -218,9 +218,9 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             {
                 var endpoint = eventArgs.LocalEndPoint;
                 
-                if (Utility.CheckIPFilter(endpoint.IpAddress, Utility.IPComparisonReasons.FOR_PROXY_OUTGOING))
+                if (Utility.CheckIPFilter(endpoint.IpAddress, Utility.IPComparisonReasons.FOR_PROXY_OUTGOING) && _appConfig.RespectEndpointToOutgoingMapping)
                 {
-                    _logger.LogDebug("ES: No special upstream was requested, using endpoint default of " + endpoint.IpAddress + " as it was determined valid.");
+                    _logger.LogDebug("ES: No header upstream was requested, using endpoint default of " + endpoint.IpAddress + " as it was determined valid and RespectEndpointToOutgoingMapping is enabled.");
                     eventArgs.WebSession.UpStreamEndPoint = new IPEndPoint(endpoint.IpAddress, 0);
                 }
             }

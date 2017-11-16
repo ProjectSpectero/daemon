@@ -21,5 +21,6 @@ namespace Spectero.daemon.Libraries.Config
         public bool isMac => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
         public bool isUnix => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
             System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+        public bool RespectEndpointToOutgoingMapping { get; set; }
     }
 }
