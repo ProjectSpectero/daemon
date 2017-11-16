@@ -51,16 +51,16 @@ namespace Spectero.daemon.Libraries.Core
             return output;
         }
 
-        private enum IPComparisonReasons
+        public enum IPComparisonReasons
         {
             FOR_PROXY_OUTGOING,
             FOR_LOCAL_NETWORK_PROTECTION
         }
 
-        private static bool CheckIPFilter(UnicastIPAddressInformation ipAddressInformation, IPComparisonReasons reason)
+        public static bool CheckIPFilter(IPAddress address, IPComparisonReasons reason)
         {
+            var ipString = address.ToString();
             var ret = true;
-            var ipString = ipAddressInformation.Address.ToString();
 
             if (ipString.StartsWith("fe80:"))
                 ret = false;
@@ -73,9 +73,15 @@ namespace Spectero.daemon.Libraries.Core
                     ret = false;
                 else if (ipString.Equals("::1"))
                     ret = false;
+                else if (ipString.Equals("0.0.0.0"))
+                    ret = false;
             }
 
             return ret;
+        }
+        public static bool CheckIPFilter(UnicastIPAddressInformation ipAddressInformation, IPComparisonReasons reason)
+        {
+            return CheckIPFilter(ipAddressInformation.Address, reason);
         }
 
         public static IEnumerable<HttpHeader> ExtractHeader(HeaderCollection headers, string headerName)

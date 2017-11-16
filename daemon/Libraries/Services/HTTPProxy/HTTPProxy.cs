@@ -207,14 +207,24 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                         eventArgs.WebSession.UpStreamEndPoint = new IPEndPoint(requestedAddress, 0);
                     }
                     else
-                        _logger.LogDebug("ES: Requested address is NOT valid for this system (" + requestedAddress + ")");
-                        
+                        _logger.LogDebug(
+                            "ES: Requested address is NOT valid for this system (" + requestedAddress + ")");
+
                 }
                 else
                     _logger.LogDebug("ES: Invalid X-SPECTERO-UPSTREAM-IP header.");
             }
             else
-                _logger.LogDebug("ES: No special upstream was requested, using system default.");
+            {
+                var endpoint = eventArgs.LocalEndPoint;
+                
+                if (Utility.CheckIPFilter(endpoint.IpAddress, Utility.IPComparisonReasons.FOR_PROXY_OUTGOING))
+                {
+                    _logger.LogDebug("ES: No special upstream was requested, using endpoint default of " + endpoint.IpAddress + " as it was determined valid.");
+                    eventArgs.WebSession.UpStreamEndPoint = new IPEndPoint(endpoint.IpAddress, 0);
+                }
+            }
+                
         }
 
         private long CalculateObjectSize(Request request)
