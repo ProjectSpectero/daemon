@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using Spectero.daemon.Libraries.Config;
 using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 
@@ -19,14 +20,29 @@ namespace Spectero.daemon.Libraries.Core
             foreach (var nic in nics)
             {
                 var ipProps = nic.GetIPProperties();
-
                 var ipAddresses = ipProps.UnicastAddresses;
 
                 // addr.PrefixLength is not available on Unix (https://github.com/dotnet/corefx/blob/35d0838c20965c526e05e119028dd7226084987c/src/System.Net.NetworkInformation/src/System/Net/NetworkInformation/UnixUnicastIPAddressInformation.cs#L47)
-                // TODO: Figure out alternative implementation for Unix
+                // So much for TRUE multiplatform, eh?
                 foreach (var addr in ipAddresses)
+                {
                     if (CheckIPFilter(addr, IPComparisonReasons.FOR_LOCAL_NETWORK_PROTECTION))
-                        ipNetworks.Add(IPNetwork.Parse(addr.Address + "/" + addr.PrefixLength));
+                    {
+                        IPNetwork network = null;
+                        if (AppConfig.isWindows)
+                            network = IPNetwork.Parse(addr.Address + "/" + addr.PrefixLength);                           
+                        else if (AppConfig.isUnix)
+                            network = IPNetwork.Parse(addr.Address + "/" + GetPrefixLengthFromNetmask(addr.IPv4Mask));
+                        else
+                        {
+                            // Well, giggity. If it ain't Windows OR Unix, then WHAT is it?
+                            continue;
+                        }
+                        Console.WriteLine(network);
+                        ipNetworks.Add(network);
+                    }                       
+                }
+                   
             }
             return ipNetworks;
         }
@@ -53,6 +69,18 @@ namespace Spectero.daemon.Libraries.Core
             return output;
         }
 
+        private static int GetPrefixLengthFromNetmask(IPAddress netmask)
+        {
+            var str = netmask.GetAddressBytes().Select(x => Convert.ToString(Int32.Parse(x.ToString()), 2).PadLeft(8, '0'));
+            var ret = 0;
+            foreach (var element in str)
+            {
+                ret += element.Count(x => x.Equals('1'));
+            }
+
+            return ret;
+        }
+
         public enum IPComparisonReasons
         {
             FOR_PROXY_OUTGOING,
@@ -74,6 +102,8 @@ namespace Spectero.daemon.Libraries.Core
                 if (ipString.StartsWith("127"))
                     ret = false;
                 else if (ipString.Equals("::1"))
+                    ret = false;
+                else if (ipString.Equals("::"))
                     ret = false;
                 else if (ipString.Equals("0.0.0.0"))
                     ret = false;

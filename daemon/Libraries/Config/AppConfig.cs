@@ -16,10 +16,10 @@ namespace Spectero.daemon.Libraries.Config
         public string PasswordCostCalculationTestTarget { get; set; }
         public double PasswordCostTimeThreshold { get; set; }
 
-        public bool isWindows => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-        public bool isLinux => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-        public bool isMac => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-        public bool isUnix => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
+        public static bool isWindows => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        public static bool isLinux => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+        public static bool isMac => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+        public static bool isUnix => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
             System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
         public bool RespectEndpointToOutgoingMapping { get; set; }
     }

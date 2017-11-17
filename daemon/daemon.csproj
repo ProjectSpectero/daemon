@@ -5,7 +5,7 @@
     <ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="Templates\OpenVPN.sketch" />
+    <Content Include="Templates\OpenVPNUser.cshtml_u" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Libraries\Services\ShadowSOCKS\" />
