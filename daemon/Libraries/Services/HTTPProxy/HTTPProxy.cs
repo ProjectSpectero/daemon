@@ -216,6 +216,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             }
             else
             {
+                // Default behavior is to set the same endpoint the request came in via as the outgoing address in multi-ip deployment scenarios
+                // This does not trigger for local (127/8, ::1, 0.0.0.0 and such addresses either)
                 var endpoint = eventArgs.LocalEndPoint;
                 
                 if (Utility.CheckIPFilter(endpoint.IpAddress, Utility.IPComparisonReasons.FOR_PROXY_OUTGOING) && _appConfig.RespectEndpointToOutgoingMapping)

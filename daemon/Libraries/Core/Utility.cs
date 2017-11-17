@@ -22,6 +22,8 @@ namespace Spectero.daemon.Libraries.Core
 
                 var ipAddresses = ipProps.UnicastAddresses;
 
+                // addr.PrefixLength is not available on Unix (https://github.com/dotnet/corefx/blob/35d0838c20965c526e05e119028dd7226084987c/src/System.Net.NetworkInformation/src/System/Net/NetworkInformation/UnixUnicastIPAddressInformation.cs#L47)
+                // TODO: Figure out alternative implementation for Unix
                 foreach (var addr in ipAddresses)
                     if (CheckIPFilter(addr, IPComparisonReasons.FOR_LOCAL_NETWORK_PROTECTION))
                         ipNetworks.Add(IPNetwork.Parse(addr.Address + "/" + addr.PrefixLength));
