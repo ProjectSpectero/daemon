@@ -38,7 +38,6 @@ namespace Spectero.daemon.Libraries.Core
                             // Well, giggity. If it ain't Windows OR Unix, then WHAT is it?
                             continue;
                         }
-                        Console.WriteLine(network);
                         ipNetworks.Add(network);
                     }                       
                 }
