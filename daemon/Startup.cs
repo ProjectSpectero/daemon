@@ -78,7 +78,7 @@ namespace Spectero.daemon
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
 
-            app.UseAddReqestIdHeader();
+            app.UseAddRequestIdHeader();
             app.UseResponseWrapper();
             app.UseMvc();
             
