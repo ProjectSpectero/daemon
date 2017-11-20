@@ -7,12 +7,6 @@ namespace Spectero.daemon.Libraries.Core.HTTP
     {
         /* POCO that holds the components that make up a response from the API
          * 'Message' is derived from the status code, or optionally can be provided
-         *  [
-         *      'code' -> this.Code,
-         *      'Errors' -> null | [ "ERROR_CODE_1" ... ],
-         *      'Data' -> null | [ ... ],
-         *      'Message' -> "MESSAGE_CODE_1"
-         *  ]
          */
 
 
@@ -28,19 +22,23 @@ namespace Spectero.daemon.Libraries.Core.HTTP
             Code = code;
             Result = result;
             Errors = errors;
-            Message = message;
+            ProvidedMessage = message;
         }
          
 
         public HttpStatusCode Code { get; set; }
-        public IEnumerable<string> Errors { get; set; }
-        public object Result { get; set; }
-        public string Message { get; set; }
 
-        public string Version
+        public IEnumerable<string> Errors { get; set; }
+
+        public object Result { get; set; }
+
+        private string ProvidedMessage { get; set; }
+        private string ResolveMessage(HttpStatusCode code)
         {
-            get { return "1.0"; }
+            return "";
         }
-        public string RequestId { get; }
+        public string Message => ProvidedMessage ?? ResolveMessage(Code);
+
+        public string Version => "1.0";
     }
 }
