@@ -78,8 +78,9 @@ namespace Spectero.daemon
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
 
-            app.UseMvc();
             app.UseResponseWrapper();
+            app.UseMvc();
+            
 
             loggerFactory.AddNLog();
             loggerFactory.ConfigureNLog("nlog.config");
