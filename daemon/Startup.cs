@@ -11,6 +11,7 @@ using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Crypto;
+using Spectero.daemon.Libraries.Core.HTTP.Middlewares;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
@@ -78,6 +79,7 @@ namespace Spectero.daemon
                 app.UseDeveloperExceptionPage();
 
             app.UseMvc();
+            app.UseResponseWrapper();
 
             loggerFactory.AddNLog();
             loggerFactory.ConfigureNLog("nlog.config");
