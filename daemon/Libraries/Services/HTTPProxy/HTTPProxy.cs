@@ -196,8 +196,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
             if (requestedUpstream != null)
             {
+                // Found a request for a specific upstream
                 IPAddress requestedAddress;
-                // TODO: Validate that the app doesn't fall on its face due to things like "0.0.0.3" being parsed successfully.
                 if (IPAddress.TryParse(requestedUpstream.Value, out requestedAddress))
                 {
                     _logger.LogDebug("ES: Proxy request received with upstream request of " + requestedAddress);
