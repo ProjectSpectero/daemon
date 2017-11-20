@@ -209,7 +209,6 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     else
                         _logger.LogDebug(
                             "ES: Requested address is NOT valid for this system (" + requestedAddress + ")");
-
                 }
                 else
                     _logger.LogDebug("ES: Invalid X-SPECTERO-UPSTREAM-IP header.");
