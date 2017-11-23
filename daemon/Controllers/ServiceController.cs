@@ -45,24 +45,5 @@ namespace Spectero.daemon.Controllers
             }
             throw new EInvalidRequest();
         }
-
-        // POST api/service
-        [HttpPost]
-        public IEnumerable<string> Set()
-        {
-            Logger.LogInformation("SERVICE -> POST endpoint request");
-
-
-            if (!Db.TableExists<User>())
-                Db.CreateTable<User>();
-
-            Db.Insert(
-                new User {Id = 1, AuthKey = "A", CreatedDate = DateTime.Now}
-            );
-
-            var rows = Db.Select<User>().Count;
-
-            return new[] {"Rows: " + rows};
-        }
     }
 }
