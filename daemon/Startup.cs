@@ -79,7 +79,7 @@ namespace Spectero.daemon
                 app.UseDeveloperExceptionPage();
 
             app.UseAddRequestIdHeader();
-            app.UseResponseWrapper();
+            //app.UseResponseWrapper();
             app.UseMvc();
             
 
