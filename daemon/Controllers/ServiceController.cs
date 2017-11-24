@@ -24,12 +24,15 @@ namespace Spectero.daemon.Controllers
 
         private readonly string[] _validServices = {"HTTPProxy", "OpenVPN", "ShadowSOCKS", "SSHTunnel"};
 
+        private readonly IServiceConfigManager _serviceConfigManager;
+
         public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger,
             IDbConnection db, IServiceManager serviceManager,
-            IStatistician statistician)
+            IServiceConfigManager serviceConfigManager, IStatistician statistician)
             : base(appConfig, logger, db)
         {
             _serviceManager = serviceManager;
+            _serviceConfigManager = serviceConfigManager;
         }
 
         [HttpGet("", Name = "IndexServices")]
@@ -51,8 +54,7 @@ namespace Spectero.daemon.Controllers
             if (_validServices.Any(s => service == s))
             {
                 var type = Utility.GetServiceType(service);
-                var actualService = _serviceManager.GetService(type);
-                var config = actualService.GetConfig();
+                var config = _serviceConfigManager.Generate(type);
                 _response.Result = config;
                 return Ok(_response);
             }
