@@ -36,7 +36,7 @@ namespace Spectero.daemon.Controllers
         }
 
         [HttpGet("", Name = "IndexServices")]
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
             var services = _serviceManager.GetServices();
             var ret = new Dictionary<string, string>();
@@ -49,7 +49,7 @@ namespace Spectero.daemon.Controllers
         }
 
         [HttpGet("config/{service}")]
-        public async Task<IActionResult> GetConfig(string service)
+        public IActionResult GetConfig(string service)
         {
             if (_validServices.Any(s => service == s))
             {
@@ -62,7 +62,7 @@ namespace Spectero.daemon.Controllers
         }
 
         [HttpGet("{name}/{task}", Name = "ManageServices")]
-        public async Task<IActionResult> Manage(string name, string task)
+        public IActionResult Manage(string name, string task)
         {
             Logger.LogDebug("Service manager n -> " + name + ", a -> " + task);
 
