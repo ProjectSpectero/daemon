@@ -10,9 +10,6 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Statistics;
-using Spectero.daemon.Libraries.Errors;
-using Spectero.daemon.Libraries.Services.HTTPProxy;
-using Spectero.daemon.Libraries.Services.OpenVPN;
 
 namespace Spectero.daemon.Libraries.Services
 {
@@ -48,7 +45,7 @@ namespace Spectero.daemon.Libraries.Services
             Type type = Utility.GetServiceType(name);
 
             var config = _serviceConfigManager.Generate(type);
-            var service = GetOrCreateService(type);
+            var service = GetService(type);
 
             if (service == null || config == null)
             {
@@ -77,7 +74,7 @@ namespace Spectero.daemon.Libraries.Services
             return null;
         }
 
-        public IService GetOrCreateService (Type type)
+        public IService GetService (Type type)
         {
             if (_services.ContainsKey(type))
                 return _services[type];

@@ -7,7 +7,7 @@ namespace Spectero.daemon.Libraries.Services
     {
         bool Process(string name, string action);
         ConcurrentDictionary<Type, IService> GetServices();
-        IService GetOrCreateService(Type type);
+        IService GetService(Type type);
 
     }
 }
