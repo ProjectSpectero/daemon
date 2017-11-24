@@ -5,6 +5,9 @@
     <ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Libraries\Core\HTTP\Template.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="Templates\OpenVPNUser.cshtml_u" />
   </ItemGroup>
   <ItemGroup>

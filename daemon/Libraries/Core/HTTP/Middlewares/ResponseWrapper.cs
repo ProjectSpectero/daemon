@@ -26,6 +26,7 @@ namespace Spectero.daemon.Libraries.Core.HTTP.Middlewares
 
             using (var memoryStream = new MemoryStream())
             {
+                // Translation logic from the interim response to the final formatted response goes here
                 //set the current response to the memorystream.
                 context.Response.Body = memoryStream;
 
@@ -36,9 +37,7 @@ namespace Spectero.daemon.Libraries.Core.HTTP.Middlewares
                 memoryStream.Seek(0, SeekOrigin.Begin);
 
                 var readToEnd = new StreamReader(memoryStream).ReadToEnd();
-                var objResult = JsonConvert.DeserializeObject(readToEnd);
-                var result = Response.Create((HttpStatusCode) context.Response.StatusCode, objResult, null);
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(result));
+                await context.Response.WriteAsync(readToEnd);
             }
         }
     }

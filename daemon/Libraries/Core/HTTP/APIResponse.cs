@@ -3,28 +3,28 @@ using System.Net;
 
 namespace Spectero.daemon.Libraries.Core.HTTP
 {
-    public class Response
+    public class APIResponse
     {
         /* POCO that holds the components that make up a response from the API
          * 'Message' is derived from the status code, or optionally can be provided
          */
 
 
-        public static Response Create(HttpStatusCode code, object result = null, IEnumerable<string> errors = null,
+        public static APIResponse Create(HttpStatusCode code, object result = null, IEnumerable<string> errors = null,
             string message = null)
         {
-            return new Response(code, result, errors, message);
+            return new APIResponse(code, result, errors, message);
         }
 
-        protected Response(HttpStatusCode code, object result = null, IEnumerable<string> errors = null,
+        private APIResponse(HttpStatusCode code, object result = null, IEnumerable<string> errors = null,
             string message = null)
         {
             Code = code;
             Result = result;
             Errors = errors;
-            ProvidedMessage = message;
+            Message = message;
         }
-         
+
 
         public HttpStatusCode Code { get; set; }
 
@@ -32,12 +32,12 @@ namespace Spectero.daemon.Libraries.Core.HTTP
 
         public object Result { get; set; }
 
-        private string ProvidedMessage { get; set; }
         private string ResolveMessage(HttpStatusCode code)
         {
             return "";
         }
-        public string Message => ProvidedMessage ?? ResolveMessage(Code);
+
+        public string Message;
 
         public string Version => "1.0";
     }
