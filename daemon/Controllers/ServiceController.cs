@@ -13,7 +13,6 @@ using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Models;
-using IService = Spectero.daemon.Libraries.Services.IService;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
 namespace Spectero.daemon.Controllers
@@ -25,7 +24,7 @@ namespace Spectero.daemon.Controllers
         private readonly IServiceManager _serviceManager;
         private readonly string[] _validActions = {"start", "stop", "restart"};
 
-        private readonly string[] _validServices = {"proxy", "vpn", "ssh"};
+        private readonly string[] _validServices = {"HTTPProxy", "OpenVPN", "ShadowSOCKS", "SSHTunnel"};
 
         public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger,
             IDbConnection db, IServiceManager serviceManager,
