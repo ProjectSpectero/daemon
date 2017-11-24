@@ -54,12 +54,13 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         {
         }
 
-        public void Start(IServiceConfig serviceConfig)
+        public void Start(IServiceConfig serviceConfig = null)
         {
             LogState("Start");
             if (State == ServiceState.Halted)
             {
-                _proxyConfig = (HTTPConfig) serviceConfig;
+                if (serviceConfig != null)
+                    _proxyConfig = (HTTPConfig) serviceConfig;
 
                 //Loop through and listen on all defined IP <-> port pairs
                 foreach (var listener in _proxyConfig.listeners)
@@ -249,6 +250,16 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 ret = 64; // Assume a response is at least 64 bytes if a non 2-xx header was encountered
 
             return ret;
+        }
+
+        public IServiceConfig GetConfig()
+        {
+            return _proxyConfig;
+        }
+
+        public void SetConfig(IServiceConfig config)
+        {
+            _proxyConfig = (HTTPConfig) config;
         }
     }
 }

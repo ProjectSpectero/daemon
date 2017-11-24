@@ -44,35 +44,30 @@ namespace Spectero.daemon.Libraries.Services
         {
             Type type = Utility.GetServiceType(name);
 
-            var config = _serviceConfigManager.Generate(type);
             var service = GetService(type);
 
-            if (service == null || config == null)
+            if (service == null)
             {
-                _logger.LogError("NAP: Resolved service or its config was null when processing name -> " + name + ", action -> " + action);
+                _logger.LogError("NAP: Resolved service was null when processing name -> " + name + ", action -> " + action);
                 return false;
             }                
 
             switch (action)
             {
                 case "start":
-                    service.Start(config);
+                    service.Start();
                     break;
                 case "stop":
                     service.Stop();
                     break;
                 case "restart":
-                    service.ReStart(config);
+                    service.ReStart();
                     break;
             }
 
             return true;
         }
 
-        public IServiceConfig GetServiceConfig<T>() where T : new()
-        {
-            return null;
-        }
 
         public IService GetService (Type type)
         {
@@ -102,6 +97,8 @@ namespace Spectero.daemon.Libraries.Services
                 _logger.LogDebug("IS: Processing activation request for " + serviceType);
                 var service = (IService) Activator.CreateInstance(serviceType, _appConfig, _logger, _db, _authenticator,
                     _localNetworks, _localAddresses, _statistician);
+                var config = _serviceConfigManager.Generate(serviceType);
+                service.SetConfig(config);
                 _logger.LogDebug("IS: Activation succeeded for " + serviceType);
                 _services.TryAdd(serviceType, service);
             }

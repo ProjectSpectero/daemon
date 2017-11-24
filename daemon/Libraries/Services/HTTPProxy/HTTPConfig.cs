@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
@@ -15,10 +17,12 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             this.bannedDomains = bannedDomains;
         }
 
-        internal List<Tuple<string, int>> listeners { get; }
-        internal List<string> allowedDomains { get; }
-        internal List<string> bannedDomains { get; }
-        internal HTTPProxyModes proxyMode { get; }
+        public List<Tuple<string, int>> listeners { get; }
+        public List<string> allowedDomains { get; }
+        public List<string> bannedDomains { get; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public HTTPProxyModes proxyMode { get; }
 
         public async Task<string> GetStringConfig()
         {

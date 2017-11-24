@@ -38,12 +38,12 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _localAddresses = localAddresses;
         }
 
-        public void Start(IServiceConfig serviceConfig)
+        public void Start(IServiceConfig serviceConfig = null)
         {
             _vpnConfig = (OpenVPNConfig) serviceConfig;
         }
 
-        public void ReStart(IServiceConfig serviceConfig)
+        public void ReStart(IServiceConfig serviceConfig = null)
         {
             _vpnConfig = (OpenVPNConfig) serviceConfig;
         }
@@ -64,6 +64,16 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         public void LogState(string caller)
         {
+        }
+
+        public IServiceConfig GetConfig()
+        {
+            return _vpnConfig;
+        }
+
+        public void SetConfig(IServiceConfig config)
+        {
+            _vpnConfig = (OpenVPNConfig) config;
         }
     }
 }

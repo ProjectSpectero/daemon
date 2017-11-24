@@ -5,11 +5,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
+using Utility = Spectero.daemon.Libraries.Core.Utility;
 
 namespace Spectero.daemon.Controllers
 {
@@ -43,6 +45,19 @@ namespace Spectero.daemon.Controllers
             return Ok(_response);
         }
 
+        [HttpGet("config/{service}")]
+        public async Task<IActionResult> GetConfig(string service)
+        {
+            if (_validServices.Any(s => service == s))
+            {
+                var type = Utility.GetServiceType(service);
+                var actualService = _serviceManager.GetService(type);
+                var config = actualService.GetConfig();
+                _response.Result = config;
+                return Ok(_response);
+            }
+            throw new EInvalidRequest();
+        }
 
         [HttpGet("{name}/{task}", Name = "ManageServices")]
         public async Task<IActionResult> Manage(string name, string task)
