@@ -10,34 +10,25 @@ namespace Spectero.daemon.Libraries.Core.HTTP
          */
 
 
-        public static APIResponse Create(HttpStatusCode code, object result = null, IEnumerable<string> errors = null,
+        public static APIResponse Create(object result = null, IEnumerable<string> errors = null,
             string message = null)
         {
-            return new APIResponse(code, result, errors, message);
+            return new APIResponse(result, errors, message);
         }
 
-        private APIResponse(HttpStatusCode code, object result = null, IEnumerable<string> errors = null,
+        public APIResponse(object result = null, IEnumerable<string> errors = null,
             string message = null)
         {
-            Code = code;
             Result = result;
             Errors = errors;
             Message = message;
         }
 
-
-        public HttpStatusCode Code { get; set; }
-
         public IEnumerable<string> Errors { get; set; }
 
         public object Result { get; set; }
 
-        private string ResolveMessage(HttpStatusCode code)
-        {
-            return "";
-        }
-
-        public string Message;
+        public string Message { get; set; }
 
         public string Version => "1.0";
     }

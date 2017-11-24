@@ -37,7 +37,7 @@ namespace Spectero.daemon.Libraries.Core.HTTP.Middlewares
                 memoryStream.Seek(0, SeekOrigin.Begin);
 
                 var readToEnd = new StreamReader(memoryStream).ReadToEnd();
-                await context.Response.WriteAsync(readToEnd);
+                await context.Response.WriteAsync(JsonConvert.SerializeObject(readToEnd));
             }
         }
     }
