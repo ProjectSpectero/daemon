@@ -61,11 +61,9 @@ namespace Spectero.daemon.Controllers
             throw new EInvalidRequest();
         }
 
-        [HttpGet("{name}/{task}", Name = "ManageServices")]
+        [HttpGet("{name}/{task}", Name = "ManageServices")])g
         public IActionResult Manage(string name, string task)
         {
-            Logger.LogDebug("Service manager n -> " + name + ", a -> " + task);
-
             if (_validServices.Any(s => name == s) &&
                 _validActions.Any(s => task == s))
             {
