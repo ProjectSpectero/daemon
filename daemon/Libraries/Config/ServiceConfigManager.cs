@@ -18,6 +18,7 @@ using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Spectero.daemon.Models;
+using IService = Spectero.daemon.Libraries.Services.IService;
 
 namespace Spectero.daemon.Libraries.Config
 {
@@ -42,9 +43,8 @@ namespace Spectero.daemon.Libraries.Config
             _identity = identityProvider;
         }
 
-        public IServiceConfig Generate<T>() where T : new()
+        public IServiceConfig Generate(Type type)
         {
-            var type = typeof(T);
             var processors = new Dictionary<Type, Func<IServiceConfig>>
             {
                 {

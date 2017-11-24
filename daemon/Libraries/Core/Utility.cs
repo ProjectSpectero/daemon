@@ -5,6 +5,9 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Errors;
+using Spectero.daemon.Libraries.Services.HTTPProxy;
+using Spectero.daemon.Libraries.Services.OpenVPN;
 using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 
@@ -123,6 +126,29 @@ namespace Spectero.daemon.Libraries.Core
                         t => t.Name == headerName
                     )
                 );
+        }
+
+        public static Type GetServiceType(string name)
+        {
+            Type ret;
+            switch (name)
+            {
+                case "HTTPProxy":
+                    ret = typeof(Services.HTTPProxy.HTTPProxy);
+                    break;
+                case "OpenVPN":
+                    ret = typeof(Services.OpenVPN.OpenVPN);
+                    break;
+                case "SSHTunnel":
+                    ret = null;
+                    break;
+                case "ShadowSOCKS":
+                    ret = null;
+                    break;
+                default:
+                    throw new EInvalidArguments();
+            }
+            return ret;
         }
     }
 }

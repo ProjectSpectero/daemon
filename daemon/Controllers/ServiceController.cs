@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ServiceStack;
-using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
-using Spectero.daemon.Models;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
 namespace Spectero.daemon.Controllers

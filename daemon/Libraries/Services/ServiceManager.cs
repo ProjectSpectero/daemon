@@ -45,30 +45,10 @@ namespace Spectero.daemon.Libraries.Services
 
         public bool Process(string name, string action)
         {
-            IService service;
-            IServiceConfig config;
+            Type type = Utility.GetServiceType(name);
 
-            switch (name)
-            {
-                case "HTTPProxy":
-                    config = (HTTPConfig) _serviceConfigManager.Generate<HTTPProxy.HTTPProxy>();
-                    service = GetOrCreateService<HTTPProxy.HTTPProxy>();
-                    break;
-                case "OpenVPN":
-                    config = (OpenVPNConfig) _serviceConfigManager.Generate<OpenVPN.OpenVPN>();
-                    service = GetOrCreateService<OpenVPN.OpenVPN>();
-                    break;
-                case "SSHTunnel":
-                    config = null;
-                    service = null;
-                    break;
-                case "ShadowSOCKS":
-                    config = null;
-                    service = null;
-                    break;
-                default:
-                    throw new EInvalidArguments();
-            }
+            var config = _serviceConfigManager.Generate(type);
+            var service = GetOrCreateService(type);
 
             if (service == null || config == null)
             {
@@ -92,10 +72,13 @@ namespace Spectero.daemon.Libraries.Services
             return true;
         }
 
-        private IService GetOrCreateService<T>() where T : new()
+        public IServiceConfig GetServiceConfig<T>() where T : new()
         {
-            var type = typeof(T);
+            return null;
+        }
 
+        public IService GetOrCreateService (Type type)
+        {
             if (_services.ContainsKey(type))
                 return _services[type];
             else

@@ -1,9 +1,10 @@
-﻿using Spectero.daemon.Libraries.Services;
+﻿using System;
+using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.Config
 {
     public interface IServiceConfigManager
     {
-        IServiceConfig Generate<T>() where T : new();
+        IServiceConfig Generate(Type type);
     }
 }
