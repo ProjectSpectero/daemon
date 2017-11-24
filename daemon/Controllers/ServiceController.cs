@@ -13,6 +13,7 @@ using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Models;
+using IService = Spectero.daemon.Libraries.Services.IService;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
 namespace Spectero.daemon.Controllers
@@ -22,9 +23,9 @@ namespace Spectero.daemon.Controllers
     public class ServiceController : BaseController
     {
         private readonly IServiceManager _serviceManager;
-        private readonly string[] validActions = {"start", "stop", "restart"};
+        private readonly string[] _validActions = {"start", "stop", "restart"};
 
-        private readonly string[] validServices = {"proxy", "vpn", "ssh"};
+        private readonly string[] _validServices = {"proxy", "vpn", "ssh"};
 
         public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger,
             IDbConnection db, IServiceManager serviceManager,
@@ -34,14 +35,27 @@ namespace Spectero.daemon.Controllers
             _serviceManager = serviceManager;
         }
 
+        [HttpGet("", Name = "IndexServices")]
+        public async Task<IActionResult> Index()
+        {
+            var services = _serviceManager.GetServices();
+            var ret = new Dictionary<string, string>();
+            foreach (var service in services)
+            {
+                ret.Add(service.Value.GetType().Name, service.Value.GetState().ToString());
+            }
+            _response.Result = ret;
+            return Ok(_response);
+        }
+
 
         [HttpGet("{name}/{task}", Name = "ManageServices")]
         public async Task<IActionResult> Manage(string name, string task)
         {
             Logger.LogDebug("Service manager n -> " + name + ", a -> " + task);
 
-            if (validServices.Any(s => name == s) &&
-                validActions.Any(s => task == s))
+            if (_validServices.Any(s => name == s) &&
+                _validActions.Any(s => task == s))
             {
                 _serviceManager.Process(name, task);
                 _response.Message = Messages.SERVICE_STARTED;

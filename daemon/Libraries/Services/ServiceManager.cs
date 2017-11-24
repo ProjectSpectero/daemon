@@ -41,6 +41,7 @@ namespace Spectero.daemon.Libraries.Services
             _serviceConfigManager = serviceConfigManager;
         }
 
+
         public bool Process(string name, string action)
         {
             IService service;
