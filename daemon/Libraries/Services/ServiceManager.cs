@@ -52,7 +52,7 @@ namespace Spectero.daemon.Libraries.Services
                 return false;
             }                
 
-            switch (action)
+            switch (action.ToLower())
             {
                 case "start":
                     service.Start();
