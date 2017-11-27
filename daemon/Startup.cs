@@ -29,6 +29,7 @@ namespace Spectero.daemon
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", false, true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true)
+                .AddJsonFile("hosting.json", optional: true)
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
         }
