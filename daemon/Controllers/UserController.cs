@@ -115,6 +115,68 @@ namespace Spectero.daemon.Controllers
 
         }
 
+        [HttpPut("", Name = "UpdateUser")]
+        public async Task<IActionResult> UpdateUser([FromBody] User user)
+        {
+            long Id;
+            string AuthKey;
+            string Password;
+            string Cert;
+            string CertKey;
+
+            User fetchedUser = null;
+
+            try
+            {
+                fetchedUser = await Db.SingleByIdAsync<User>(user.Id);
+
+                if (fetchedUser == null)
+                {
+                    _response.Errors.Add(Errors.MISSING_BODY);
+                    _response.Errors.Add(Errors.USER_NOT_FOUND);
+                    return BadRequest(_response);
+                }
+
+                if (!user.AuthKey.IsNullOrEmpty() && !fetchedUser.AuthKey.Equals(user.AuthKey))
+                    fetchedUser.AuthKey = user.AuthKey;
+
+                if (!user.Password.IsNullOrEmpty())
+                    fetchedUser.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+
+                // TODO: Actually validate cert and certkey
+
+                if (!user.CertKey.IsNullOrEmpty() && !fetchedUser.CertKey.Equals(user.CertKey))
+                    fetchedUser.CertKey = user.CertKey;
+
+                if (!user.Cert.IsNullOrEmpty() && !fetchedUser.Cert.Equals(user.Cert))
+                    fetchedUser.Cert = user.Cert;
+            }
+            catch (NullReferenceException e)
+            {
+                Logger.LogError(e.Message);
+                _response.Errors.Add(Errors.MISSING_BODY);
+            }
+
+            if (fetchedUser == null || HasErrors())
+                return BadRequest(_response);
+
+            try
+            {
+                await Db.UpdateAsync(fetchedUser);
+            }
+            catch (DbException e)
+            {
+                Logger.LogError(e.Message);
+                _response.Errors.Add(e.Message); // Poor man's fluent validation, fix later. Here's to hoping DB validation actually works.
+            }
+            
+            if (HasErrors())
+                return BadRequest(_response);
+
+            _response.Result = fetchedUser;
+            return Ok(_response);
+        }
+
         // GET
         public IActionResult Index()
         {
