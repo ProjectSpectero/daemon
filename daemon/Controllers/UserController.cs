@@ -173,7 +173,14 @@ namespace Spectero.daemon.Controllers
             if (HasErrors())
                 return BadRequest(_response);
 
-            _response.Result = fetchedUser;
+            _response.Result = new User
+            {
+                Id = fetchedUser.Id,
+                AuthKey = fetchedUser.AuthKey,
+                Cert = fetchedUser.Cert,
+                CreatedDate = fetchedUser.CreatedDate
+            };
+
             return Ok(_response);
         }
 
