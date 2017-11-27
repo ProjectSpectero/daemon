@@ -111,7 +111,7 @@ namespace Spectero.daemon.Controllers
             {
                 // A difference was found between the running config and the candidate config
                 var service = _serviceManager.GetService(typeof(HTTPProxy));
-                service.SetConfig(config); //Update the running config, listener config will not apply until a full system restart is made
+                service.SetConfig(config, config.listeners != currentConfig.listeners); //Update the running config, listener config will not apply until a full system restart is made. There's a bug here.
             }
 
             // If we get to this point, it means the candidate config was valid and should be committed into the DB.

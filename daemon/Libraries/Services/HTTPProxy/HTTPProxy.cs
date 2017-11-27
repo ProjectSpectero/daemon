@@ -257,7 +257,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             return _proxyConfig;
         }
 
-        public void SetConfig(IServiceConfig config)
+        public void SetConfig(IServiceConfig config, bool restartNeeded = false)
         {
             _proxyConfig = (HTTPConfig) config;
         }

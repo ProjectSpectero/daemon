@@ -71,7 +71,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             return _vpnConfig;
         }
 
-        public void SetConfig(IServiceConfig config)
+        public void SetConfig(IServiceConfig config, bool restartNeeded = false)
         {
             _vpnConfig = (OpenVPNConfig) config;
         }

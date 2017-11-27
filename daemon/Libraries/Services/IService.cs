@@ -9,6 +9,6 @@
         void LogState(string caller);
         ServiceState GetState();
         IServiceConfig GetConfig();
-        void SetConfig(IServiceConfig config);
+        void SetConfig(IServiceConfig config, bool restartNeeded = false);
     }
 }
