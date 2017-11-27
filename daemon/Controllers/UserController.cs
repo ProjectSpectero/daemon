@@ -74,7 +74,7 @@ namespace Spectero.daemon.Controllers
             var user = await Db.SingleByIdAsync<User>(id);
             if (user != null)
             {
-                _response.Result = new { Id = user.Id, AuthKey = user.AuthKey, Cert = user.Cert, CreatedDate = user.CreatedDate }; // Hide password and certkey
+                _response.Result = new User { Id = user.Id, AuthKey = user.AuthKey, Cert = user.Cert, CreatedDate = user.CreatedDate }; // Hide password and certkey
                 return Ok(_response);
             }
             else
