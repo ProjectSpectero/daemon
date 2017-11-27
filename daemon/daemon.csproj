@@ -18,6 +18,7 @@
     <Folder Include="Database\">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Folder>
+    <Folder Include="Models\NewFolder\" />
     <Folder Include="Templates\">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Folder>

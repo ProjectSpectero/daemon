@@ -1,7 +1,8 @@
 ﻿namespace Spectero.daemon.Libraries.Core.Constants
 {
-    public enum Errors
+    public static class Errors
     {
-        NotAllowed
+        public const string MISSING_BODY = "MISSING_BODY";
+        public const string MISSING_OR_INVALID_PASSWORD = "MISSING_OR_INVALID_PASSWORD";
     }
 }

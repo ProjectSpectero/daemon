@@ -22,7 +22,12 @@ namespace Spectero.daemon.Controllers
             AppConfig = appConfig.Value;
             Logger = logger;
             Db = db;
-            _response = APIResponse.Create(null, new List<string>(), null);
+            _response = APIResponse.Create(null, new List<object>(), null);
+        }
+
+        public bool HasErrors()
+        {
+            return _response.Errors.Count > 0;
         }
     }
 }
