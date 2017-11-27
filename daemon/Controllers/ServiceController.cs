@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,7 +21,7 @@ namespace Spectero.daemon.Controllers
     public class ServiceController : BaseController
     {
         private readonly IServiceManager _serviceManager;
-        private readonly string[] _validActions = {"start", "stop", "restart"};
+        private readonly string[] _validActions = {"start", "stop", "restart", "config"};
 
         private readonly string[] _validServices = {"HTTPProxy", "OpenVPN", "ShadowSOCKS", "SSHTunnel"};
 
@@ -48,30 +49,38 @@ namespace Spectero.daemon.Controllers
             return Ok(_response);
         }
 
-        [HttpGet("config/{service}")]
-        public IActionResult GetConfig(string service)
-        {
-            if (_validServices.Any(s => service == s))
-            {
-                var type = Utility.GetServiceType(service);
-                var config = _serviceConfigManager.Generate(type);
-                _response.Result = config;
-                return Ok(_response);
-            }
-            throw new EInvalidRequest();
-        }
-
-        [HttpGet("{name}/{task}", Name = "ManageServices")])g
+        [HttpGet("{name}/{task}", Name = "ManageServices")]
         public IActionResult Manage(string name, string task)
         {
             if (_validServices.Any(s => name == s) &&
                 _validActions.Any(s => task == s))
             {
+                if (task.Equals("config"))
+                {
+                    var type = Utility.GetServiceType(name);
+                    var config = _serviceConfigManager.Generate(type);
+                    _response.Result = config;
+                    return Ok(_response);
+                }
+
                 _serviceManager.Process(name, task);
                 _response.Message = Messages.SERVICE_STARTED;
                 return Ok(_response);
             }
             throw new EInvalidRequest();
+        }
+
+        [HttpGet("ips", Name = "GetLocalIPs")]
+        public IActionResult GetLocalIPs()
+        {
+            var ips = Utility.GetLocalIPs();
+            var addresses = new List<string>();
+            foreach (var ip in ips)
+            {
+                addresses.Add(ip.ToString());
+            }
+            _response.Result = addresses;
+            return Ok(_response);
         }
     }
 }
