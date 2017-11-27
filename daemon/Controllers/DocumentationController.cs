@@ -20,6 +20,7 @@ namespace Spectero.daemon.Controllers
             _apiExplorer = apiExplorer;
         }
 
+        [HttpGet("", Name = "ShowDocumentation")]
         public IActionResult Index()
         {
             return View(_apiExplorer);
