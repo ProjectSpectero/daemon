@@ -4,6 +4,7 @@
     {
         public const string SystemIdentity = "sys.id";
         public const string HttpListener = "http.listener";
+        public const string HttpConfig = "http.config";
         public const string HttpMode = "http.mode";
         public const string HttpAllowedDomains = "http.domains.allowed";
         public const string HttpBannedDomains = "http.domains.banned";

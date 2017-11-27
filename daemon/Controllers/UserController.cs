@@ -64,7 +64,7 @@ namespace Spectero.daemon.Controllers
             user.Id = userId;
             _response.Result = user;
 
-            return Created(Url.RouteUrl("GetUserById", new { id = userId }), _response); // See why 201 - Created() doesn't work here
+            return Created(Url.RouteUrl("GetUserById", new { id = userId }), _response);
 
         }
 

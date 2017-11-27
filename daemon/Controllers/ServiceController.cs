@@ -1,13 +1,21 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using ServiceStack.OrmLite;
+using ServiceStack.Templates;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
+using Spectero.daemon.Libraries.Services.HTTPProxy;
+using Spectero.daemon.Models;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 using Utility = Spectero.daemon.Libraries.Core.Utility;
 
@@ -65,6 +73,55 @@ namespace Spectero.daemon.Controllers
                 return Ok(_response);
             }
             throw new EInvalidRequest();
+        }
+
+        [HttpPut("HTTPProxy/config", Name = "HandleHTTPProxyConfigUpdate")]
+        public async Task<IActionResult> HandleHTTPProxyConfigUpdate([FromBody] HTTPConfig config)
+        {
+            var currentConfig = (HTTPConfig) _serviceConfigManager.Generate(Utility.GetServiceType("HTTPProxy"));
+
+            var localAvailableIPs = Utility.GetLocalIPs();
+            var availableIPs = localAvailableIPs as IPAddress[] ?? localAvailableIPs.ToArray();
+
+            // Check if all listeners are valid
+            foreach (var listener in config.listeners)
+            {
+                if (IPAddress.TryParse(listener.Item1, out var holder))
+                {                   
+                    if (availableIPs.Contains(holder))
+                        continue;
+                    Logger.LogError("CCHH: Invalid listener request for " + holder + " found.");
+                    _response.Errors.Add(Errors.INVALID_IP_AS_LISTENER_REQUEST);
+                }
+            }
+
+            // Check if the mode is valid
+            if (config.proxyMode != HTTPProxyModes.Normal && config.proxyMode != HTTPProxyModes.ExclusiveAllow)
+            {
+                _response.Errors.Add(Errors.INVALID_HTTP_MODE_REQUEST);
+            }
+
+            if (HasErrors())              
+                return BadRequest(_response);
+
+
+            if (config.listeners != currentConfig.listeners || config.proxyMode != currentConfig.proxyMode ||
+                config.allowedDomains != currentConfig.allowedDomains ||
+                config.bannedDomains != currentConfig.bannedDomains)
+            {
+                // A difference was found between the running config and the candidate config
+                var service = _serviceManager.GetService(typeof(HTTPProxy));
+                service.SetConfig(config); //Update the running config, listener config will not apply until a full system restart is made
+            }
+
+            // If we get to this point, it means the candidate config was valid and should be committed into the DB.
+
+            var dbConfig = await Db.SingleAsync<Configuration>(x => x.Key == ConfigKeys.HttpConfig);
+            dbConfig.Value = JsonConvert.SerializeObject(config);
+            await Db.UpdateAsync(dbConfig);
+
+            _response.Result = config;
+            return Ok(_response);
         }
 
         [HttpGet("ips", Name = "GetLocalIPs")]

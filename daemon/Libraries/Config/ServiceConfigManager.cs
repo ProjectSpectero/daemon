@@ -121,9 +121,6 @@ namespace Spectero.daemon.Libraries.Config
                             return null;
                         }
                             
-
-                        var config = new OpenVPNConfig(_engine, _identity);
-
                         var base64CAPKCS12 = "";
                         var base64ServerPKCS12 = "";
                         var base64ServerChainPKCS12 = "";
@@ -238,7 +235,8 @@ namespace Spectero.daemon.Libraries.Config
                         }
 
                         // TODO: Expand API to allow exporting an IEnurable<IServiceConfig> instead
-                        return configs.First();
+                        //return configs.First();
+                        return null;
                     }
                 }
             };
