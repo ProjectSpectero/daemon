@@ -88,6 +88,7 @@ namespace Spectero.daemon.Controllers
             var ret = new List<User>();
             foreach (var user in users)
             {
+                // Abstract Password and Certkey
                 ret.Add(new User
                 {
                     Id = user.Id,
@@ -98,6 +99,20 @@ namespace Spectero.daemon.Controllers
             }
             _response.Result = ret;
             return Ok(_response);
+        }
+
+        [HttpDelete("{id}", Name = "DeleteUser")]
+        public async Task<IActionResult> DeleteUser(long id)
+        {
+            var user = await Db.SingleByIdAsync<User>(id);
+            if (user != null)
+            {
+                await Db.DeleteAsync<User>(user);
+                return NoContent();
+            }
+            else
+                return NotFound(_response);
+
         }
 
         // GET
