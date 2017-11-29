@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using ServiceStack;
 using ServiceStack.OrmLite;
 using ServiceStack.Templates;
 using Spectero.daemon.Libraries.Config;
@@ -78,8 +79,9 @@ namespace Spectero.daemon.Controllers
         [HttpPut("HTTPProxy/config", Name = "HandleHTTPProxyConfigUpdate")]
         public async Task<IActionResult> HandleHttpProxyConfigUpdate([FromBody] HTTPConfig config)
         {
-            if (! ModelState.IsValid)
+            if (! ModelState.IsValid || config.listeners.IsNullOrEmpty())
             {
+                // ModelState takes care of checking if the field map succeeded. This means mode | allowed.d | banned.d do not need manual checking
                 _response.Errors.Add(Errors.MISSING_BODY);
                 return BadRequest(_response);
             }
@@ -100,10 +102,6 @@ namespace Spectero.daemon.Controllers
                     _response.Errors.Add(Errors.INVALID_IP_AS_LISTENER_REQUEST);
                 }
             }
-
-            // Check if the mode is valid
-            if (config.proxyMode != HTTPProxyModes.Normal && config.proxyMode != HTTPProxyModes.ExclusiveAllow)
-                _response.Errors.Add(Errors.INVALID_HTTP_MODE_REQUEST);
 
             if (HasErrors())              
                 return BadRequest(_response);
