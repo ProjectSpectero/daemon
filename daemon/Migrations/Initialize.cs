@@ -69,25 +69,10 @@ namespace Spectero.daemon.Migrations
                 // HTTP proxy
                 _db.Insert(new Configuration
                 {
-                    Key = ConfigKeys.HttpListener,
-                    Value = Defaults.HTTP.ToJson()
+                    Key = ConfigKeys.HttpConfig,
+                    Value = Defaults.HTTP.Value.ToJson()
                 });
-                _db.Insert(new Configuration
-                {
-                    Key = ConfigKeys.HttpMode,
-                    Value = HTTPProxyModes.Normal.ToString()
-                });
-                _db.Insert(new Configuration
-                {
-                    Key = ConfigKeys.HttpAllowedDomains,
-                    Value = ""
-                });
-                _db.Insert(new Configuration
-                {
-                    Key = ConfigKeys.HttpBannedDomains,
-                    Value = ""
-                });
-
+               
                 // Password Hashing
                 _logger.LogDebug("Firstrun: Calculating optimal password hashing cost.");
                 _db.Insert(new Configuration

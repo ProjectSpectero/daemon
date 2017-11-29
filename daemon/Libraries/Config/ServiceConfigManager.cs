@@ -50,61 +50,18 @@ namespace Spectero.daemon.Libraries.Config
                 {
                     typeof(HTTPProxy), delegate
                     {
-                        var listeners = new List<Tuple<string, int>>();
+                        var storedConfig = _db.Single<Configuration>(x => x.Key == ConfigKeys.HttpConfig);
+                        var serviceConfig = JsonConvert.DeserializeObject<HTTPConfig>(storedConfig.Value);
 
-                        var serviceConfig = _db.Select<Configuration>(x => x.Key == ConfigKeys.HttpListener);
 
-                        if (serviceConfig.Count > 0)
+                        if (serviceConfig == null)
                         {
-                            foreach (var listener in serviceConfig)
-                            {
-                                var lstDict = JsonConvert
-                                    .DeserializeObject<List<Dictionary<string, dynamic>>>(listener.Value)
-                                    .FirstOrDefault();
-                                if (lstDict != null && lstDict.ContainsKey("Item1") && lstDict.ContainsKey("Item2"))
-                                {
-                                    var ip = (string) lstDict["Item1"];
-                                    var port = (int) lstDict["Item2"];
-                                    listeners.Add(Tuple.Create(ip, port));
-                                }
-                                else
-                                {
-                                    _logger.LogError(
-                                        "TG: Could not extract a valid ip:port pair from at least one listener.");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            _logger.LogWarning("TG: No listeners could be retrieved from the DB for " +
+                            _logger.LogError("TG: No listeners could be retrieved from the DB for " +
                                                typeof(HTTPProxy) + ", using defaults.");
-                            listeners = Defaults.HTTP;
+                            serviceConfig = Defaults.HTTP.Value;
                         }
 
-                        var proxyMode = _db.Select<Configuration>(x => x.Key == ConfigKeys.HttpMode)
-                            .FirstOrDefault(); // Guaranteed to be one single value
-                        var allowedDomains = _db.Select<Configuration>(x => x.Key == ConfigKeys.HttpAllowedDomains)
-                            .FirstOrDefault(); // JSON list of strings, but there is only one list
-                        var bannedDomains = _db.Select<Configuration>(x => x.Key == ConfigKeys.HttpBannedDomains)
-                            .FirstOrDefault(); // JSON list of strings, but there is only one list
-
-                        var actualMode = HTTPProxyModes.Normal;
-                        var actualAllowedDomains = new List<string>();
-                        var actualBannedDomains = new List<string>();
-
-                        if (proxyMode != null)
-                            if (proxyMode.Value == HTTPProxyModes.ExclusiveAllow.ToString())
-                                actualMode = HTTPProxyModes.ExclusiveAllow;
-
-                        if (allowedDomains != null)
-                            actualAllowedDomains = JsonConvert
-                                .DeserializeObject<List<string>>(allowedDomains.Value);
-
-                        if (bannedDomains != null)
-                            actualBannedDomains = JsonConvert
-                                .DeserializeObject<List<string>>(bannedDomains.Value);
-
-                        return new HTTPConfig(listeners, actualMode, actualAllowedDomains, actualBannedDomains);
+                        return serviceConfig;
                     }
                 },
                 {
