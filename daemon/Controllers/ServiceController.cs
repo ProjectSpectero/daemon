@@ -78,6 +78,12 @@ namespace Spectero.daemon.Controllers
         [HttpPut("HTTPProxy/config", Name = "HandleHTTPProxyConfigUpdate")]
         public async Task<IActionResult> HandleHttpProxyConfigUpdate([FromBody] HTTPConfig config)
         {
+            if (! ModelState.IsValid)
+            {
+                _response.Errors.Add(Errors.MISSING_BODY);
+                return BadRequest(_response);
+            }
+                
             var currentConfig = (HTTPConfig) _serviceConfigManager.Generate(Utility.GetServiceType("HTTPProxy"));
 
             var localAvailableIPs = Utility.GetLocalIPs();
