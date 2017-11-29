@@ -76,7 +76,7 @@ namespace Spectero.daemon.Controllers
         }
 
         [HttpPut("HTTPProxy/config", Name = "HandleHTTPProxyConfigUpdate")]
-        public async Task<IActionResult> HandleHTTPProxyConfigUpdate([FromBody] HTTPConfig config)
+        public async Task<IActionResult> HandleHttpProxyConfigUpdate([FromBody] HTTPConfig config)
         {
             var currentConfig = (HTTPConfig) _serviceConfigManager.Generate(Utility.GetServiceType("HTTPProxy"));
 
@@ -97,21 +97,26 @@ namespace Spectero.daemon.Controllers
 
             // Check if the mode is valid
             if (config.proxyMode != HTTPProxyModes.Normal && config.proxyMode != HTTPProxyModes.ExclusiveAllow)
-            {
                 _response.Errors.Add(Errors.INVALID_HTTP_MODE_REQUEST);
-            }
 
             if (HasErrors())              
                 return BadRequest(_response);
 
 
-            if (config.listeners != currentConfig.listeners || config.proxyMode != currentConfig.proxyMode ||
+            if (config.listeners != currentConfig.listeners ||
+                config.proxyMode != currentConfig.proxyMode ||
                 config.allowedDomains != currentConfig.allowedDomains ||
                 config.bannedDomains != currentConfig.bannedDomains)
             {
                 // A difference was found between the running config and the candidate config
+                // If listener config changed, the service needs restarting as it can't be adjusted without the sockets being re-initialized.
+                var restartNeeded = config.listeners != currentConfig.listeners;               
                 var service = _serviceManager.GetService(typeof(HTTPProxy));
-                service.SetConfig(config, config.listeners != currentConfig.listeners); //Update the running config, listener config will not apply until a full system restart is made. There's a bug here.
+
+                service.SetConfig(config, restartNeeded); //Update the running config, listener config will not apply until a full system restart is made. There's a bug here.
+
+                if (restartNeeded)
+                    _response.Message = Messages.SERVICE_RESTART_NEEDED;
             }
 
             // If we get to this point, it means the candidate config was valid and should be committed into the DB.
