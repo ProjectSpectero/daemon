@@ -7,5 +7,6 @@
         public const string MISSING_OR_INVALID_PASSWORD = "MISSING_OR_INVALID_PASSWORD";
         public const string INVALID_IP_AS_LISTENER_REQUEST = "INVALID_IP_AS_LISTENER_REQUEST";
         public const string INVALID_HTTP_MODE_REQUEST = "INVALID_HTTP_MODE_REQUEST";
+        public const string STORED_CONFIG_WAS_NULL = "STORED_CONFIG_WAS_NULL";
     }
 }
