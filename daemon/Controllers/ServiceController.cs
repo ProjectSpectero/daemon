@@ -96,7 +96,7 @@ namespace Spectero.daemon.Controllers
             {
                 if (IPAddress.TryParse(listener.Item1, out var holder))
                 {                   
-                    if (availableIPs.Contains(holder))
+                    if (availableIPs.Contains(holder) || holder.Equals(IPAddress.Any))
                         continue;
                     Logger.LogError("CCHH: Invalid listener request for " + holder + " found.");
                     _response.Errors.Add(Errors.INVALID_IP_AS_LISTENER_REQUEST);
@@ -114,7 +114,7 @@ namespace Spectero.daemon.Controllers
             {
                 // A difference was found between the running config and the candidate config
                 // If listener config changed, the service needs restarting as it can't be adjusted without the sockets being re-initialized.
-                var restartNeeded = config.listeners != currentConfig.listeners;               
+                var restartNeeded = ! config.listeners.SequenceEqual(currentConfig.listeners);          
                 var service = _serviceManager.GetService(typeof(HTTPProxy));
 
                 service.SetConfig(config, restartNeeded); //Update the running config, listener config will not apply until a full system restart is made. There's a bug here.
