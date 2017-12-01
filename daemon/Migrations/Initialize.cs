@@ -84,6 +84,13 @@ namespace Spectero.daemon.Migrations
                         .ToString()
                 });
 
+                // JWT security Key
+                _logger.LogDebug("Firstrun: Generating JWT security key.");
+                _db.Insert(new Configuration
+                {
+                    Key = ConfigKeys.JWTSymmetricSecurityKey,
+                    Value = PasswordUtils.GeneratePassword(48, 12)
+                });
 
                 // Crypto
                 // 48 characters len with 12 non-alpha-num characters

@@ -20,5 +20,8 @@
         public const string OpenVPNMaxClients = "vpn.openvpn.max_clients";
         public const string OpenVPNRedirectGatewayOptions = "vpn.openvpn.redirect_gateway";
 
+        //JWT
+        public const string JWTSymmetricSecurityKey = "crypto.jwt.key";
+
     }
 }

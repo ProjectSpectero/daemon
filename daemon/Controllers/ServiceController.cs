@@ -126,16 +126,11 @@ namespace Spectero.daemon.Controllers
             // If we get to this point, it means the candidate config was valid and should be committed into the DB.
 
             var dbConfig = await Db.SingleAsync<Configuration>(x => x.Key == ConfigKeys.HttpConfig);
-            if (dbConfig != null)
-            {
-                dbConfig.Value = JsonConvert.SerializeObject(config);
-                await Db.UpdateAsync(dbConfig);
+            dbConfig.Value = JsonConvert.SerializeObject(config);
+            await Db.UpdateAsync(dbConfig);
 
-                _response.Result = config;
-                return Ok(_response);
-            }
-            _response.Errors.Add(Errors.STORED_CONFIG_WAS_NULL);
-            return StatusCode(500, _response);
+            _response.Result = config;
+            return Ok(_response);
         }
 
         [HttpGet("ips", Name = "GetLocalIPs")]

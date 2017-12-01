@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Math;
@@ -11,6 +12,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 {
     public interface ICryptoService
     {
+        SymmetricSecurityKey GetJWTSigningKey();
         byte[] ExportCertificateChain(X509Certificate2 cert, X509Certificate2 ca);
 
         X509Certificate2 LoadCertificate(string issuerFileName, string password = "password");

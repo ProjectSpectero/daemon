@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
@@ -13,6 +16,10 @@ using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.X509;
+using ServiceStack;
+using ServiceStack.OrmLite;
+using Spectero.daemon.Libraries.Core.Constants;
+using Spectero.daemon.Models;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 
 namespace Spectero.daemon.Libraries.Core.Crypto
@@ -31,9 +38,20 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
     public class CryptoService : ICryptoService
     {
-        public CryptoService()
+        private readonly IDbConnection _db;
+        private SymmetricSecurityKey jwtKey;
+        public CryptoService(IDbConnection db)
         {
-            
+            _db = db;
+        }
+
+        public SymmetricSecurityKey GetJWTSigningKey()
+        {
+            if (jwtKey != null)
+                return jwtKey;
+            var stringKey = _db.Single<Configuration>(x => x.Key == ConfigKeys.JWTSymmetricSecurityKey).Value;
+            jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(stringKey));
+            return jwtKey;
         }
 
         public byte[] ExportCertificateChain(X509Certificate2 cert, X509Certificate2 ca)
