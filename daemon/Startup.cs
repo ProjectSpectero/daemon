@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using NLog.Extensions.Logging;
 using NLog.Web;
 using RazorLight;
@@ -39,8 +42,7 @@ namespace Spectero.daemon
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
-            services.AddMemoryCache();
+
 
             var appConfig = Configuration.GetSection("Daemon");
             services.Configure<AppConfig>(appConfig);
@@ -69,7 +71,24 @@ namespace Spectero.daemon
                 new EngineFactory()
                     .ForFileSystem(System.IO.Path.Combine(_currentDirectory, appConfig["TemplateDirectory"]))
             );
-            
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateAudience = false,
+                        ValidateIssuer = false,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey =
+                            services.BuildServiceProvider().GetService<ICryptoService>().GetJWTSigningKey()
+                    };
+                });
+
+            services.AddMvc();
+            services.AddMemoryCache();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

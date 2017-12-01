@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -18,6 +18,7 @@ using Spectero.daemon.Libraries.Services.OpenVPN;
 
 namespace Spectero.daemon.Controllers
 {
+    [Authorize(AuthenticationSchemes = "Bearer")]
     [Route("v1/[controller]")]
     public class DebugController : BaseController
     {
@@ -41,12 +42,10 @@ namespace Spectero.daemon.Controllers
 
         }
         // GET
-        [HttpGet("test", Name = "DebugTest")]
-        public async Task<string> Index()
+        [HttpGet("", Name = "DebugTest")]
+        public async Task<IActionResult> Index()
         {
-            var config = new OpenVPNConfig(_engine, _identity);
-
-            return await config.GetStringConfig();
+            return Ok(GetClaim(ClaimTypes.Name).Value);
         }
     }
 }

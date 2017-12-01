@@ -3,6 +3,7 @@ using System.Data;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -24,6 +25,7 @@ namespace Spectero.daemon.Controllers
 {
     [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
     [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(ServiceController))]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class ServiceController : BaseController
     {
         private readonly IServiceManager _serviceManager;

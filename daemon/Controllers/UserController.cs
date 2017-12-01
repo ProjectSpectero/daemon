@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ namespace Spectero.daemon.Controllers
 {
     [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
     [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(UserController))]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class UserController : BaseController
     {
         public UserController(IOptionsSnapshot<AppConfig> appConfig, ILogger<UserController> logger,

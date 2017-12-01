@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -28,6 +30,17 @@ namespace Spectero.daemon.Controllers
         protected bool HasErrors()
         {
             return _response.Errors.Count > 0;
+        }
+
+        protected IEnumerable<Claim> GetClaims()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            return identity?.Claims;
+        }
+
+        protected Claim GetClaim(string type)
+        {
+            return GetClaims().FirstOrDefault(x => x.Type == type);
         }
     }
 }
