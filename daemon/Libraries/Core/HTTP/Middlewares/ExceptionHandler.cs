@@ -27,6 +27,7 @@ namespace Spectero.daemon.Libraries.Core.HTTP.Middlewares
 
         private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            
+
         }
+    }
 }

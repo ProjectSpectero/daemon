@@ -25,7 +25,7 @@ namespace Spectero.daemon.Controllers
             _response = APIResponse.Create(null, new List<object>(), null);
         }
 
-        public bool HasErrors()
+        protected bool HasErrors()
         {
             return _response.Errors.Count > 0;
         }

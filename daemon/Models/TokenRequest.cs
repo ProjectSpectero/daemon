@@ -2,7 +2,7 @@
 {
     public class TokenRequest : IModel
     {
-        public string Username;
+        public string AuthKey;
         public string Password;
     }
 }
