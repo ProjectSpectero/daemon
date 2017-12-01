@@ -54,7 +54,7 @@ namespace Spectero.daemon.Controllers
                         issuer: "yourdomain.com",
                         audience: "yourdomain.com",
                         claims: claims,
-                        expires: DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes),
+                        expires: DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0 ? AppConfig.JWTTokenExpiryInMinutes : 60),
                         signingCredentials: credentials
                     );
                 _response.Result = token;
