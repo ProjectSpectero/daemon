@@ -19,6 +19,7 @@ using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 namespace Spectero.daemon.Controllers
 {
     [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
+    [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(AuthController))]
     public class AuthController : BaseController
     {
         private readonly ICryptoService _cryptoService;
