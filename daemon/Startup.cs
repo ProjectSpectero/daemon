@@ -87,6 +87,17 @@ namespace Spectero.daemon
                     };
                 });
 
+
+            services.AddCors(options =>
+            {
+                // TODO: Lock down this policy in production
+                options.AddPolicy("DefaultCORSPolicy",
+                    builder => builder.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials());
+            });
+
             services.AddMvc();
             services.AddMemoryCache();
 
@@ -101,14 +112,15 @@ namespace Spectero.daemon
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseAddCORS();
+                app.UseCors("DefaultCORSPolicy");
+                app.UseInterceptOptions(); // Return 200/OK with correct CORS to allow preflight requests, giant hack.
             }
 
             app.UseDefaultFiles();
             app.UseStaticFiles(new StaticFileOptions()
             {
                 FileProvider = new PhysicalFileProvider(
-                    Path.Combine(Directory.GetCurrentDirectory(), appConfig["WebRoot"]))
+                    Path.Combine(_currentDirectory, appConfig["WebRoot"]))
             });
 
             app.UseAddRequestIdHeader();

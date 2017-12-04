@@ -8,9 +8,6 @@
     <Compile Remove="Libraries\Core\HTTP\Template.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Templates\OpenVPNUser.cshtml_u" />
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="Libraries\Services\ShadowSOCKS\" />
     <Folder Include="Logs\">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -21,7 +18,9 @@
     <Folder Include="Templates\">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Folder>
-    <Folder Include="wwwroot\" />
+    <Folder Include="wwwroot\">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Folder>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="2.1.2" />
