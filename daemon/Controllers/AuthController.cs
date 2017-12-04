@@ -55,12 +55,12 @@ namespace Spectero.daemon.Controllers
                 var key = _cryptoService.GetJWTSigningKey();
                 var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Hardcoded alg for now, perhaps allow changing later
                 var token = new JwtSecurityToken
-                    (
-                        // Can't issue aud/iss since we have no idea what the accessing URL will be. This is not a typical webapp with static `Host`
-                        claims: claims,
-                        expires: DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0 ? AppConfig.JWTTokenExpiryInMinutes : 60),
-                        signingCredentials: credentials
-                    );
+                (
+                    // Can't issue aud/iss since we have no idea what the accessing URL will be. This is not a typical webapp with static `Host`
+                    claims: claims,
+                    expires: DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0 ? AppConfig.JWTTokenExpiryInMinutes : 60),
+                    signingCredentials: credentials
+                );
                 _response.Message = Messages.JWT_TOKEN_ISSUED;
                 _response.Result = new JwtSecurityTokenHandler().WriteToken(token);
                 return Ok(_response);

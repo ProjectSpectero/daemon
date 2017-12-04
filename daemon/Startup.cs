@@ -96,10 +96,12 @@ namespace Spectero.daemon
             ILoggerFactory loggerFactory, IMigration migration)
         {
             if (env.IsDevelopment())
+            {
                 app.UseDeveloperExceptionPage();
-
+                app.UseAddCORS();
+            }
+                
             app.UseAddRequestIdHeader();
-            //app.UseResponseWrapper();
             app.UseMvc();
             
 
