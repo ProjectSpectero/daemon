@@ -1,10 +1,12 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NLog.Extensions.Logging;
@@ -42,7 +44,6 @@ namespace Spectero.daemon
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
 
             var appConfig = Configuration.GetSection("Daemon");
             services.Configure<AppConfig>(appConfig);
@@ -95,12 +96,21 @@ namespace Spectero.daemon
         public void Configure(IApplicationBuilder app, IHostingEnvironment env,
             ILoggerFactory loggerFactory, IMigration migration)
         {
+            var appConfig = Configuration.GetSection("Daemon");
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseAddCORS();
             }
-                
+
+            app.UseDefaultFiles();
+            app.UseStaticFiles(new StaticFileOptions()
+            {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(Directory.GetCurrentDirectory(), appConfig["WebRoot"]))
+            });
+
             app.UseAddRequestIdHeader();
             app.UseMvc();
             

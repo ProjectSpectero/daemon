@@ -24,5 +24,6 @@ namespace Spectero.daemon.Libraries.Config
             System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
         public bool RespectEndpointToOutgoingMapping { get; set; }
         public bool BindToUnbound { get; set; }
+        public string WebRoot { get; set; }
     }
 }
