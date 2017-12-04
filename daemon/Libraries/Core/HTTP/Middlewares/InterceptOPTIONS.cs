@@ -15,11 +15,12 @@ namespace Spectero.daemon.Libraries.Core.HTTP.Middlewares
 
         public async Task Invoke(HttpContext httpContext)
         {
-            if (httpContext.Request.Method == "OPTIONS") // Horrible hack
+            if (httpContext.Request.Method.Equals("OPTIONS")) // Horrible hack
             {
                 httpContext.Response.StatusCode = 200;
-                await httpContext.Response.WriteAsync("");
-            }                          
+                return;
+            }
+            await _next(httpContext);
         }
     }
 }
