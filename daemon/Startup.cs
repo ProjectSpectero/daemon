@@ -104,7 +104,6 @@ namespace Spectero.daemon
             app.UseAddRequestIdHeader();
             app.UseMvc();
             
-
             loggerFactory.AddNLog();
             loggerFactory.ConfigureNLog("nlog.config");
             app.AddNLogWeb();

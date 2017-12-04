@@ -98,10 +98,11 @@ namespace Spectero.daemon.Controllers
             {
                 if (IPAddress.TryParse(listener.Item1, out var holder))
                 {                   
-                    if (availableIPs.Contains(holder) || holder.Equals(IPAddress.Any))
+                    if (AppConfig.BindToUnbound || availableIPs.Contains(holder) || holder.Equals(IPAddress.Any))
                         continue;
                     Logger.LogError("CCHH: Invalid listener request for " + holder + " found.");
                     _response.Errors.Add(Errors.INVALID_IP_AS_LISTENER_REQUEST);
+                    break;
                 }
             }
 
