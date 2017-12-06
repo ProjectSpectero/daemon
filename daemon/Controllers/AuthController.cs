@@ -56,7 +56,8 @@ namespace Spectero.daemon.Controllers
                 var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Hardcoded alg for now, perhaps allow changing later
                 var token = new JwtSecurityToken
                 (
-                    // Can't issue aud/iss since we have no idea what the accessing URL will be. This is not a typical webapp with static `Host`
+                    // Can't issue aud/iss since we have no idea what the accessing URL will be.
+                    // This is not a typical webapp with static `Host`
                     claims: claims,
                     expires: DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0 ? AppConfig.JWTTokenExpiryInMinutes : 60),
                     signingCredentials: credentials
