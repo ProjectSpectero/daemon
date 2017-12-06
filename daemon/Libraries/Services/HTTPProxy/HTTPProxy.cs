@@ -65,8 +65,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 //Loop through and listen on all defined IP <-> port pairs
                 foreach (var listener in _proxyConfig.listeners)
                 {
-                    _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(IPAddress.Parse(listener.Item1), listener.Item2,
-                        true));
+                    var endpoint = new ExplicitProxyEndPoint(IPAddress.Parse(listener.Item1), listener.Item2,
+                        false);
+                    endpoint.ExcludedHttpsHostNameRegex = new List<string> { ".*" };
+                    _proxyServer.AddEndPoint(endpoint);
                     _logger.LogDebug("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
                 }
 
@@ -74,7 +76,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 _proxyServer.AuthenticateUserFunc += _authenticator.Authenticate;
                 _proxyServer.BeforeRequest += OnRequest;
                 _proxyServer.BeforeResponse += OnResponse;
+                _proxyServer.TunnelConnectRequest += OnTunnelConnectRequest;
+                _proxyServer.TunnelConnectResponse += OnTunnelConnectResponse;
                 _proxyServer.ExceptionFunc = exception => _logger.LogDebug(exception.Message);
+
 
                 _proxyServer.Start();
                 State = ServiceState.Running;
@@ -120,20 +125,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             return State;
         }
 
-        private async Task OnRequest(object sender, SessionEventArgs eventArgs)
+        private void CheckProxyMode(string host, ref string failReason)
         {
-            _logger.LogDebug("ESO: Processing request to " + eventArgs.WebSession.Request.Url);
-
-            string failReason = null;
-
-            var request = eventArgs.WebSession.Request;
-            var requestUri = request.RequestUri;
-            var host = requestUri.Host;
-
-            await _statistician.Update<HTTPProxy>(CalculateObjectSize(request),
-                DataFlowDirections.Out);
-
-            if (_proxyConfig.proxyMode == HTTPProxyModes.ExclusiveAllow)
+            if (failReason.IsNullOrEmpty() && _proxyConfig.proxyMode == HTTPProxyModes.ExclusiveAllow)
+            {
                 if (_proxyConfig.allowedDomains != null)
                 {
                     var matchFound = false;
@@ -152,10 +147,28 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                         "ESO: Proxy is set to start in exclusive-allow mode, but list of domains is empty. This will mean that ALL traffic will be dropped.");
                     failReason = BlockedReasons.ExclusiveAllow;
                 }
+            }
+        }
 
-            var hostAddresses = Dns.GetHostAddresses(host);
+        private void CheckBannedDomain(string host, ref string failReason)
+        {
+            if (failReason.IsNullOrEmpty() && _proxyConfig.bannedDomains != null)
+                foreach (var blockedUri in _proxyConfig.bannedDomains)
+                {
+                    if (!host.Equals(blockedUri)) continue;
+                    _logger.LogDebug("ESO: Blocked host " + host + " found.");
+                    failReason = BlockedReasons.BlockedUri;
+                    break;
+                }
+        }
 
-            if (_appConfig.LocalSubnetBanEnabled && hostAddresses.Length > 0 && failReason == null)
+        private void CheckLanProtection(string host, ref string failReason)
+        {           
+            if (failReason.IsNullOrEmpty() && _appConfig.LocalSubnetBanEnabled)
+            {
+                var hostAddresses = Dns.GetHostAddresses(host);
+                if (hostAddresses.Length == 0) return;
+
                 foreach (var network in _localNetworks)
                 foreach (var address in hostAddresses)
                 {
@@ -164,15 +177,32 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     failReason = BlockedReasons.LanProtection;
                     break;
                 }
+            }
+        }
 
-            if (failReason == null && _proxyConfig.bannedDomains != null)
-                foreach (var blockedUri in _proxyConfig.bannedDomains)
-                {
-                    if (!requestUri.AbsoluteUri.Contains(blockedUri)) continue;
-                    _logger.LogDebug("ESO: Blocked URI " + blockedUri + " found in " + requestUri);
-                    failReason = BlockedReasons.BlockedUri;
-                    break;
-                }
+
+
+        private async Task OnTunnelConnectRequest(object sender, TunnelConnectSessionEventArgs eventArgs)
+        {
+            await OnRequest(sender, eventArgs as SessionEventArgs);
+        }
+
+        private async Task OnRequest(object sender, SessionEventArgs eventArgs)
+        {
+            _logger.LogDebug("ESO: Processing request to " + eventArgs.WebSession.Request.Url);
+
+            string failReason = null;
+
+            var request = eventArgs.WebSession.Request;
+            var requestUri = request.RequestUri;
+            var host = requestUri.Host;
+
+            await _statistician.Update<HTTPProxy>(CalculateObjectSize(request),
+                DataFlowDirections.Out);
+
+            CheckProxyMode(host, ref failReason);
+            CheckBannedDomain(host, ref failReason);
+            CheckLanProtection(host, ref failReason);
 
             SetUpstreamAddress(ref eventArgs);
 
@@ -180,8 +210,11 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             if (failReason != null)
                 await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, failReason,
                     Uri.EscapeDataString(requestUri.ToString())));
+        }
 
-
+        private async Task OnTunnelConnectResponse(object sender, TunnelConnectSessionEventArgs eventArgs)
+        {
+            await OnResponse(sender, eventArgs as SessionEventArgs);
         }
 
         private async Task OnResponse(object sender, SessionEventArgs eventArgs)
@@ -189,6 +222,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             await _statistician.Update<HTTPProxy>(CalculateObjectSize(eventArgs.WebSession.Response),
                 DataFlowDirections.In);
         }
+
+
 
         private void SetUpstreamAddress(ref SessionEventArgs eventArgs)
         {
