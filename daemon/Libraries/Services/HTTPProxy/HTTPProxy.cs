@@ -66,7 +66,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 foreach (var listener in _proxyConfig.listeners)
                 {
                     _proxyServer.AddEndPoint(new ExplicitProxyEndPoint(IPAddress.Parse(listener.Item1), listener.Item2,
-                        false));
+                        true));
                     _logger.LogDebug("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
                 }
 
@@ -74,6 +74,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 _proxyServer.AuthenticateUserFunc += _authenticator.Authenticate;
                 _proxyServer.BeforeRequest += OnRequest;
                 _proxyServer.BeforeResponse += OnResponse;
+                _proxyServer.ExceptionFunc = exception => _logger.LogDebug(exception.Message);
 
                 _proxyServer.Start();
                 State = ServiceState.Running;
@@ -192,7 +193,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private void SetUpstreamAddress(ref SessionEventArgs eventArgs)
         {
             var requestedUpstream =
-                Utility.ExtractHeader(eventArgs.WebSession.Request.RequestHeaders, "X-SPECTERO-UPSTREAM-IP")
+                Utility.ExtractHeader(eventArgs.WebSession.Request.Headers, "X-SPECTERO-UPSTREAM-IP")
                     .FirstOrDefault();
 
             if (requestedUpstream != null)
@@ -218,6 +219,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             {
                 // Default behavior is to set the same endpoint the request came in via as the outgoing address in multi-ip deployment scenarios
                 // This does not trigger for local (127/8, ::1, 0.0.0.0 and such addresses either)
+                
                 var endpoint = eventArgs.LocalEndPoint;
                 
                 if (Utility.CheckIPFilter(endpoint.IpAddress, Utility.IPComparisonReasons.FOR_PROXY_OUTGOING) && _appConfig.RespectEndpointToOutgoingMapping)
@@ -225,6 +227,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     _logger.LogDebug("ES: No header upstream was requested, using endpoint default of " + endpoint.IpAddress + " as it was determined valid and RespectEndpointToOutgoingMapping is enabled.");
                     eventArgs.WebSession.UpStreamEndPoint = new IPEndPoint(endpoint.IpAddress, 0);
                 }
+                
             }
                 
         }

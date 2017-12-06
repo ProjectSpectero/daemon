@@ -95,14 +95,14 @@ namespace Spectero.daemon.Libraries.Core
                 ret = false;
             else if (ipString.StartsWith("169.254"))
                 ret = false;
+            else if (ipString.StartsWith("::"))
+                ret = false;
 
             if (ret && reason == IPComparisonReasons.FOR_PROXY_OUTGOING)
             {
                 if (ipString.StartsWith("127"))
                     ret = false;
                 else if (ipString.Equals("::1"))
-                    ret = false;
-                else if (ipString.Equals("::"))
                     ret = false;
                 else if (ipString.Equals("0.0.0.0"))
                     ret = false;
