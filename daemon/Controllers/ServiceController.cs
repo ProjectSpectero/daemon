@@ -10,7 +10,6 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using ServiceStack;
 using ServiceStack.OrmLite;
-using ServiceStack.Templates;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Statistics;
@@ -72,7 +71,7 @@ namespace Spectero.daemon.Controllers
                 }
 
                 _serviceManager.Process(name, task);
-                _response.Message = Messages.SERVICE_STARTED;
+                _response.Message = _serviceManager.Process(name, task);
                 return Ok(_response);
             }
             throw new EInvalidRequest();

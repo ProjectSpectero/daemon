@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Statistics;
 
 namespace Spectero.daemon.Libraries.Services
@@ -40,32 +41,35 @@ namespace Spectero.daemon.Libraries.Services
         }
 
 
-        public bool Process(string name, string action)
+        public string Process(string name, string action)
         {
             Type type = Utility.GetServiceType(name);
-
             var service = GetService(type);
+            string message = null;
 
             if (service == null)
             {
                 _logger.LogError("NAP: Resolved service was null when processing name -> " + name + ", action -> " + action);
-                return false;
+                return null;
             }                
 
             switch (action.ToLower())
             {
                 case "start":
                     service.Start();
+                    message = Messages.SERVICE_STARTED;
                     break;
                 case "stop":
                     service.Stop();
+                    message = Messages.SERVICE_STOPPED;
                     break;
                 case "restart":
                     service.ReStart();
+                    message = Messages.SERVICE_RESTARTED;
                     break;
             }
 
-            return true;
+            return message;
         }
 
 
