@@ -76,7 +76,7 @@ namespace Spectero.daemon.Controllers
             var user = await Db.SingleByIdAsync<User>(id);
             if (user != null)
             {
-                _response.Result = new User { Id = user.Id, AuthKey = user.AuthKey, Cert = user.Cert, CreatedDate = user.CreatedDate }; // Hide password and certkey
+                _response.Result = user;
                 return Ok(_response);
             }
             else
@@ -86,20 +86,7 @@ namespace Spectero.daemon.Controllers
         [HttpGet("", Name = "GetUsers")]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await Db.SelectAsync<User>();
-            var ret = new List<User>();
-            foreach (var user in users)
-            {
-                // Abstract Password and Certkey
-                ret.Add(new User
-                {
-                    Id = user.Id,
-                    AuthKey = user.AuthKey,
-                    Cert = user.Cert,
-                    CreatedDate = user.CreatedDate
-                });
-            }
-            _response.Result = ret;
+            _response.Result = await Db.SelectAsync<User>();
             return Ok(_response);
         }
 
@@ -175,13 +162,7 @@ namespace Spectero.daemon.Controllers
             if (HasErrors())
                 return BadRequest(_response);
 
-            _response.Result = new User
-            {
-                Id = fetchedUser.Id,
-                AuthKey = fetchedUser.AuthKey,
-                Cert = fetchedUser.Cert,
-                CreatedDate = fetchedUser.CreatedDate
-            };
+            _response.Result = fetchedUser;
 
             return Ok(_response);
         }

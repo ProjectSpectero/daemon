@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
 using ServiceStack.DataAnnotations;
 
 namespace Spectero.daemon.Models
@@ -23,9 +24,12 @@ namespace Spectero.daemon.Models
         public string AuthKey { get; set; }
 
         [ServiceStack.DataAnnotations.Required]
+        [JsonIgnore] // Prevent JSON serialization
         public string Password { get; set; }
 
         public string Cert { get; set; }
+
+        [JsonIgnore] // Prevent JSON serialization
         public string CertKey { get; set; }
 
         [DataType(DataType.Date)]
