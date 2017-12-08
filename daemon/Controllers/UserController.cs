@@ -97,6 +97,12 @@ namespace Spectero.daemon.Controllers
             var user = await Db.SingleByIdAsync<User>(id);
             if (user != null)
             {
+                if (user.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
+                {
+                    _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED);
+                    return StatusCode(403, _response);
+                }
+
                 await Db.DeleteAsync<User>(user);
                 return NoContent();
             }
@@ -125,6 +131,12 @@ namespace Spectero.daemon.Controllers
                     _response.Errors.Add(Errors.MISSING_BODY);
                     _response.Errors.Add(Errors.USER_NOT_FOUND);
                     return BadRequest(_response);
+                }
+
+                if (fetchedUser.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
+                {
+                    _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED);
+                    return StatusCode(403, _response);
                 }
 
                 if (!user.AuthKey.IsNullOrEmpty() && !fetchedUser.AuthKey.Equals(user.AuthKey))
