@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -15,17 +16,33 @@ namespace Spectero.daemon.Models
             SpecteroCloud
         }
 
-        [JsonConverter(typeof(StringEnumConverter))]
-        public SourceTypes Source { get; set; }
+        [EnumAsInt]
+        public enum Role
+        {
+            SuperAdmin,
+            WebApi,
+            HttpProxy,
+            OpenVPN,
+            ShadowSOCKS,
+            SSHTunnel
+        }
+
+ 
 
         [Index]
         [AutoIncrement]
         public long Id { get; set; }
 
+        [JsonConverter(typeof(StringEnumConverter))]
+        public SourceTypes Source { get; set; }
+
         [ServiceStack.DataAnnotations.Required]
         [ServiceStack.DataAnnotations.StringLength(50)]
         [Index(Unique = true)]
         public string AuthKey { get; set; }
+
+        [JsonProperty("roles", ItemConverterType = typeof(StringEnumConverter))]
+        public List<Role> Roles { get; set; }
 
         [ServiceStack.DataAnnotations.Required]
         [JsonIgnore] // Prevent JSON serialization
@@ -36,7 +53,7 @@ namespace Spectero.daemon.Models
         [JsonIgnore] // Prevent JSON serialization
         public string CertKey { get; set; }
 
-        public long SpecteroEngagementId = -1;
+        public long SpecteroEngagementId = 0;
 
         [DataType(DataType.Date)]
         public DateTime CreatedDate{ get; set; }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -131,6 +132,10 @@ namespace Spectero.daemon.Migrations
                 _db.Insert(new User
                 {
                     AuthKey = "spectero",
+                    Roles = new List<User.Role>
+                    {
+                        User.Role.SuperAdmin
+                    },
                     Password = BCrypt.Net.BCrypt.HashPassword(password, (int) viablePasswordCost),
                     Cert = null, // TODO: Fix these when fixing the VPN module
                     CertKey = null,

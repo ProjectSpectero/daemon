@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.IO;
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -48,9 +47,8 @@ namespace Spectero.daemon
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+            // Don't build a premature service provider from IServiceCollection, it only includes the services registered when the provider is built.
             var appConfig = Configuration.GetSection("Daemon");
-            var serviceProvider = services.BuildServiceProvider();
 
             services.Configure<AppConfig>(appConfig);
 
@@ -88,8 +86,7 @@ namespace Spectero.daemon
                         ValidateIssuer = false,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey =
-                            serviceProvider.GetService<ICryptoService>().GetJWTSigningKey()
+                        IssuerSigningKey = services.BuildServiceProvider().GetService<ICryptoService>().GetJWTSigningKey()
                     };
                 });
 
