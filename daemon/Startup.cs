@@ -31,11 +31,9 @@ namespace Spectero.daemon
     public class Startup
     {
         private readonly string _currentDirectory = System.IO.Directory.GetCurrentDirectory();
-        private readonly ILoggerFactory _loggerFactory;
 
-        public Startup(IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public Startup(IHostingEnvironment env)
         {
-            _loggerFactory = loggerFactory;
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", false, true)
