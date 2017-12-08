@@ -36,8 +36,13 @@ namespace Spectero.daemon.Models
         [JsonIgnore] // Prevent JSON serialization
         public string CertKey { get; set; }
 
+        public long SpecteroEngagementId = -1;
+
         [DataType(DataType.Date)]
         public DateTime CreatedDate{ get; set; }
+
+        [DataType(DataType.Date)]
+        public DateTime LastLoginTime { get; set; }
 
         public override string ToString()
         {
