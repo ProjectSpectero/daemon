@@ -49,10 +49,11 @@ namespace Spectero.daemon.Controllers
 
             long userId = -1;
             user.CreatedDate = DateTime.Now;
+            user.Source = Models.User.SourceTypes.Local;
 
             try
             {
-                userId = await Db.InsertAsync<User>(user, selectIdentity: true);
+                userId = await Db.InsertAsync<User>(user, true);
             }
             catch (DbException e)
             {

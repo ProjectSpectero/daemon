@@ -39,20 +39,7 @@ namespace Spectero.daemon.Migrations
         public void Up()
         {
             var instanceId = _identityProvider.GetGuid();
-
-            if (!_db.TableExists<User>())
-            {
-                _logger.LogDebug("Firstrun: Creating Users table");
-                _db.CreateTable<User>();
-            }
-
-
-            if (!_db.TableExists<Statistic>())
-            {
-                _logger.LogDebug("Firstrun: Creating Statistics table");
-                _db.CreateTable<Statistic>();
-            }
-
+            long viablePasswordCost = _config.PasswordCostLowerThreshold;
 
             if (!_db.TableExists<Configuration>())
             {
@@ -72,16 +59,17 @@ namespace Spectero.daemon.Migrations
                     Key = ConfigKeys.HttpConfig,
                     Value = Defaults.HTTP.Value.ToJson()
                 });
-               
+
                 // Password Hashing
                 _logger.LogDebug("Firstrun: Calculating optimal password hashing cost.");
+                viablePasswordCost = AuthUtils.GenerateViableCost(_config.PasswordCostCalculationTestTarget,
+                    _config.PasswordCostCalculationIterations,
+                    _config.PasswordCostTimeThreshold, _config.PasswordCostLowerThreshold);
+                _logger.LogDebug("Firstrun: Determined " + viablePasswordCost + " to be the optimal password hashing cost.");
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.PasswordHashingCost,
-                    Value = AuthUtils.GenerateViableCost(_config.PasswordCostCalculationTestTarget,
-                            _config.PasswordCostCalculationIterations,
-                            _config.PasswordCostTimeThreshold, _config.PasswordCostLowerThreshold)
-                        .ToString()
+                    Value = viablePasswordCost.ToString()
                 });
 
                 // JWT security Key
@@ -100,7 +88,7 @@ namespace Spectero.daemon.Migrations
                 var ca = _cryptoService.CreateCertificateAuthorityCertificate("CN=" + instanceId + ".ca.instance.spectero.io",
                     null, null, caPassword);
                 var serverCertificate = _cryptoService.IssueCertificate("CN=" + instanceId + ".instance.spectero.io",
-                    ca, null, new[] {KeyPurposeID.IdKPServerAuth}, serverPassword);
+                    ca, null, new[] { KeyPurposeID.IdKPServerAuth }, serverPassword);
 
                 _db.Insert(new Configuration
                 {
@@ -135,6 +123,33 @@ namespace Spectero.daemon.Migrations
                 //TODO: Insert sensible OpenVPN defaults into the DB at firstrun
 
             }
+
+            if (!_db.TableExists<User>())
+            {
+                _logger.LogDebug("Firstrun: Creating Users table");
+                var password = PasswordUtils.GeneratePassword(16, 8);
+                _db.CreateTable<User>();
+                _db.Insert(new User
+                {
+                    AuthKey = "spectero",
+                    Password = BCrypt.Net.BCrypt.HashPassword(password, (int) viablePasswordCost),
+                    Cert = null, // TODO: Fix these when fixing the VPN module
+                    CertKey = null,
+                    Source = User.SourceTypes.Local,
+                    CreatedDate = DateTime.Now
+                });
+                _logger.LogInformation("Firstrun: Created initial admin user: spectero, password: " + password);
+            }
+
+
+            if (!_db.TableExists<Statistic>())
+            {
+                _logger.LogDebug("Firstrun: Creating Statistics table");
+                _db.CreateTable<Statistic>();
+            }
+
+
+            
         }
 
         public void Down()

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using ServiceStack.DataAnnotations;
 
 namespace Spectero.daemon.Models
@@ -8,11 +9,14 @@ namespace Spectero.daemon.Models
     public class User : IModel
     {
         [EnumAsInt]
-        public enum Source
+        public enum SourceTypes
         {
             Local,
-            Spectero
+            SpecteroCloud
         }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public SourceTypes Source { get; set; }
 
         [Index]
         [AutoIncrement]
@@ -33,7 +37,7 @@ namespace Spectero.daemon.Models
         public string CertKey { get; set; }
 
         [DataType(DataType.Date)]
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedDate{ get; set; }
 
         public override string ToString()
         {
