@@ -1,9 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.Data;
+using System.IO;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -21,15 +24,18 @@ using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Migrations;
+using Spectero.daemon.Models;
 
 namespace Spectero.daemon
 {
     public class Startup
     {
-        private string _currentDirectory = System.IO.Directory.GetCurrentDirectory();
+        private readonly string _currentDirectory = System.IO.Directory.GetCurrentDirectory();
+        private readonly ILoggerFactory _loggerFactory;
 
-        public Startup(IHostingEnvironment env)
+        public Startup(IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            _loggerFactory = loggerFactory;
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", false, true)
@@ -46,12 +52,14 @@ namespace Spectero.daemon
         {
 
             var appConfig = Configuration.GetSection("Daemon");
+            var serviceProvider = services.BuildServiceProvider();
+
             services.Configure<AppConfig>(appConfig);
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             services.AddSingleton(c =>
-                new OrmLiteConnectionFactory(appConfig["DatabaseFile"], SqliteDialect.Provider).Open()
+                InitializeDbConnection(appConfig["DatabaseFile"], SqliteDialect.Provider)
             );
 
             services.AddSingleton<IStatistician, Statistician>();
@@ -83,7 +91,7 @@ namespace Spectero.daemon
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey =
-                            services.BuildServiceProvider().GetService<ICryptoService>().GetJWTSigningKey()
+                            serviceProvider.GetService<ICryptoService>().GetJWTSigningKey()
                     };
                 });
 
@@ -117,7 +125,7 @@ namespace Spectero.daemon
             }
 
             app.UseDefaultFiles();
-            app.UseStaticFiles(new StaticFileOptions()
+            app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(
                     Path.Combine(_currentDirectory, appConfig["WebRoot"]))
@@ -131,6 +139,46 @@ namespace Spectero.daemon
             app.AddNLogWeb();
 
             migration.Up();
+        }
+
+        private IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)
+        {
+            // Validate that the DB connection can actually be used.
+            // If not, attempt to fix it (for SQLite and corrupt files.)
+            // Other providers not implemented (and are not possibly fixable for us anyway due to 3rd party daemons being involved)
+            OrmLiteConnectionFactory factory = new OrmLiteConnectionFactory(connectionString, provider);
+            IDbConnection databaseContext = null;
+
+            try
+            {
+                databaseContext = factory.Open();
+                databaseContext.TableExists<User>();
+            }
+            catch (SqliteException e)
+            {
+                // Message=SQLite Error 26: 'file is encrypted or is not a database'. most likely.
+                // If we got here, our local database is corrupt.
+                // Why Console.Writeline? Because the logging context is not initialized yet <_<'
+
+                Console.WriteLine("Error: " + e.Message);
+                databaseContext?.Close();
+
+                // Move the corrupt DB file into db.sqlite.corrupt to aid recovery if needed.
+                File.Copy(connectionString, connectionString + ".corrupt");
+
+                // Create a new empty DB file for the schema to be initialized into
+                // Dirty hack to ensure that the file's resource is actually released by the time ORMLite tries to open it
+                using (var resource = File.Create(connectionString))
+                {
+                    Console.WriteLine("Error Recovery: Executing automatic DB schema creation after saving the corrupt DB into db.sqlite.corrupt");
+                }
+
+                databaseContext = factory.Open();
+            }
+
+
+            return databaseContext;
+
         }
     }
 }

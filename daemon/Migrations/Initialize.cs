@@ -11,7 +11,6 @@ using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Identity;
-using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Migrations
