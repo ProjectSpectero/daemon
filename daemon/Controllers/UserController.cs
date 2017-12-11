@@ -31,6 +31,9 @@ namespace Spectero.daemon.Controllers
         [HttpPost("", Name = "CreateUser")]
         public async Task<IActionResult> Create ([FromBody] User user)
         {
+            if (! ModelState.IsValid)
+                _response.Errors.Add(Errors.MISSING_BODY);
+
             try
             {
                 if (!user.Password.IsNullOrEmpty())

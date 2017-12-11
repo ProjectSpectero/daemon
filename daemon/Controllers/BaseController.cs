@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Net;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.HTTP;
+using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Controllers
 {
@@ -41,6 +42,16 @@ namespace Spectero.daemon.Controllers
         protected Claim GetClaim(string type)
         {
             return GetClaims().FirstOrDefault(x => x.Type == type);
+        }
+
+        protected User CurrentUser()
+        {
+            string userIdString = GetClaim(ClaimTypes.UserData)?.Value;
+            if (int.TryParse(userIdString, out var id))
+            {
+                return Db.Single<User>(id);
+            }
+            return null;
         }
     }
 }
