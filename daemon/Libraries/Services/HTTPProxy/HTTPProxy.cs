@@ -73,7 +73,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 }
 
                 _proxyServer.ProxyRealm = "Spectero";
-                _proxyServer.AuthenticateUserFunc += _authenticator.Authenticate;
+                _proxyServer.AuthenticateUserFunc += _authenticator.AuthenticateHttpProxy;
                 _proxyServer.BeforeRequest += OnRequest;
                 _proxyServer.BeforeResponse += OnResponse;
                 _proxyServer.TunnelConnectRequest += OnTunnelConnectRequest;

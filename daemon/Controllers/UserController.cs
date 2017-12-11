@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Models;
 
@@ -21,11 +23,12 @@ namespace Spectero.daemon.Controllers
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class UserController : BaseController
     {
+        private readonly IMemoryCache _cache;
         public UserController(IOptionsSnapshot<AppConfig> appConfig, ILogger<UserController> logger,
-            IDbConnection db)
+            IDbConnection db, IMemoryCache cache)
             : base(appConfig, logger, db)
         {
-
+            _cache = cache;
         }
 
         [HttpPost("", Name = "CreateUser")]
@@ -105,13 +108,12 @@ namespace Spectero.daemon.Controllers
                     _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED);
                     return StatusCode(403, _response);
                 }
-
+                ClearUserFromCacheIfExists(user.AuthKey);
                 await Db.DeleteAsync<User>(user);
                 return NoContent();
             }
             else
                 return NotFound(_response);
-
         }
 
         [HttpPut("", Name = "UpdateUser")]
@@ -180,13 +182,18 @@ namespace Spectero.daemon.Controllers
 
             _response.Result = fetchedUser;
 
+            ClearUserFromCacheIfExists(fetchedUser.AuthKey);
             return Ok(_response);
         }
 
-        // GET
-        public IActionResult Index()
+        // Used to invalidate a cached user if they are deleted / updated
+        private async void ClearUserFromCacheIfExists(string username)
         {
-            return Ok();
+            var key = Utility.GenerateCacheKey(username);
+            if (_cache.Get<User>(key) != null)
+            {
+                _cache.Remove(key);
+            }
         }
     }
 }

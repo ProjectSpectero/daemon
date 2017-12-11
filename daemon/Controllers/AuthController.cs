@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Models;
@@ -23,10 +24,14 @@ namespace Spectero.daemon.Controllers
     public class AuthController : BaseController
     {
         private readonly ICryptoService _cryptoService;
+        private readonly IAuthenticator _authenticator;
+
         public AuthController(IOptionsSnapshot<AppConfig> appConfig, ILogger<AuthController> logger,
-            IDbConnection db, ICryptoService cryptoService)
+            IDbConnection db, ICryptoService cryptoService,
+            IAuthenticator authenticator)
             : base(appConfig, logger, db)
         {
+            _authenticator = authenticator;
             _cryptoService = cryptoService;
         }
 
@@ -41,38 +46,31 @@ namespace Spectero.daemon.Controllers
 
             string username = request.AuthKey;
             string password = request.Password;
+            var user = await _authenticator.Authenticate(username, password, Models.User.Actions.ManageApi);
 
-            var user = await Db.SingleAsync<User>(x => x.AuthKey == username);
-                
-            if (user != null && BCrypt.Net.BCrypt.Verify(password, user.Password))
+            if (user != null)
             {
-                if (! user.Can(Models.User.Actions.ManageApi))
-                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
-
-                if (! HasErrors())
+                var claims = new[]
                 {
-                    var claims = new[]
-                    {
-                        new Claim(ClaimTypes.UserData, user.Id.ToString()),
-                        new Claim(ClaimTypes.Name, user.AuthKey)
-                        // Todo: Add roles
-                    };
-                    var key = _cryptoService.GetJWTSigningKey();
-                    var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Hardcoded alg for now, perhaps allow changing later
-                    var token = new JwtSecurityToken
-                    (
-                        // Can't issue aud/iss since we have no idea what the accessing URL will be.
-                        // This is not a typical webapp with static `Host`
-                        claims: claims,
-                        expires: DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0 ? AppConfig.JWTTokenExpiryInMinutes : 60),
-                        signingCredentials: credentials
-                    );
-                    _response.Message = Messages.JWT_TOKEN_ISSUED;
-                    _response.Result = new JwtSecurityTokenHandler().WriteToken(token);
-                    return Ok(_response);
-                }               
+                    new Claim(ClaimTypes.UserData, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.AuthKey)
+                    // Todo: Add roles
+                };
+                var key = _cryptoService.GetJWTSigningKey();
+                var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Hardcoded alg for now, perhaps allow changing later
+                var token = new JwtSecurityToken
+                (
+                    // Can't issue aud/iss since we have no idea what the accessing URL will be.
+                    // This is not a typical webapp with static `Host`
+                    claims: claims,
+                    expires: DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0 ? AppConfig.JWTTokenExpiryInMinutes : 60),
+                    signingCredentials: credentials
+                );
+                _response.Message = Messages.JWT_TOKEN_ISSUED;
+                _response.Result = new JwtSecurityTokenHandler().WriteToken(token);
+                return Ok(_response);
             }
-
+                
             _response.Errors.Add(Errors.AUTHENTICATION_FAILED); // Won't disclose why it failed, for that is a security risk
             return StatusCode(403, _response);
         }

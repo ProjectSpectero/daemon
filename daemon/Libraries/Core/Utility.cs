@@ -148,5 +148,10 @@ namespace Spectero.daemon.Libraries.Core
             }
             return ret;
         }
+
+        public static string GenerateCacheKey(string username)
+        {
+            return "auth.user." + username;
+        }
     }
 }

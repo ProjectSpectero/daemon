@@ -28,11 +28,11 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
             _cache = cache;
         }
 
-        public async Task<bool> Authenticate(string username, string password)
+        public async Task<User> Authenticate(string username, string password, User.Actions action)
         {
             _logger.LogDebug("UPA: Attempting to verify auth for " + username);
 
-            var user = _cache.Get<User>(GenerateCacheKey(username));
+            var user = _cache.Get<User>(Utility.GenerateCacheKey(username));
 
             if (user == null)
             {
@@ -40,24 +40,25 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                 var dbQuery = await _db.SelectAsync<User>(x => x.AuthKey == username);
                 user = dbQuery.FirstOrDefault();
                 if (user != null)
-                    _cache.Set(GenerateCacheKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
+                    _cache.Set(Utility.GenerateCacheKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
             }
 
             if (user != null)
             {
                 _logger.LogDebug("UPA: User " + username + " was found, executing auth flow.");
-                var ret = BCrypt.Net.BCrypt.Verify(password, user.Password);
-                _logger.LogDebug("UPA: Auth Backend said " + ret);
-                return ret;
+                var passwordVerified = BCrypt.Net.BCrypt.Verify(password, user.Password);
+                _logger.LogDebug("UPA: Password verification -> " + passwordVerified);
+                if (passwordVerified && user.Can(action))
+                    return user;
+                _logger.LogDebug("UPA: User can not perform " + action.ToString());
             }
-
             _logger.LogDebug("UPA: Couldn't find an user named " + username);
-            return false;
+            return null;
         }
 
-        private string GenerateCacheKey(string username)
+        public async Task<bool> AuthenticateHttpProxy(string username, string password)
         {
-            return "auth.user." + username;
+            return await Authenticate(username, password, User.Actions.ConnectToHttpProxy) != null;
         }
     }
 }
