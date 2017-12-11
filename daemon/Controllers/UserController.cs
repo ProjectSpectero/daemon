@@ -187,7 +187,7 @@ namespace Spectero.daemon.Controllers
         }
 
         // Used to invalidate a cached user if they are deleted / updated
-        private async void ClearUserFromCacheIfExists(string username)
+        private void ClearUserFromCacheIfExists(string username)
         {
             var key = Utility.GenerateCacheKey(username);
             if (_cache.Get<User>(key) != null)
