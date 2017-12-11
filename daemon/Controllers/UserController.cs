@@ -120,7 +120,7 @@ namespace Spectero.daemon.Controllers
                     _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED);
 
                 // Prevent deletion of SuperAdmins if you aren't one
-                if (user.HasRole(Models.User.Role.SuperAdmin) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                if (user.HasRole(Models.User.Role.SuperAdmin) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
                     _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
 
                 // Prevent deletion of WebApi users if you aren't a SuperAdmin
@@ -135,7 +135,7 @@ namespace Spectero.daemon.Controllers
                     return StatusCode(403, _response);
 
                 ClearUserFromCacheIfExists(user.AuthKey);
-                await Db.DeleteAsync<User>(user);
+                await Db.DeleteByIdAsync<User>(user.Id);
                 return NoContent();
             }
             else
