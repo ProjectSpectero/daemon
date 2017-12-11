@@ -88,7 +88,7 @@ namespace Spectero.daemon.Models
             return "Id -> " + Id + ", AuthKey -> " + AuthKey + ", Password -> " + Password + ", Created At -> " + CreatedDate;
         }
 
-        private bool HasRole(Role role)
+        internal bool HasRole(Role role)
         {
             if (Roles == null || Roles.Count == 0)
                 return false;
@@ -99,7 +99,7 @@ namespace Spectero.daemon.Models
         /*
          * Poor man's RBAC, our needs are not big enough to use a proper roles framework.
          */
-        public bool Can(Action action)
+        internal bool Can(Action action)
         {
             if (HasRole(Role.SuperAdmin))
                 return true;

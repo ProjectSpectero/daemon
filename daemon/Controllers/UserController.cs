@@ -49,6 +49,18 @@ namespace Spectero.daemon.Controllers
                 Logger.LogError(e.Message);
                 _response.Errors.Add(Errors.MISSING_BODY);
             }
+
+            if (user.HasRole(Models.User.Role.SuperAdmin) ||
+                user.HasRole(Models.User.Role.WebApi))
+            {
+                // SuperAdmin or WebApi has been requested, verify that the current user is a superadmin too.
+                if (! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                {
+                    // Privilege escalation attempt, shut it down.
+                    _response.Errors.Add(Errors.ROLE_ESCALATION_FAILED);
+                    return StatusCode(403, _response);
+                }
+            }
           
             if (HasErrors())
                 return BadRequest(_response);
@@ -103,11 +115,25 @@ namespace Spectero.daemon.Controllers
             var user = await Db.SingleByIdAsync<User>(id);
             if (user != null)
             {
+                // Prevent deletion of cloud users
                 if (user.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
-                {
                     _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED);
+
+                // Prevent deletion of SuperAdmins if you aren't one
+                if (user.HasRole(Models.User.Role.SuperAdmin) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
+
+                // Prevent deletion of WebApi users if you aren't a SuperAdmin
+                if (user.HasRole(Models.User.Role.WebApi) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
+
+                // Prevent removing own account
+                if (user.AuthKey.Equals(CurrentUser().AuthKey))
+                    _response.Errors.Add(Errors.USER_CANNOT_REMOVE_SELF);
+
+                if (HasErrors())
                     return StatusCode(403, _response);
-                }
+
                 ClearUserFromCacheIfExists(user.AuthKey);
                 await Db.DeleteAsync<User>(user);
                 return NoContent();
