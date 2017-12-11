@@ -28,7 +28,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
             _cache = cache;
         }
 
-        public async Task<User> Authenticate(string username, string password, User.Actions action)
+        public async Task<User> Authenticate(string username, string password, User.Action action)
         {
             _logger.LogDebug("UPA: Attempting to verify auth for " + username);
 
@@ -58,7 +58,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
         public async Task<bool> AuthenticateHttpProxy(string username, string password)
         {
-            return await Authenticate(username, password, User.Actions.ConnectToHTTPProxy) != null;
+            return await Authenticate(username, password, User.Action.ConnectToHTTPProxy) != null;
         }
     }
 }

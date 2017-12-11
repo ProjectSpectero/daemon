@@ -5,7 +5,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 {
     public interface IAuthenticator
     {
-        Task<User> Authenticate(string username, string password, User.Actions action);
+        Task<User> Authenticate(string username, string password, User.Action action);
         Task<bool> AuthenticateHttpProxy(string username, string password);
     }
 }

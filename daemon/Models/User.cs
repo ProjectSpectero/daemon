@@ -27,7 +27,17 @@ namespace Spectero.daemon.Models
             SSHTunnel
         }
 
- 
+        public enum Action
+        {
+            ManageDaemon,
+            ManageApi,
+            ConnectToHTTPProxy,
+            ConnectToOpenVPN,
+            ConnectToShadowSOCKS,
+            ConnectToSSHTunnel
+        }
+
+
 
         [Index]
         [AutoIncrement]
@@ -44,18 +54,26 @@ namespace Spectero.daemon.Models
         [JsonProperty("roles", ItemConverterType = typeof(StringEnumConverter))]
         public List<Role> Roles { get; set; }
 
-        [JsonProperty("password")]
-        [Ignore]
-        public string PasswordSetter {  set => Password = value; }
 
         [ServiceStack.DataAnnotations.Required]
         [JsonIgnore] // Prevent JSON serialization
         public string Password { get; set; }
 
+        [JsonProperty("password")]
+        [Ignore]
+        public string PasswordSetter { set => Password = value; }
+
         public string Cert { get; set; }
 
         [JsonIgnore] // Prevent JSON serialization
         public string CertKey { get; set; }
+
+        [JsonProperty("certKey")]
+        [Ignore]
+        public string CertKeySetter
+        {
+            set => CertKey = value;
+        }
 
         public long SpecteroEngagementId = 0;
 
@@ -70,16 +88,6 @@ namespace Spectero.daemon.Models
             return "Id -> " + Id + ", AuthKey -> " + AuthKey + ", Password -> " + Password + ", Created At -> " + CreatedDate;
         }
 
-        public enum Actions
-        {
-            ManageDaemon,
-            ManageApi,
-            ConnectToHTTPProxy,
-            ConnectToOpenVPN,
-            ConnectToShadowSOCKS,
-            ConnectToSSHTunnel
-        }
-
         private bool HasRole(Role role)
         {
             if (Roles == null || Roles.Count == 0)
@@ -91,28 +99,28 @@ namespace Spectero.daemon.Models
         /*
          * Poor man's RBAC, our needs are not big enough to use a proper roles framework.
          */
-        public bool Can(Actions action)
+        public bool Can(Action action)
         {
             if (HasRole(Role.SuperAdmin))
                 return true;
 
             if (HasRole(Role.WebApi))
             {
-                if (action != Actions.ManageDaemon)
+                if (action != Action.ManageDaemon)
                     return true;
                 return false;
             }
 
-            if (HasRole(Role.HTTPProxy) && action.Equals(Actions.ConnectToHTTPProxy))
+            if (HasRole(Role.HTTPProxy) && action.Equals(Action.ConnectToHTTPProxy))
                 return true;
 
-            if (HasRole(Role.OpenVPN) && action.Equals(Actions.ConnectToOpenVPN))
+            if (HasRole(Role.OpenVPN) && action.Equals(Action.ConnectToOpenVPN))
                 return true;
 
-            if (HasRole(Role.ShadowSOCKS) && action.Equals(Actions.ConnectToShadowSOCKS))
+            if (HasRole(Role.ShadowSOCKS) && action.Equals(Action.ConnectToShadowSOCKS))
                 return true;
 
-            if (HasRole(Role.SSHTunnel) && action.Equals(Actions.ConnectToSSHTunnel))
+            if (HasRole(Role.SSHTunnel) && action.Equals(Action.ConnectToSSHTunnel))
                 return true;
 
             return false;

@@ -46,7 +46,7 @@ namespace Spectero.daemon.Controllers
 
             string username = request.AuthKey;
             string password = request.Password;
-            var user = await _authenticator.Authenticate(username, password, Models.User.Actions.ManageApi);
+            var user = await _authenticator.Authenticate(username, password, Models.User.Action.ManageApi);
 
             if (user != null)
             {
