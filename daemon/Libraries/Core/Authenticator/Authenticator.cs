@@ -58,7 +58,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
         public async Task<bool> AuthenticateHttpProxy(string username, string password)
         {
-            return await Authenticate(username, password, User.Actions.ConnectToHttpProxy) != null;
+            return await Authenticate(username, password, User.Actions.ConnectToHTTPProxy) != null;
         }
     }
 }

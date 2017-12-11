@@ -21,7 +21,7 @@ namespace Spectero.daemon.Models
         {
             SuperAdmin,
             WebApi,
-            HttpProxy,
+            HTTPProxy,
             OpenVPN,
             ShadowSOCKS,
             SSHTunnel
@@ -43,6 +43,10 @@ namespace Spectero.daemon.Models
 
         [JsonProperty("roles", ItemConverterType = typeof(StringEnumConverter))]
         public List<Role> Roles { get; set; }
+
+        [JsonProperty("password")]
+        [Ignore]
+        public string PasswordSetter {  set => Password = value; }
 
         [ServiceStack.DataAnnotations.Required]
         [JsonIgnore] // Prevent JSON serialization
@@ -70,7 +74,7 @@ namespace Spectero.daemon.Models
         {
             ManageDaemon,
             ManageApi,
-            ConnectToHttpProxy,
+            ConnectToHTTPProxy,
             ConnectToOpenVPN,
             ConnectToShadowSOCKS,
             ConnectToSSHTunnel
@@ -99,7 +103,7 @@ namespace Spectero.daemon.Models
                 return false;
             }
 
-            if (HasRole(Role.HttpProxy) && action.Equals(Actions.ConnectToHttpProxy))
+            if (HasRole(Role.HTTPProxy) && action.Equals(Actions.ConnectToHTTPProxy))
                 return true;
 
             if (HasRole(Role.OpenVPN) && action.Equals(Actions.ConnectToOpenVPN))
