@@ -53,10 +53,8 @@ namespace Spectero.daemon.Controllers
             if (HasErrors())
                 return BadRequest(_response);
 
-            var currentUser = CurrentUser();
-
             if ((user.HasRole(Models.User.Role.SuperAdmin) ||
-                 user.HasRole(Models.User.Role.WebApi)) && ! currentUser.HasRole(Models.User.Role.SuperAdmin))
+                 user.HasRole(Models.User.Role.WebApi)) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
             {
                 // Privilege escalation attempt, shut it down.
                 _response.Errors.Add(Errors.ROLE_ESCALATION_FAILED);
@@ -114,21 +112,20 @@ namespace Spectero.daemon.Controllers
             var user = await Db.SingleByIdAsync<User>(id);
             if (user != null)
             {
-                var currentUser = CurrentUser();
                 // Prevent deletion of cloud users
                 if (user.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
                     _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED);
 
                 // Prevent deletion of SuperAdmins if you aren't one
-                if (user.HasRole(Models.User.Role.SuperAdmin) && ! currentUser.HasRole(Models.User.Role.SuperAdmin))
+                if (user.HasRole(Models.User.Role.SuperAdmin) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
                     _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
 
                 // Prevent deletion of WebApi users if you aren't a SuperAdmin
-                if (user.HasRole(Models.User.Role.WebApi) && ! currentUser.HasRole(Models.User.Role.SuperAdmin))
+                if (user.HasRole(Models.User.Role.WebApi) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
                     _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
 
                 // Prevent removing own account
-                if (user.AuthKey.Equals(currentUser.AuthKey))
+                if (user.AuthKey.Equals(CurrentUser().AuthKey))
                     _response.Errors.Add(Errors.USER_CANNOT_REMOVE_SELF);
 
                 if (HasErrors())
@@ -161,8 +158,6 @@ namespace Spectero.daemon.Controllers
                     _response.Errors.Add(Errors.MISSING_BODY);
                     return BadRequest(_response);
                 }
-
-                var currentUser = CurrentUser();
                    
                 if (fetchedUser.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
                 {

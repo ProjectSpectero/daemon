@@ -18,6 +18,7 @@ namespace Spectero.daemon.Controllers
         protected readonly IDbConnection Db;
         protected readonly ILogger<BaseController> Logger;
         protected readonly APIResponse _response;
+        private User _currentUser;
 
         public BaseController(IOptionsSnapshot<AppConfig> appConfig, ILogger<BaseController> logger,
             IDbConnection db)
@@ -46,10 +47,14 @@ namespace Spectero.daemon.Controllers
 
         protected User CurrentUser()
         {
+            if (_currentUser != null)
+                return _currentUser;
+
             string userIdString = GetClaim(ClaimTypes.UserData)?.Value;
             if (int.TryParse(userIdString, out var id))
             {
-                return Db.Single<User>(id);
+                _currentUser = Db.SingleById<User>(id);
+                return _currentUser;
             }
             return null;
         }
