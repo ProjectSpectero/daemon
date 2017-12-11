@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -142,33 +141,40 @@ namespace Spectero.daemon.Controllers
                 return NotFound(_response);
         }
 
-        [HttpPut("", Name = "UpdateUser")]
-        public async Task<IActionResult> UpdateUser([FromBody] User user)
+        [HttpPut("{id}", Name = "UpdateUser")]
+        public async Task<IActionResult> UpdateUser(long id, [FromBody] User user)
         {
-            long Id;
-            string AuthKey;
-            string Password;
-            string Cert;
-            string CertKey;
-
             User fetchedUser = null;
-
             try
             {
-                fetchedUser = await Db.SingleByIdAsync<User>(user.Id);
+                fetchedUser = await Db.SingleByIdAsync<User>(id);
 
                 if (fetchedUser == null)
                 {
-                    _response.Errors.Add(Errors.MISSING_BODY);
                     _response.Errors.Add(Errors.USER_NOT_FOUND);
-                    return BadRequest(_response);
+                    return StatusCode(404, _response);
                 }
 
+                if (! ModelState.IsValid)
+                {
+                    _response.Errors.Add(Errors.MISSING_BODY);
+                    return BadRequest(_response);
+                }
+                   
                 if (fetchedUser.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
                 {
                     _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED);
                     return StatusCode(403, _response);
                 }
+
+                // Not allowed to edit a superadmin if you aren't one
+                if (fetchedUser.HasRole(Models.User.Role.SuperAdmin) &&
+                    ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                {
+                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
+                    return StatusCode(403, _response);
+                }
+                   
 
                 if (!user.AuthKey.IsNullOrEmpty() && !fetchedUser.AuthKey.Equals(user.AuthKey))
                     fetchedUser.AuthKey = user.AuthKey;
@@ -183,6 +189,28 @@ namespace Spectero.daemon.Controllers
 
                 if (!user.Cert.IsNullOrEmpty() && !fetchedUser.Cert.Equals(user.Cert))
                     fetchedUser.Cert = user.Cert;
+
+                if (! user.Roles.SequenceEqual(fetchedUser.Roles))
+                {
+                    // No need to care about roles unless they're changing
+                    if (user.HasRole(Models.User.Role.WebApi))
+                    {
+                        // Check if it existed previously, or if it's being granted
+                        if (! fetchedUser.HasRole(Models.User.Role.WebApi))
+                        {
+                            // Didn't exist before, see if API user is SuperAdmin
+                            if (!CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                            {
+                                // Only SuperAdmins can grant WebApi or SuperAdmin
+                                _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
+                                return StatusCode(403, _response);
+                            }
+                        }
+                    }
+
+                    // After verifying, assign the new roles for DB commit
+                    fetchedUser.Roles = user.Roles;
+                }
             }
             catch (NullReferenceException e)
             {
