@@ -31,12 +31,10 @@
     <PackageReference Include="RazorLight" Version="2.0.0-alpha3" />
     <PackageReference Include="ServiceStack.OrmLite.Sqlite.Core" Version="1.0.44" />
     <PackageReference Include="ServiceStack.Text.Core" Version="1.0.44" />
+    <PackageReference Include="Titanium.Web.Proxy" Version="3.0.207-beta" />
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\proxy\Titanium.Web.Proxy\Titanium.Web.Proxy.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="appsettings.json">

@@ -81,7 +81,7 @@ namespace Spectero.daemon.Models
         public DateTime CreatedDate{ get; set; }
 
         [DataType(DataType.Date)]
-        public DateTime LastLoginTime { get; set; }
+        public DateTime LastLoginDate { get; set; }
 
         public override string ToString()
         {
