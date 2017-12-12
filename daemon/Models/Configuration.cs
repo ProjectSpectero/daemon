@@ -2,7 +2,7 @@
 
 namespace Spectero.daemon.Models
 {
-    public class Configuration : IModel
+    public class Configuration : BaseModel
     {
         [EnumAsInt]
         public enum Type
@@ -10,10 +10,6 @@ namespace Spectero.daemon.Models
             Generic,
             Service
         }
-
-        [Index]
-        [AutoIncrement]
-        public int Id { get; set; }
 
         public string Key { get; set; }
         public string Value { get; set; }

@@ -141,7 +141,20 @@ namespace Spectero.daemon
             // Validate that the DB connection can actually be used.
             // If not, attempt to fix it (for SQLite and corrupt files.)
             // Other providers not implemented (and are not possibly fixable for us anyway due to 3rd party daemons being involved)
+            OrmLiteConfig.InsertFilter = (cmd, row) =>
+            {
+                if (row is BaseModel model)
+                    model.CreatedDate = model.UpdatedDate = DateTime.UtcNow;
+            };
+
+            OrmLiteConfig.UpdateFilter = (cmd, row) =>
+            {
+                if (row is BaseModel model)
+                    model.UpdatedDate = DateTime.UtcNow;
+            };
+
             OrmLiteConnectionFactory factory = new OrmLiteConnectionFactory(connectionString, provider);
+            
             IDbConnection databaseContext = null;
 
             try
@@ -170,7 +183,6 @@ namespace Spectero.daemon
 
                 databaseContext = factory.Open();
             }
-
 
             return databaseContext;
 

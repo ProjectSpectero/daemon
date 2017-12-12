@@ -50,24 +50,32 @@ namespace Spectero.daemon.Libraries.Services
             if (service == null)
             {
                 _logger.LogError("NAP: Resolved service was null when processing name -> " + name + ", action -> " + action);
-                return null;
-            }                
-
-            switch (action.ToLower())
-            {
-                case "start":
-                    service.Start();
-                    message = Messages.SERVICE_STARTED;
-                    break;
-                case "stop":
-                    service.Stop();
-                    message = Messages.SERVICE_STOPPED;
-                    break;
-                case "restart":
-                    service.ReStart();
-                    message = Messages.SERVICE_RESTARTED;
-                    break;
+                return Messages.ACTION_FAILED;
             }
+
+            try
+            {
+                switch (action.ToLower())
+                {
+                    case "start":
+                        service.Start();
+                        message = Messages.SERVICE_STARTED;
+                        break;
+                    case "stop":
+                        service.Stop();
+                        message = Messages.SERVICE_STOPPED;
+                        break;
+                    case "restart":
+                        service.ReStart();
+                        message = Messages.SERVICE_RESTARTED;
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+                message = Messages.ACTION_FAILED;
+            }
+
 
             return message;
         }

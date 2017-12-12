@@ -7,7 +7,7 @@ using ServiceStack.DataAnnotations;
 
 namespace Spectero.daemon.Models
 {
-    public class User : IModel
+    public class User : BaseModel
     {
         [EnumAsInt]
         public enum SourceTypes
@@ -36,12 +36,6 @@ namespace Spectero.daemon.Models
             ConnectToShadowSOCKS,
             ConnectToSSHTunnel
         }
-
-
-
-        [Index]
-        [AutoIncrement]
-        public long Id { get; set; }
 
         [JsonConverter(typeof(StringEnumConverter))]
         public SourceTypes Source { get; set; }
@@ -76,9 +70,6 @@ namespace Spectero.daemon.Models
         }
 
         public long SpecteroEngagementId = 0;
-
-        [DataType(DataType.Date)]
-        public DateTime CreatedDate{ get; set; }
 
         [DataType(DataType.Date)]
         public DateTime LastLoginDate { get; set; }

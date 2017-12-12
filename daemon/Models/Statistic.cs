@@ -4,7 +4,7 @@ using Spectero.daemon.Libraries.Core.Statistics;
 
 namespace Spectero.daemon.Models
 {
-    public class Statistic : IModel
+    public class Statistic : BaseModel
     {
         [EnumAsInt]
         public enum SampleSize
@@ -24,12 +24,8 @@ namespace Spectero.daemon.Models
             SSH
         }
 
-        [Index]
-        [AutoIncrement]
-        public long Id { get; set; }
 
         public long Bytes { get; set; }
-        public DateTime CreationTime { get; set; }
 
         //Todo: check if this actually gets serialized properly
         public DataFlowDirections Directions { get; set; }

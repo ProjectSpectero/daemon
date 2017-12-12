@@ -7,6 +7,8 @@
         public const string SERVICE_STOPPED = "SERVICE_STOPPED";
         public const string SERVICE_RESTARTED = "SERVICE_RESTARTED";
 
+        public const string ACTION_FAILED = "ACTION_FAILED";
+
         public const string SERVICE_RESTART_NEEDED = "SERVICE_RESTART_NEEDED";
         public const string JWT_TOKEN_ISSUED = "JWT_TOKEN_ISSUED";
     }
