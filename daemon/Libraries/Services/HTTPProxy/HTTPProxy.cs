@@ -30,9 +30,11 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly IEnumerable<IPNetwork> _localNetworks;
         private readonly IEnumerable<IPAddress> _localAddresses;
         private readonly ILogger<ServiceManager> _logger;
-        private readonly ProxyServer _proxyServer = new ProxyServer();
         private readonly IStatistician _statistician;
+        private readonly ProxyServer _proxyServer = new ProxyServer();
+
         private HTTPConfig _proxyConfig;
+        
 
         private ServiceState State = ServiceState.Halted;
 
@@ -52,22 +54,34 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         public HTTPProxy()
         {
+
         }
 
         public void Start(IServiceConfig serviceConfig = null)
         {
             LogState("Start");
+
             if (State == ServiceState.Halted)
             {
                 if (serviceConfig != null)
                     _proxyConfig = (HTTPConfig) serviceConfig;
 
+                // Remove all old endpoints, if they exist, prior to startup.
+                // Everything else will be reset anyway.
+                foreach (var endPoint in _proxyServer.ProxyEndPoints)
+                {
+                    _proxyServer.RemoveEndPoint(endPoint);
+                }
+
                 //Loop through and listen on all defined IP <-> port pairs
                 foreach (var listener in _proxyConfig.listeners)
                 {
                     var endpoint = new ExplicitProxyEndPoint(IPAddress.Parse(listener.Item1), listener.Item2,
-                        false);
-                    endpoint.ExcludedHttpsHostNameRegex = new List<string> { ".*" };
+                        false)
+                    {
+                        ExcludedHttpsHostNameRegex = new List<string> {".*"}
+                    };
+
                     _proxyServer.AddEndPoint(endpoint);
                     _logger.LogDebug("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
                 }

@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
@@ -73,7 +76,39 @@ namespace Spectero.daemon.Libraries.Services
             }
             catch (Exception e)
             {
+                var errorBuilder = new StringBuilder(String.Format("Processing {0} failed on {1}.{2}", action, name, Environment.NewLine));
+                bool alreadyLogged = false;
+
+                if (type == typeof(HTTPProxy.HTTPProxy))
+                {
+                    // We possibly have some custom data we can include, thus special handling.
+                    if (e.Data.Count > 0)
+                    {
+                        if (e.InnerException is SocketException)
+                            errorBuilder.AppendLine(
+                                "listen() failed at one or more of the specified endpoints. Details: ");
+
+                        var customErrorMessage = new StringBuilder("");
+
+                        foreach (var customData in e.Data)
+                        {
+                            // Not sure I understand why a null entry is even possible, but SolarLint says so, it must be true (!)
+                            if (customData == null) continue;
+
+                            var localData = (DictionaryEntry) customData;
+                            customErrorMessage.Append(localData.Key + " " + localData.Value);
+                        }
+                        errorBuilder.AppendLine(customErrorMessage.ToString());
+                    }
+
+                    _logger.LogError(e, errorBuilder.ToString());
+                    alreadyLogged = true;
+                }
+
                 message = Messages.ACTION_FAILED;
+
+                if (! alreadyLogged)
+                    _logger.LogError(e, message);
             }
 
 
