@@ -68,7 +68,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
                 // Remove all old endpoints, if they exist, prior to startup.
                 // Everything else will be reset anyway.
-                foreach (var endPoint in _proxyServer.ProxyEndPoints)
+                var existingEndPoints = _proxyServer.ProxyEndPoints.ToArray();
+                foreach (var endPoint in existingEndPoints)
                 {
                     _proxyServer.RemoveEndPoint(endPoint);
                 }

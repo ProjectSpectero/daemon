@@ -96,7 +96,7 @@ namespace Spectero.daemon.Libraries.Services
                             if (customData == null) continue;
 
                             var localData = (DictionaryEntry) customData;
-                            customErrorMessage.Append(localData.Key + " " + localData.Value);
+                            customErrorMessage.Append(localData.Key + " " + localData.Value + " ");
                         }
                         errorBuilder.AppendLine(customErrorMessage.ToString());
                     }
