@@ -115,9 +115,9 @@ namespace Spectero.daemon.Controllers
                 config.bannedDomains != currentConfig.bannedDomains)
             {
                 // A difference was found between the running config and the candidate config
-                // If listener config changed, the service needs restarting as it can't be adjusted without the sockets being re-initialized.
-                var restartNeeded = ! config.listeners.SequenceEqual(currentConfig.listeners);          
+                // If listener config changed AND service is running, the service needs restarting as it can't be adjusted without the sockets being re-initialized.         
                 var service = _serviceManager.GetService(typeof(HTTPProxy));
+                var restartNeeded = !config.listeners.SequenceEqual(currentConfig.listeners) && service.GetState() == ServiceState.Running;
 
                 service.SetConfig(config, restartNeeded); //Update the running config, listener config will not apply until a full system restart is made. There's a bug here.
 
