@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Net;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -16,9 +15,7 @@ using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
-using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Spectero.daemon.Models;
-using IService = Spectero.daemon.Libraries.Services.IService;
 
 namespace Spectero.daemon.Libraries.Config
 {
@@ -43,9 +40,9 @@ namespace Spectero.daemon.Libraries.Config
             _identity = identityProvider;
         }
 
-        public IServiceConfig Generate(Type type)
+        public IEnumerable<IServiceConfig> Generate(Type type)
         {
-            var processors = new Dictionary<Type, Func<IServiceConfig>>
+            var processors = new Dictionary<Type, Func<IEnumerable<IServiceConfig>>>
             {
                 {
                     typeof(HTTPProxy), delegate
@@ -61,7 +58,7 @@ namespace Spectero.daemon.Libraries.Config
                             serviceConfig = Defaults.HTTP.Value;
                         }
 
-                        return serviceConfig;
+                        return new List<IServiceConfig>{ serviceConfig };
                     }
                 },
                 {
@@ -156,7 +153,7 @@ namespace Spectero.daemon.Libraries.Config
                         }
 
                         // TODO: Expand API to allow exporting an IEnurable<IServiceConfig> instead
-                        return configs.First();
+                        return configs;
                     }
                 }
             };

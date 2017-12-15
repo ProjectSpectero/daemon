@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net;
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
@@ -17,7 +19,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly IEnumerable<IPAddress> _localAddresses;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
-        private OpenVPNConfig _vpnConfig;
+        private IEnumerable<OpenVPNConfig> _vpnConfig;
         private readonly ServiceState State = ServiceState.Halted;
 
         public OpenVPN()
@@ -38,23 +40,24 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _localAddresses = localAddresses;
         }
 
-        public void Start(IServiceConfig serviceConfig = null)
+        public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
         {
-            _vpnConfig = (OpenVPNConfig) serviceConfig;
+            _vpnConfig = serviceConfig as List<OpenVPNConfig>;
         }
 
-        public void ReStart(IServiceConfig serviceConfig = null)
+        public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
         {
-            _vpnConfig = (OpenVPNConfig) serviceConfig;
+            _vpnConfig = serviceConfig as List<OpenVPNConfig>;
         }
 
-        public void Reload(IServiceConfig serviceConfig)
+        public void Reload(IEnumerable<IServiceConfig> serviceConfig = null)
         {
-            _vpnConfig = (OpenVPNConfig) serviceConfig;
+            _vpnConfig = serviceConfig as List<OpenVPNConfig>;
         }
 
         public void Stop()
         {
+            throw new NotSupportedException();
         }
 
         public ServiceState GetState()
@@ -64,16 +67,17 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         public void LogState(string caller)
         {
+            throw new NotSupportedException();
         }
 
-        public IServiceConfig GetConfig()
+        public IEnumerable<IServiceConfig> GetConfig()
         {
             return _vpnConfig;
         }
 
-        public void SetConfig(IServiceConfig config, bool restartNeeded = false)
+        public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
         {
-            _vpnConfig = (OpenVPNConfig) config;
+            _vpnConfig = config as List<OpenVPNConfig>;
         }
     }
 }

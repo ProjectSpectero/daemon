@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.Config
 {
     public interface IServiceConfigManager
     {
-        IServiceConfig Generate(Type type);
+        IEnumerable<IServiceConfig> Generate(Type type);
     }
 }

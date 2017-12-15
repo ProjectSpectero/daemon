@@ -19,7 +19,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly string serviceName = "OpenVPN";
 
         public bool AllowMultipleConnectionsFromSameClient;
+
+        [JsonIgnore]
         public X509Certificate2 CACert;
+        [JsonIgnore]
+        public X509Certificate2 ServerCert;
+
+        public string PKCS12Certificate;
+
         /*
          * string = IP address
          * int = port
@@ -38,8 +45,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         public List<RedirectGatewayOptions> redirectGateway;
 
-        public X509Certificate2 ServerCert;
-        public string PKCS12Certificate;
+        
 
         /*
          * --push option

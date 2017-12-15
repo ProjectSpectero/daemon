@@ -1,14 +1,16 @@
-﻿namespace Spectero.daemon.Libraries.Services
+﻿using System.Collections.Generic;
+
+namespace Spectero.daemon.Libraries.Services
 {
     public interface IService
     {
-        void Start(IServiceConfig serviceConfig = null);
-        void ReStart(IServiceConfig serviceConfig = null);
+        void Start(IEnumerable<IServiceConfig> serviceConfig = null);
+        void ReStart(IEnumerable<IServiceConfig> serviceConfig = null);
         void Stop();
-        void Reload(IServiceConfig serviceConfig = null);
+        void Reload(IEnumerable<IServiceConfig> serviceConfig = null);
         void LogState(string caller);
         ServiceState GetState();
-        IServiceConfig GetConfig();
-        void SetConfig(IServiceConfig config, bool restartNeeded = false);
+        IEnumerable<IServiceConfig> GetConfig();
+        void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false);
     }
 }

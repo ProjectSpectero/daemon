@@ -57,14 +57,21 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         }
 
-        public void Start(IServiceConfig serviceConfig = null)
+        public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
         {
             LogState("Start");
 
             if (State == ServiceState.Halted)
             {
                 if (serviceConfig != null)
-                    _proxyConfig = (HTTPConfig) serviceConfig;
+                    _proxyConfig = (HTTPConfig) serviceConfig.First();
+
+                // Stop proxy server if it's somehow internally running due to a mismatched state (due to errors on a previous startup)
+                if (_proxyServer.ProxyRunning)
+                {
+                    _logger.LogWarning("HTTPProxy (titanium)'s state and ours do not match. This is not supposed to happen! Attempting to fix...");
+                    _proxyServer.Stop();
+                }
 
                 // Remove all old endpoints, if they exist, prior to startup.
                 // Everything else will be reset anyway.
@@ -73,7 +80,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 {
                     _proxyServer.RemoveEndPoint(endPoint);
                 }
-
+                   
                 //Loop through and listen on all defined IP <-> port pairs
                 foreach (var listener in _proxyConfig.listeners)
                 {
@@ -104,7 +111,6 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         public void Stop()
         {
-            // TODO: fix stop, causes a crash atm.
             LogState("Stop");
             if (State == ServiceState.Running)
             {
@@ -114,20 +120,20 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             LogState("Stop");
         }
 
-        public void ReStart(IServiceConfig serviceConfig = null)
+        public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
         {
             LogState("ReStart");
             if (State == ServiceState.Running)
             {
                 Stop();
-                Start(serviceConfig ?? _proxyConfig);
+                Start(serviceConfig);
             }
             LogState("ReStart");
         }
 
-        public void Reload(IServiceConfig serviceConfig)
+        public void Reload(IEnumerable<IServiceConfig> serviceConfig)
         {
-            _proxyConfig = (HTTPConfig) serviceConfig;
+            _proxyConfig = (HTTPConfig) serviceConfig.First();
         }
 
         public void LogState(string caller)
@@ -305,14 +311,14 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             return ret;
         }
 
-        public IServiceConfig GetConfig()
+        public IEnumerable<IServiceConfig> GetConfig()
         {
-            return _proxyConfig;
+            return new List<IServiceConfig> { _proxyConfig };
         }
 
-        public void SetConfig(IServiceConfig config, bool restartNeeded = false)
+        public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
         {
-            _proxyConfig = (HTTPConfig) config;
+            _proxyConfig = (HTTPConfig) config.First();
         }
     }
 }

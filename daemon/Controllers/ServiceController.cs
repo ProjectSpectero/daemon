@@ -87,7 +87,7 @@ namespace Spectero.daemon.Controllers
                 return BadRequest(_response);
             }
                 
-            var currentConfig = (HTTPConfig) _serviceConfigManager.Generate(Utility.GetServiceType("HTTPProxy"));
+            var currentConfig = (HTTPConfig) _serviceConfigManager.Generate(Utility.GetServiceType("HTTPProxy")).First();
 
             var localAvailableIPs = Utility.GetLocalIPs();
             var availableIPs = localAvailableIPs as IPAddress[] ?? localAvailableIPs.ToArray();
@@ -119,7 +119,7 @@ namespace Spectero.daemon.Controllers
                 var service = _serviceManager.GetService(typeof(HTTPProxy));
                 var restartNeeded = !config.listeners.SequenceEqual(currentConfig.listeners) && service.GetState() == ServiceState.Running;
 
-                service.SetConfig(config, restartNeeded); //Update the running config, listener config will not apply until a full system restart is made. There's a bug here.
+                service.SetConfig(new List<IServiceConfig> { config }, restartNeeded); //Update the running config, listener config will not apply until a full system restart is made. There's a bug here.
 
                 if (restartNeeded)
                     _response.Message = Messages.SERVICE_RESTART_NEEDED;

@@ -103,6 +103,9 @@ namespace Spectero.daemon.Libraries.Services
 
                     _logger.LogError(e, errorBuilder.ToString());
                     alreadyLogged = true;
+
+                    // To ensure consistency, FORCE a stop
+                    service.Stop();
                 }
 
                 message = Messages.ACTION_FAILED;
