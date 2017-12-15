@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Org.BouncyCastle.Crypto.Parameters;
 using RazorLight;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Identity;
@@ -26,17 +23,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
          * Transportproto = tcp/udp server
          * IPNetwork = Local subnet
          */
-        //[JsonProperty("listener", ItemConverterType = typeof(StringEnumConverter))]
         public Tuple<string, int, TransportProtocols, string> listener;
 
         public bool ClientToClient;
 
-        //[JsonProperty("dhcpOptions", ItemConverterType = typeof(StringEnumConverter))]
         public List<Tuple<DhcpOptions, string>> dhcpOptions;
         public int MaxClients;
         public List<IPNetwork> pushedNetworks;
 
-        //[JsonProperty("redorectGateway", ItemConverterType = typeof(StringEnumConverter))]
         public List<RedirectGatewayOptions> redirectGateway;
 
         public X509Certificate2 ServerCert;
