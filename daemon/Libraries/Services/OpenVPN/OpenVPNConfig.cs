@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Org.BouncyCastle.Crypto.Parameters;
 using RazorLight;
 using Spectero.daemon.Libraries.Core;
@@ -24,12 +26,19 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
          * Transportproto = tcp/udp server
          * IPNetwork = Local subnet
          */
-        public Tuple<string, int, TransportProtocols, IPNetwork> listener;
+        //[JsonProperty("listener", ItemConverterType = typeof(StringEnumConverter))]
+        public Tuple<string, int, TransportProtocols, string> listener;
+
         public bool ClientToClient;
+
+        //[JsonProperty("dhcpOptions", ItemConverterType = typeof(StringEnumConverter))]
         public List<Tuple<DhcpOptions, string>> dhcpOptions;
         public int MaxClients;
         public List<IPNetwork> pushedNetworks;
+
+        //[JsonProperty("redorectGateway", ItemConverterType = typeof(StringEnumConverter))]
         public List<RedirectGatewayOptions> redirectGateway;
+
         public X509Certificate2 ServerCert;
         public string PKCS12Certificate;
 
@@ -56,5 +65,15 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             var renderedTemplate = await _engine.CompileRenderAsync(serviceName, this);
             return renderedTemplate;
         }
+    }
+
+    public class POCO
+    {
+        public enum TestEnum
+        {
+            A, B
+        }
+
+        public Tuple<TestEnum, int> prop = Tuple.Create(TestEnum.A, 100);
     }
 }

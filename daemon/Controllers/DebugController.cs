@@ -11,6 +11,7 @@ using RazorLight;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
@@ -45,7 +46,7 @@ namespace Spectero.daemon.Controllers
         [HttpGet("", Name = "DebugTest")]
         public async Task<IActionResult> Index()
         {
-            return Ok(GetClaim(ClaimTypes.Name).Value);
+            return Ok(Defaults.OpenVPNConfigs);
         }
     }
 }

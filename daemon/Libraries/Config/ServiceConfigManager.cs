@@ -67,7 +67,7 @@ namespace Spectero.daemon.Libraries.Config
                 {
                     typeof(OpenVPN), delegate
                     {
-                        List<OpenVPNConfig> configs = new List<OpenVPNConfig>();
+                        var configs = new List<OpenVPNConfig>();
 
                         var storedOpenVPNConfig = _db.Select<Configuration>(x => x.Key.Contains("vpn.openvpn."));
                         var storedCryptoConfig = _db.Select<Configuration>(x => x.Key.Contains("crypto."));
@@ -118,12 +118,12 @@ namespace Spectero.daemon.Libraries.Config
                         var serverCert = _cryptoService.LoadCertificate(Convert.FromBase64String(base64ServerPKCS12),
                             serverCertPass);
 
-                        bool AllowClientToClient = Defaults.OpenVPN.ClientToClient;
-                        bool AllowMultipleConnectionsFromSameClient = Defaults.OpenVPN.AllowMultipleConnectionsFromSameClient;
-                        int MaxClients = Defaults.OpenVPN.MaxClients;
+                        var allowClientToClient = Defaults.OpenVPN.ClientToClient;
+                        var allowMultipleConnectionsFromSameClient = Defaults.OpenVPN.AllowMultipleConnectionsFromSameClient;
+                        var maxClients = Defaults.OpenVPN.MaxClients;
 
                         var dhcpOptions = Defaults.OpenVPN.dhcpOptions;
-                        var listeners = new List<Tuple<string, int, TransportProtocols, IPNetwork>>();
+                        var listeners = new List<Tuple<string, int, TransportProtocols, string>>();
                         var pushedNetworks = Defaults.OpenVPN.pushedNetworks;
                         var redirectGatewayOptions = Defaults.OpenVPN.redirectGateway;
 
@@ -132,10 +132,10 @@ namespace Spectero.daemon.Libraries.Config
                             switch (ovpnConfig.Key)
                             {
                                     case ConfigKeys.OpenVPNAllowClientToClient:
-                                        AllowClientToClient = Boolean.Parse(ovpnConfig.Value);
+                                        allowClientToClient = Boolean.Parse(ovpnConfig.Value);
                                     break;
                                     case ConfigKeys.OpenVPNAllowMultipleConnectionsFromSameClient:
-                                        AllowMultipleConnectionsFromSameClient = Boolean.Parse(ovpnConfig.Value);
+                                        allowMultipleConnectionsFromSameClient = Boolean.Parse(ovpnConfig.Value);
                                     break;
                                     case ConfigKeys.OpenVPNDHCPOptions:
                                         //TODO: Validate that this conversion is proper [1]
@@ -145,12 +145,12 @@ namespace Spectero.daemon.Libraries.Config
                                         break;
                                     case ConfigKeys.OpenVPNListeners:
                                         //TODO: Validate that this conversion is proper [2]
-                                        var networkListeners = JsonConvert.DeserializeObject<List<Tuple<string, int, TransportProtocols, IPNetwork>>>(ovpnConfig.Value);
+                                        var networkListeners = JsonConvert.DeserializeObject<List<Tuple<string, int, TransportProtocols, string>>>(ovpnConfig.Value);
                                         if (networkListeners != null)
                                             listeners = networkListeners;
                                     break;
                                     case ConfigKeys.OpenVPNMaxClients:
-                                        int.TryParse(ovpnConfig.Value, out MaxClients);
+                                        int.TryParse(ovpnConfig.Value, out maxClients);
                                     break;
                                     case ConfigKeys.OpenVPNPushedNetworks:
                                         //TODO: Validate that this conversion is proper [3]
@@ -183,9 +183,9 @@ namespace Spectero.daemon.Libraries.Config
                             cfg.CACert = ca;
                             cfg.ServerCert = serverCert;
                             cfg.PKCS12Certificate = base64ServerChainPKCS12;
-                            cfg.AllowMultipleConnectionsFromSameClient = AllowMultipleConnectionsFromSameClient;
-                            cfg.ClientToClient = AllowClientToClient;
-                            cfg.MaxClients = MaxClients;
+                            cfg.AllowMultipleConnectionsFromSameClient = allowMultipleConnectionsFromSameClient;
+                            cfg.ClientToClient = allowClientToClient;
+                            cfg.MaxClients = maxClients;
                             cfg.dhcpOptions = dhcpOptions;
                             cfg.redirectGateway = redirectGatewayOptions;
                             cfg.pushedNetworks = pushedNetworks;

@@ -26,20 +26,39 @@ namespace Spectero.daemon.Libraries.Core.Constants
         {
             get
             {
-                var config = new OpenVPNConfig(null, null);
-                config.AllowMultipleConnectionsFromSameClient = false;
-                config.ClientToClient = false;
-
-                config.pushedNetworks = new List<IPNetwork>();
-
-                config.redirectGateway = new List<RedirectGatewayOptions>();
-                config.redirectGateway.Add(RedirectGatewayOptions.Def1);
-
-                config.dhcpOptions = new List<Tuple<DhcpOptions, string>>();
-
-                config.PKCS12Certificate = "";
+                var config = new OpenVPNConfig(null, null)
+                {
+                    AllowMultipleConnectionsFromSameClient = false,
+                    ClientToClient = false,
+                    pushedNetworks = new List<IPNetwork>(),
+                    redirectGateway = new List<RedirectGatewayOptions> {RedirectGatewayOptions.Def1},
+                    dhcpOptions = new List<Tuple<DhcpOptions, string>>(),
+                    MaxClients = 1024
+                };
 
                 return config;
+            }
+        }
+
+        public static List<OpenVPNConfig> OpenVPNConfigs
+        {
+            get
+            {
+                var ret = new List<OpenVPNConfig>();
+                var defaultListeners = new List<Tuple<string, int, TransportProtocols, string>>
+                {
+                    {Tuple.Create("0.0.0.0", 1194, TransportProtocols.TCP, "172.16.224.0/24")},
+                    {Tuple.Create("0.0.0.0", 1194, TransportProtocols.UDP, "172.16.225.0/24")}
+                };
+
+                foreach (var defaultListener in defaultListeners)
+                {
+                    var cfg = OpenVPN;
+                    cfg.listener = defaultListener;
+                    ret.Add(cfg);
+                }
+
+                return ret;
             }
         }
 
