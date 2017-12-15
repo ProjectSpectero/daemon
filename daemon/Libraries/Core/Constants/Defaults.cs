@@ -22,7 +22,7 @@ namespace Spectero.daemon.Libraries.Core.Constants
             }
         }
 
-        public static OpenVPNConfig OpenVPN
+        public static Lazy<OpenVPNConfig> OpenVPN
         {
             get
             {
@@ -36,32 +36,14 @@ namespace Spectero.daemon.Libraries.Core.Constants
                     MaxClients = 1024
                 };
 
-                return config;
+                return new Lazy<OpenVPNConfig>(config);
             }
         }
 
-        public static List<OpenVPNConfig> OpenVPNConfigs
+        public static List<Tuple<string, int, TransportProtocols, string>> OpenVPNListeners => new List<Tuple<string, int, TransportProtocols, string>>
         {
-            get
-            {
-                var ret = new List<OpenVPNConfig>();
-                var defaultListeners = new List<Tuple<string, int, TransportProtocols, string>>
-                {
-                    {Tuple.Create("0.0.0.0", 1194, TransportProtocols.TCP, "172.16.224.0/24")},
-                    {Tuple.Create("0.0.0.0", 1194, TransportProtocols.UDP, "172.16.225.0/24")}
-                };
-
-                foreach (var defaultListener in defaultListeners)
-                {
-                    var cfg = OpenVPN;
-                    cfg.listener = defaultListener;
-                    ret.Add(cfg);
-                }
-
-                return ret;
-            }
-        }
-
-
+            {Tuple.Create("0.0.0.0", 1194, TransportProtocols.TCP, "172.16.224.0/24")},
+            {Tuple.Create("0.0.0.0", 1194, TransportProtocols.UDP, "172.16.225.0/24")}
+        };
     }
 }

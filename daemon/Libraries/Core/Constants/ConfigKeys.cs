@@ -14,13 +14,14 @@
         //OpenVPN
         public const string OpenVPNAllowMultipleConnectionsFromSameClient = "vpn.openvpn.allow_multiple_connections";
         public const string OpenVPNAllowClientToClient = "vpn.openvpn.allow_client_to_client";
-        public const string OpenVPNListeners = "vpn.openvpn.listeners";
+
         public const string OpenVPNDHCPOptions = "vpn.openvpn.dhcp_options";
         public const string OpenVPNPushedNetworks = "vpn.openvpn.pushed_networks";
         public const string OpenVPNMaxClients = "vpn.openvpn.max_clients";
         public const string OpenVPNRedirectGatewayOptions = "vpn.openvpn.redirect_gateway";
 
-        public const string OpenVPNConfigs = "vpn.openvpn.configs";
+        public const string OpenVPNBaseConfig = "vpn.openvpn.config.template";
+        public const string OpenVPNListeners = "vpn.openvpn.config.listeners";
 
         //JWT
         public const string JWTSymmetricSecurityKey = "crypto.jwt.key";

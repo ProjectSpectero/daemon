@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RazorLight;
+using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
@@ -20,7 +21,7 @@ using Spectero.daemon.Libraries.Services.OpenVPN;
 namespace Spectero.daemon.Controllers
 {
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [Route("v1/[controller]")]
+    [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
     public class DebugController : BaseController
     {
 
@@ -46,7 +47,7 @@ namespace Spectero.daemon.Controllers
         [HttpGet("", Name = "DebugTest")]
         public async Task<IActionResult> Index()
         {
-            return Ok(Defaults.OpenVPNConfigs);
+            return Ok(Defaults.OpenVPN.Value);
         }
     }
 }

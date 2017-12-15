@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509;
 using ServiceStack;
 using ServiceStack.OrmLite;
@@ -57,7 +58,7 @@ namespace Spectero.daemon.Migrations
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.HttpConfig,
-                    Value = Defaults.HTTP.Value.ToJson()
+                    Value = JsonConvert.SerializeObject(Defaults.HTTP.Value)
                 });
 
                 // Password Hashing
@@ -121,13 +122,19 @@ namespace Spectero.daemon.Migrations
                 });
 
                 // OpenVPN defaults
+
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.OpenVPNListeners,
+                    Value = JsonConvert.SerializeObject(Defaults.OpenVPNListeners)
 
                 });
 
-                //TODO: Insert sensible OpenVPN defaults into the DB at firstrun
+                _db.Insert(new Configuration
+                {
+                    Key = ConfigKeys.OpenVPNBaseConfig,
+                    Value = JsonConvert.SerializeObject(Defaults.OpenVPN.Value)
+                });
 
             }
 

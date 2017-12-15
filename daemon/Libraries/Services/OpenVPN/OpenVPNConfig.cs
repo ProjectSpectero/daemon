@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using RazorLight;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Identity;
@@ -13,8 +14,10 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
     public class OpenVPNConfig : IServiceConfig
     {
         private readonly IRazorLightEngine _engine;
+        private readonly IIdentityProvider _identity;
+
         private readonly string serviceName = "OpenVPN";
-        public IIdentityProvider _identity;
+
         public bool AllowMultipleConnectionsFromSameClient;
         public X509Certificate2 CACert;
         /*
@@ -23,6 +26,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
          * Transportproto = tcp/udp server
          * IPNetwork = Local subnet
          */
+
+        [JsonIgnore]
         public Tuple<string, int, TransportProtocols, string> listener;
 
         public bool ClientToClient;
