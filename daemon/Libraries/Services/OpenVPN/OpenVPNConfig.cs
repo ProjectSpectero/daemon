@@ -34,7 +34,6 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
          * IPNetwork = Local subnet
          */
 
-        [JsonIgnore]
         public Tuple<string, int, TransportProtocols, string> listener;
 
         public bool ClientToClient;
