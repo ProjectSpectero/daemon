@@ -150,6 +150,8 @@ namespace Spectero.daemon.Migrations
                     {
                         User.Role.SuperAdmin
                     },
+                    FullName = "Spectero Administrator",
+                    EmailAddress = "changeme@example.com",
                     Password = BCrypt.Net.BCrypt.HashPassword(password, (int) viablePasswordCost),
                     Cert = null, // TODO: Fix these when fixing the VPN module
                     CertKey = null,

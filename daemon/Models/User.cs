@@ -71,6 +71,9 @@ namespace Spectero.daemon.Models
 
         public long SpecteroEngagementId = 0;
 
+        public string FullName { get; set; }
+        public string EmailAddress { get; set; }
+
         [DataType(DataType.Date)]
         public DateTime LastLoginDate { get; set; }
 

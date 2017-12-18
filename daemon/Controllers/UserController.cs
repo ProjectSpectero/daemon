@@ -66,6 +66,8 @@ namespace Spectero.daemon.Controllers
             user.CreatedDate = DateTime.Now;
             user.Source = Models.User.SourceTypes.Local;
 
+            // TODO: Generate a cert and a certkey when creating user
+
             try
             {
                 userId = await Db.InsertAsync<User>(user, true);
@@ -180,14 +182,12 @@ namespace Spectero.daemon.Controllers
                 if (!user.Password.IsNullOrEmpty())
                     fetchedUser.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
 
-                // TODO: Actually validate cert and certkey
+                if (!user.FullName.IsNullOrEmpty())
+                    fetchedUser.FullName = user.FullName;
 
-                if (!user.CertKey.IsNullOrEmpty() && !fetchedUser.CertKey.Equals(user.CertKey))
-                    fetchedUser.CertKey = user.CertKey;
-
-                if (!user.Cert.IsNullOrEmpty() && !fetchedUser.Cert.Equals(user.Cert))
-                    fetchedUser.Cert = user.Cert;
-
+                if (!user.EmailAddress.IsNullOrEmpty())
+                    fetchedUser.EmailAddress = user.EmailAddress;
+                
                 if (! user.Roles.SequenceEqual(fetchedUser.Roles))
                 {
                     // No need to care about roles unless they're changing
