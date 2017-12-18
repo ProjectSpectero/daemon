@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,18 +24,29 @@ namespace Spectero.daemon.Controllers
     public class UserController : BaseController
     {
         private readonly IMemoryCache _cache;
+        private readonly Regex _userRegex;
+
         public UserController(IOptionsSnapshot<AppConfig> appConfig, ILogger<UserController> logger,
             IDbConnection db, IMemoryCache cache)
             : base(appConfig, logger, db)
         {
             _cache = cache;
+            _userRegex = new Regex(@"^[a-zA-Z][\w]*$");
         }
 
         [HttpPost("", Name = "CreateUser")]
         public async Task<IActionResult> Create ([FromBody] User user)
         {
+            // Modelstate validation is worthless, but we do it anyway.
+
             if (! ModelState.IsValid)
                 _response.Errors.Add(Errors.MISSING_BODY);
+
+            if (user.AuthKey.IsNullOrEmpty())
+                _response.Errors.Add(Errors.MISSING_BODY);
+
+            if (! _userRegex.IsMatch(user?.AuthKey))
+                _response.Errors.Add(Errors.AUTHKEY_VALIDATION_FAILED);
 
             try
             {
