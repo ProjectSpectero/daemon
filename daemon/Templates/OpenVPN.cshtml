@@ -79,7 +79,9 @@ topology subnet
 # on 10.8.0.1. Comment this line out if you are
 # ethernet bridging. See the man page for more info.
 
-server @Model.listener.Item4.Network @Model.listener.Item4.Netmask
+# TODO: The 2nd one is supposed to be the netmask.
+
+server @Model.listener.Item4 @Model.listener.Item4
 
 # Maintain a record of client - virtual IP address
 # associations in this file.  If OpenVPN goes down or

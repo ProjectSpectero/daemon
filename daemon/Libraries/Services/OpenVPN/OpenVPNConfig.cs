@@ -14,7 +14,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
     public class OpenVPNConfig : IServiceConfig
     {
         private readonly IRazorLightEngine _engine;
-        private readonly IIdentityProvider _identity;
+        public readonly IIdentityProvider _identity;
 
         private readonly string serviceName = "OpenVPN";
 

@@ -28,5 +28,6 @@ namespace Spectero.daemon.Libraries.Config
         public bool SpaMode { get; set; }
         public string LoggingConfig { get; set; }
         public string SpaFileName { get; set; }
+        public int SpaCacheTime { get; set; }
     }
 }
