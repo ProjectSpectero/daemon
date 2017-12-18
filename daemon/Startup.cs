@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NLog.Extensions.Logging;
 using NLog.Web;
@@ -107,10 +108,11 @@ namespace Spectero.daemon
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env,
+        public void Configure(IOptionsSnapshot<AppConfig> configMonitor, IApplicationBuilder app, IHostingEnvironment env,
             ILoggerFactory loggerFactory, IMigration migration)
         {
-            var appConfig = Configuration.GetSection("Daemon");
+            var appConfig = configMonitor.Value;
+            var webRootPath = Path.Combine(_currentDirectory, appConfig.WebRoot);
 
             if (env.IsDevelopment())
             {
@@ -122,15 +124,24 @@ namespace Spectero.daemon
             app.UseDefaultFiles();
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(
-                    Path.Combine(_currentDirectory, appConfig["WebRoot"]))
+                FileProvider = new PhysicalFileProvider(webRootPath)
             });
 
             app.UseAddRequestIdHeader();
-            app.UseMvc();
+
+            app.UseMvc(routes =>
+            {
+                if (appConfig.SpaMode)
+                {
+                    routes.MapSpaFallbackRoute(
+                        name: "spa-fallback",
+                        defaults: new { controller = "Spa", action = "Index" }
+                    );
+                }
+            });
             
             loggerFactory.AddNLog();
-            loggerFactory.ConfigureNLog("nlog.config");
+            loggerFactory.ConfigureNLog(appConfig.LoggingConfig);
             app.AddNLogWeb();
 
             migration.Up();

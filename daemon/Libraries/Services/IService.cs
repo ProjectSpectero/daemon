@@ -7,7 +7,7 @@ namespace Spectero.daemon.Libraries.Services
         void Start(IEnumerable<IServiceConfig> serviceConfig = null);
         void ReStart(IEnumerable<IServiceConfig> serviceConfig = null);
         void Stop();
-        void Reload(IEnumerable<IServiceConfig> serviceConfig = null);
+        void Reload(IEnumerable<IServiceConfig> serviceConfig);
         void LogState(string caller);
         ServiceState GetState();
         IEnumerable<IServiceConfig> GetConfig();

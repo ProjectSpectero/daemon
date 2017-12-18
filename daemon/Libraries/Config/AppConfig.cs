@@ -25,5 +25,7 @@ namespace Spectero.daemon.Libraries.Config
         public bool RespectEndpointToOutgoingMapping { get; set; }
         public bool BindToUnbound { get; set; }
         public string WebRoot { get; set; }
+        public bool SpaMode { get; set; }
+        public string LoggingConfig { get; set; }
     }
 }

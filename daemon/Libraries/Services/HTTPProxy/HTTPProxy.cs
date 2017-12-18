@@ -318,6 +318,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
         {
+            // This service does not support "instances," i.e: the first config is the only useful one.
             _proxyConfig = (HTTPConfig) config.First();
         }
     }
