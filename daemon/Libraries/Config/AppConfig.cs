@@ -27,5 +27,6 @@ namespace Spectero.daemon.Libraries.Config
         public string WebRoot { get; set; }
         public bool SpaMode { get; set; }
         public string LoggingConfig { get; set; }
+        public string SpaFileName { get; set; }
     }
 }
