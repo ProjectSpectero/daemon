@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.IO;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -48,7 +47,7 @@ namespace Spectero.daemon.Controllers
                         _cache.Set(spaCacheKey, viewBag, AppConfig.SpaCacheTime > 0 ? TimeSpan.FromMinutes(AppConfig.SpaCacheTime) : TimeSpan.FromMinutes(5)); // Only cache it for 5 minutes at a time
                     }
                 }
-                catch (FileNotFoundException e)
+                catch (IOException e)
                 {
                     Logger.LogError(e, "Could not serve SPA app: ");
                 }
