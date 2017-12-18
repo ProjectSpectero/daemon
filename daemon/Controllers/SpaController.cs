@@ -15,24 +15,24 @@ namespace Spectero.daemon.Controllers
     public class SpaController : BaseController
     {
         private readonly IMemoryCache _cache;
-        private readonly string spaCacheKey;
+        private readonly string _spaCacheKey;
 
         public SpaController(IOptionsSnapshot<AppConfig> appConfig, ILogger<SpaController> logger,
             IDbConnection db, IMemoryCache cache) : base(appConfig, logger, db)
         {
             _cache = cache;
-            spaCacheKey = "spa-fallback.contents";
+            _spaCacheKey = "spa-fallback.contents";
         }
 
         public IActionResult Index()
         {
             Configuration viewBag;
 
-            if (_cache.TryGetValue<Configuration>(spaCacheKey, out var value))
+            if (_cache.TryGetValue<Configuration>(_spaCacheKey, out var value))
                 viewBag = value;
             else
             {
-                var currentDirectory = System.IO.Directory.GetCurrentDirectory();
+                var currentDirectory = Directory.GetCurrentDirectory();
                 var webRootPath = AppConfig.WebRoot;
                 var spaFileName = AppConfig.SpaFileName;
 
@@ -41,10 +41,10 @@ namespace Spectero.daemon.Controllers
 
                 try
                 {
-                    using (StreamReader streamReader = new StreamReader(qualifiedPath))
+                    using (var streamReader = new StreamReader(qualifiedPath))
                     {
                         viewBag.Value = streamReader.ReadToEnd();
-                        _cache.Set(spaCacheKey, viewBag, AppConfig.SpaCacheTime > 0 ? TimeSpan.FromMinutes(AppConfig.SpaCacheTime) : TimeSpan.FromMinutes(5)); // Only cache it for 5 minutes at a time
+                        _cache.Set(_spaCacheKey, viewBag, AppConfig.SpaCacheTime > 0 ? TimeSpan.FromMinutes(AppConfig.SpaCacheTime) : TimeSpan.FromMinutes(5)); // Only cache it for 5 minutes at a time
                     }
                 }
                 catch (IOException e)
