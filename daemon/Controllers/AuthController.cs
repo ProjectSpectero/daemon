@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
@@ -50,10 +51,10 @@ namespace Spectero.daemon.Controllers
 
             if (user != null)
             {
+                var userJson = JsonConvert.SerializeObject(user);
                 var claims = new[]
                 {
-                    new Claim(ClaimTypes.UserData, user.Id.ToString()),
-                    new Claim(ClaimTypes.Name, user.AuthKey)
+                    new Claim(ClaimTypes.UserData, userJson),
                     // Todo: Add roles
                 };
                 var key = _cryptoService.GetJWTSigningKey();
@@ -63,7 +64,7 @@ namespace Spectero.daemon.Controllers
                     // Can't issue aud/iss since we have no idea what the accessing URL will be.
                     // This is not a typical webapp with static `Host`
                     claims: claims,
-                    expires: DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0 ? AppConfig.JWTTokenExpiryInMinutes : 60),
+                    expires: DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0 ? AppConfig.JWTTokenExpiryInMinutes : 60), // 60 minutes by default
                     signingCredentials: credentials
                 );
                 _response.Message = Messages.JWT_TOKEN_ISSUED;

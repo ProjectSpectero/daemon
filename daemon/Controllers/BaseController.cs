@@ -5,6 +5,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.HTTP;
@@ -50,12 +51,15 @@ namespace Spectero.daemon.Controllers
             if (_currentUser != null)
                 return _currentUser;
 
-            string userIdString = GetClaim(ClaimTypes.UserData)?.Value;
-            if (int.TryParse(userIdString, out var id))
+            string userData = GetClaim(ClaimTypes.UserData)?.Value;
+            var user = JsonConvert.DeserializeObject<User>(userData);
+
+            if (user != null && user.Id != 0)
             {
-                _currentUser = Db.SingleById<User>(id);
+                _currentUser = Db.SingleById<User>(user.Id);
                 return _currentUser;
             }
+
             return null;
         }
     }
