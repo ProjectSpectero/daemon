@@ -186,10 +186,19 @@ namespace Spectero.daemon.Controllers
                     _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
                     return StatusCode(403, _response);
                 }
-                   
+
 
                 if (!user.AuthKey.IsNullOrEmpty() && !fetchedUser.AuthKey.Equals(user.AuthKey))
-                    fetchedUser.AuthKey = user.AuthKey;
+                {
+                    if (_userRegex.IsMatch(user.AuthKey))
+                        fetchedUser.AuthKey = user.AuthKey;
+                    else
+                    {
+                        _response.Errors.Add(Errors.AUTHKEY_VALIDATION_FAILED);
+                        return BadRequest(_response);
+                    }
+                }
+                    
 
                 if (!user.Password.IsNullOrEmpty())
                     fetchedUser.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
