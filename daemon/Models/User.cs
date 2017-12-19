@@ -165,8 +165,8 @@ namespace Spectero.daemon.Models
                         .When(m => ! m.FullName.IsNullOrEmpty()))
                 .Ensure(m => m.EmailAddress, _ => _
                     .Email()
-                    .WithMessage(FormatValidationError(Errors.FIELD_EMAIL, "email"))
-                    .When(m => ! m.EmailAddress.IsNullOrEmpty())
+                        .WithMessage(FormatValidationError(Errors.FIELD_EMAIL, "email"))
+                        .When(m => ! m.EmailAddress.IsNullOrEmpty())
                 )
                 .For(this)
                 .Validate();

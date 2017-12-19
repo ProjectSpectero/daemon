@@ -37,8 +37,13 @@ namespace Spectero.daemon.Controllers
         [HttpPost("", Name = "CreateUser")]
         public async Task<IActionResult> Create ([FromBody] User user)
         {
-            if (! user.Validate(out var validationErrors))
-                _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
+            if (ModelState.IsValid)
+            {
+                if (!user.Validate(out var validationErrors))
+                    _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
+            }           
+            else
+                _response.Errors.Add(Errors.MISSING_BODY, "");
 
             if (HasErrors())
                 return BadRequest(_response);
@@ -134,8 +139,13 @@ namespace Spectero.daemon.Controllers
         [HttpPut("{id}", Name = "UpdateUser")]
         public async Task<IActionResult> UpdateUser(long id, [FromBody] User user)
         {
-            if (!user.Validate(out var validationErrors))
-                _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
+            if (ModelState.IsValid)
+            {
+                if (!user.Validate(out var validationErrors))
+                    _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
+            }
+            else
+                _response.Errors.Add(Errors.MISSING_BODY, "");
 
             if (HasErrors())
                 return BadRequest(_response);

@@ -13,10 +13,9 @@
 
         public const string MISSING_BODY = "MISSING_BODY";
         public const string USER_NOT_FOUND = "USER_NOT_FOUND";
-        public const string MISSING_OR_INVALID_PASSWORD = "MISSING_OR_INVALID_PASSWORD";
         public const string AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED";
         public const string ROLE_VALIDATION_FAILED = "ROLE_VALIDATION_FAILED";
-        public const string AUTHKEY_VALIDATION_FAILED = "AUTHKEY_VALIDATION_FAILED";
+
         public const string ROLE_ESCALATION_FAILED = "ROLE_ESCALATION_FAILED";
         public const string CLOUD_USER_ALTER_NOT_ALLOWED = "CLOUD_USER_ALTER_NOT_ALLOWED";
         public const string USER_CANNOT_REMOVE_SELF = "USER_CANNOT_REMOVE_SELF";

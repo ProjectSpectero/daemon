@@ -38,8 +38,14 @@ namespace Spectero.daemon.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> AuthenticateUser([FromBody] TokenRequest request)
         {
-            if (! request.Validate(out var validationErrors))
-                _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
+            if (ModelState.IsValid)
+            {
+                if (!request.Validate(out var validationErrors))
+                    _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
+            }
+            else
+                _response.Errors.Add(Errors.MISSING_BODY, "");
+            
 
             if (HasErrors()) return StatusCode(403, _response);
 
