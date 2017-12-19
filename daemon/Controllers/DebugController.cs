@@ -17,6 +17,7 @@ using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.OpenVPN;
+using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Controllers
 {
@@ -48,6 +49,14 @@ namespace Spectero.daemon.Controllers
         public async Task<IActionResult> Index()
         {
             return Ok(Defaults.OpenVPN.Value);
+        }
+
+        [HttpPost("testUser")]
+        public IActionResult TestUserValidation([FromBody] User user)
+        {
+            user.Validate(out var errors);
+            _response.Result = errors;
+            return Ok(_response);
         }
     }
 }

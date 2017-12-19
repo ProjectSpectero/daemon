@@ -10,13 +10,13 @@ namespace Spectero.daemon.Libraries.Core.HTTP
          */
 
 
-        public static APIResponse Create(object result = null, List<object> errors = null,
+        public static APIResponse Create(object result = null, Dictionary<string, object> errors = null,
             string message = null)
         {
             return new APIResponse(result, errors, message);
         }
 
-        public APIResponse(object result = null, List<object> errors = null,
+        public APIResponse(object result = null, Dictionary<string, object> errors = null,
             string message = null)
         {
             Result = result;
@@ -24,7 +24,7 @@ namespace Spectero.daemon.Libraries.Core.HTTP
             Message = message;
         }
 
-        public List<object> Errors { get; set; }
+        public Dictionary<string, object> Errors { get; set; }
 
         public object Result { get; set; }
 

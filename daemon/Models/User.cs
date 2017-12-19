@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using ServiceStack;
 using ServiceStack.DataAnnotations;
+using Spectero.daemon.Libraries.Core.Constants;
+using Valit;
 
 namespace Spectero.daemon.Models
 {
@@ -53,9 +57,19 @@ namespace Spectero.daemon.Models
         [JsonIgnore] // Prevent JSON serialization
         public string Password { get; set; }
 
+        [Ignore]
+        private string RawPassword { get; set; }
+
         [JsonProperty("password")]
         [Ignore]
-        public string PasswordSetter { set => Password = value; }
+        public string PasswordSetter
+        {
+            set
+            {
+                RawPassword = value;
+                Password = BCrypt.Net.BCrypt.HashPassword(value);
+            }  
+        }
 
         public string Cert { get; set; }
 
@@ -119,5 +133,44 @@ namespace Spectero.daemon.Models
 
             return false;
         }
+
+        /*
+         * Built in object validator
+         */
+
+        public override bool Validate(out ImmutableArray<string> errors)
+        {
+            IValitResult result = ValitRules<User>
+                .Create()
+                .Ensure(m => m.AuthKey, _ => _
+                    .Required()
+                        .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "authKey"))
+                    .MaxLength(50)
+                        .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "authKey"))
+                    .Matches(@"^[a-zA-Z][\w]*$")
+                        .WithMessage(FormatValidationError(Errors.FIELD_REGEX_MATCH, "authKey", @"^[a-zA-Z][\w]*$")))
+                .Ensure(m => m.RawPassword, _ => _
+                    .MinLength(5)
+                        .WithMessage(FormatValidationError(Errors.FIELD_MINLENGTH, "password", "5"))
+                        .When(m => !m.RawPassword.IsNullOrEmpty())
+                    .MaxLength(72)
+                        .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "password", "72"))
+                        .When(m => !m.RawPassword.IsNullOrEmpty()))
+                .Ensure(m => m.FullName, _ => _
+                    .MaxLength(50)
+                        .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "fullName", "50"))
+                        .When(m => ! m.FullName.IsNullOrEmpty()))
+                .Ensure(m => m.EmailAddress, _ => _
+                    .Email()
+                    .WithMessage(FormatValidationError(Errors.FIELD_EMAIL, "email"))
+                    .When(m => ! m.EmailAddress.IsNullOrEmpty())
+                )
+                .For(this)
+                .Validate();
+
+            errors = result.ErrorMessages;
+            return result.Succeeded;
+        }
+
     }
 }

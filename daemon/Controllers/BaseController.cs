@@ -27,7 +27,7 @@ namespace Spectero.daemon.Controllers
             AppConfig = appConfig.Value;
             Logger = logger;
             Db = db;
-            _response = APIResponse.Create(null, new List<object>(), null);
+            _response = APIResponse.Create(null, new Dictionary<string, object> (), null);
         }
 
         protected bool HasErrors()

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using ServiceStack.DataAnnotations;
+using Valit;
 
 namespace Spectero.daemon.Models
 {
@@ -15,5 +17,15 @@ namespace Spectero.daemon.Models
 
         [DataType(DataType.Date)]
         public DateTime UpdatedDate { get; set; }
+
+        public virtual bool Validate(out ImmutableArray<string> errors)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string FormatValidationError(string errorKey, string field, string data = null)
+        {
+            return errorKey + ":" + field + ":" + data;
+        }
     }
 }

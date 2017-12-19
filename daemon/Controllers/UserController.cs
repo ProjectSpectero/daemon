@@ -37,30 +37,8 @@ namespace Spectero.daemon.Controllers
         [HttpPost("", Name = "CreateUser")]
         public async Task<IActionResult> Create ([FromBody] User user)
         {
-            // Modelstate validation is worthless, but we do it anyway.
-
-            if (! ModelState.IsValid)
-                _response.Errors.Add(Errors.MISSING_BODY);
-
-            if (user.AuthKey.IsNullOrEmpty())
-                _response.Errors.Add(Errors.MISSING_BODY);
-
-            if (! _userRegex.IsMatch(user?.AuthKey))
-                _response.Errors.Add(Errors.AUTHKEY_VALIDATION_FAILED);
-
-            try
-            {
-                if (!user.Password.IsNullOrEmpty())
-                    user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-                else
-                    _response.Errors.Add(Errors.MISSING_OR_INVALID_PASSWORD);
-            }
-            catch (NullReferenceException e)
-            {
-                Logger.LogError(e.Message);
-                _response.Errors.Add(Errors.MISSING_BODY);
-            }
-
+            if (! user.Validate(out var validationErrors))
+                _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
 
             if (HasErrors())
                 return BadRequest(_response);
@@ -69,7 +47,7 @@ namespace Spectero.daemon.Controllers
                  user.HasRole(Models.User.Role.WebApi)) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
             {
                 // Privilege escalation attempt, shut it down.
-                _response.Errors.Add(Errors.ROLE_ESCALATION_FAILED);
+                _response.Errors.Add(Errors.ROLE_ESCALATION_FAILED, "");
                 return StatusCode(403, _response);
             }
 
@@ -87,7 +65,7 @@ namespace Spectero.daemon.Controllers
             catch (DbException e)
             {
                 Logger.LogError(e.Message);
-                _response.Errors.Add(e.Message); // Poor man's fluent validation, fix later. Here's to hoping DB validation actually works.
+                _response.Errors.Add(e.Message, ""); // Poor man's fluent validation, fix later. Here's to hoping DB validation actually works.
             }
 
             if (HasErrors())
@@ -128,19 +106,19 @@ namespace Spectero.daemon.Controllers
             {
                 // Prevent deletion of cloud users
                 if (user.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
-                    _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED);
+                    _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED, "");
 
                 // Prevent deletion of SuperAdmins if you aren't one
                 if (user.HasRole(Models.User.Role.SuperAdmin) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
-                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
+                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
 
                 // Prevent deletion of WebApi users if you aren't a SuperAdmin
                 if (user.HasRole(Models.User.Role.WebApi) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
-                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
+                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
 
                 // Prevent removing own account
                 if (user.AuthKey.Equals(CurrentUser().AuthKey))
-                    _response.Errors.Add(Errors.USER_CANNOT_REMOVE_SELF);
+                    _response.Errors.Add(Errors.USER_CANNOT_REMOVE_SELF, "");
 
                 if (HasErrors())
                     return StatusCode(403, _response);
@@ -156,88 +134,69 @@ namespace Spectero.daemon.Controllers
         [HttpPut("{id}", Name = "UpdateUser")]
         public async Task<IActionResult> UpdateUser(long id, [FromBody] User user)
         {
-            User fetchedUser = null;
-            try
-            {
-                fetchedUser = await Db.SingleByIdAsync<User>(id);
+            if (!user.Validate(out var validationErrors))
+                _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
 
-                if (fetchedUser == null)
-                {
-                    _response.Errors.Add(Errors.USER_NOT_FOUND);
-                    return StatusCode(404, _response);
-                }
-
-                if (! ModelState.IsValid)
-                {
-                    _response.Errors.Add(Errors.MISSING_BODY);
-                    return BadRequest(_response);
-                }
-                   
-                if (fetchedUser.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
-                {
-                    _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED);
-                    return StatusCode(403, _response);
-                }
-
-                // Not allowed to edit an existing superadmin if you aren't one
-                if (fetchedUser.HasRole(Models.User.Role.SuperAdmin) &&
-                    ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
-                {
-                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
-                    return StatusCode(403, _response);
-                }
-
-
-                if (!user.AuthKey.IsNullOrEmpty() && !fetchedUser.AuthKey.Equals(user.AuthKey))
-                {
-                    if (_userRegex.IsMatch(user.AuthKey))
-                        fetchedUser.AuthKey = user.AuthKey;
-                    else
-                    {
-                        _response.Errors.Add(Errors.AUTHKEY_VALIDATION_FAILED);
-                        return BadRequest(_response);
-                    }
-                }
-                    
-
-                if (!user.Password.IsNullOrEmpty())
-                    fetchedUser.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-
-                if (!user.FullName.IsNullOrEmpty())
-                    fetchedUser.FullName = user.FullName;
-
-                if (!user.EmailAddress.IsNullOrEmpty())
-                    fetchedUser.EmailAddress = user.EmailAddress;
-                
-                if (! user.Roles.SequenceEqual(fetchedUser.Roles))
-                {
-                    // No need to care about roles unless they're changing
-                    Logger.LogDebug("UU: Datastore roles and requested roles are different.");
-
-                    if (user.HasRole(Models.User.Role.WebApi) && (!fetchedUser.HasRole(Models.User.Role.WebApi) &&
-                                                                  !CurrentUser().HasRole(Models.User.Role.SuperAdmin)))
-                        _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
-
-                    if (user.HasRole(Models.User.Role.SuperAdmin) &&
-                        (!fetchedUser.HasRole(Models.User.Role.SuperAdmin) &&
-                         !CurrentUser().HasRole(Models.User.Role.SuperAdmin)))
-                        _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED);
-
-                    if (HasErrors())
-                        return StatusCode(403, _response);
-
-                    // After verifying, assign the new roles for DB commit
-                    fetchedUser.Roles = user.Roles;
-                }
-            }
-            catch (NullReferenceException e)
-            {
-                Logger.LogError(e.Message);
-                _response.Errors.Add(Errors.MISSING_BODY);
-            }
-
-            if (fetchedUser == null || HasErrors())
+            if (HasErrors())
                 return BadRequest(_response);
+
+            User fetchedUser = null;
+
+            fetchedUser = await Db.SingleByIdAsync<User>(id);
+
+            if (fetchedUser == null)
+            {
+                _response.Errors.Add(Errors.USER_NOT_FOUND, "");
+                return StatusCode(404, _response);
+            }
+
+            if (fetchedUser.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
+            {
+                _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED, "");
+                return StatusCode(403, _response);
+            }
+
+            // Not allowed to edit an existing superadmin if you aren't one
+            if (fetchedUser.HasRole(Models.User.Role.SuperAdmin) &&
+                !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+            {
+                _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
+                return StatusCode(403, _response);
+            }
+
+
+            if (!user.AuthKey.IsNullOrEmpty() && !fetchedUser.AuthKey.Equals(user.AuthKey))
+                fetchedUser.AuthKey = user.AuthKey;
+
+            if (!user.Password.IsNullOrEmpty())
+                fetchedUser.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+
+            if (!user.FullName.IsNullOrEmpty())
+                fetchedUser.FullName = user.FullName;
+
+            if (!user.EmailAddress.IsNullOrEmpty())
+                fetchedUser.EmailAddress = user.EmailAddress;
+
+            if (!user.Roles.SequenceEqual(fetchedUser.Roles))
+            {
+                // No need to care about roles unless they're changing
+                Logger.LogDebug("UU: Datastore roles and requested roles are different.");
+
+                if (user.HasRole(Models.User.Role.WebApi) && (!fetchedUser.HasRole(Models.User.Role.WebApi) &&
+                                                              !CurrentUser().HasRole(Models.User.Role.SuperAdmin)))
+                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
+
+                if (user.HasRole(Models.User.Role.SuperAdmin) &&
+                    (!fetchedUser.HasRole(Models.User.Role.SuperAdmin) &&
+                     !CurrentUser().HasRole(Models.User.Role.SuperAdmin)))
+                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
+
+                if (HasErrors())
+                    return StatusCode(403, _response);
+
+                // After verifying, assign the new roles for DB commit
+                fetchedUser.Roles = user.Roles;
+            }
 
             try
             {
@@ -246,7 +205,7 @@ namespace Spectero.daemon.Controllers
             catch (DbException e)
             {
                 Logger.LogError(e.Message);
-                _response.Errors.Add(e.Message); // Poor man's fluent validation, fix later. Here's to hoping DB validation actually works.
+                _response.Errors.Add(Errors.VALIDATION_FAILED, e.Message); // Poor man's fluent validation, fix later. Here's to hoping DB validation actually works.
             }
             
             if (HasErrors())

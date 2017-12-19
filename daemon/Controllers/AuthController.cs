@@ -9,8 +9,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using ServiceStack;
-using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
@@ -40,8 +38,8 @@ namespace Spectero.daemon.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> AuthenticateUser([FromBody] TokenRequest request)
         {
-            if (! ModelState.IsValid || request.AuthKey.IsNullOrEmpty() || request.Password.IsNullOrEmpty())
-                _response.Errors.Add(Errors.MISSING_BODY);
+            if (! request.Validate(out var validationErrors))
+                _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
 
             if (HasErrors()) return StatusCode(403, _response);
 
@@ -72,7 +70,7 @@ namespace Spectero.daemon.Controllers
                 return Ok(_response);
             }
                 
-            _response.Errors.Add(Errors.AUTHENTICATION_FAILED); // Won't disclose why it failed, for that is a security risk
+            _response.Errors.Add(Errors.AUTHENTICATION_FAILED, ""); // Won't disclose why it failed, for that is a security risk
             return StatusCode(403, _response);
         }
     }

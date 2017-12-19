@@ -83,7 +83,7 @@ namespace Spectero.daemon.Controllers
             if (! ModelState.IsValid || config.listeners.IsNullOrEmpty())
             {
                 // ModelState takes care of checking if the field map succeeded. This means mode | allowed.d | banned.d do not need manual checking
-                _response.Errors.Add(Errors.MISSING_BODY);
+                _response.Errors.Add(Errors.MISSING_BODY, "");
                 return BadRequest(_response);
             }
                 
@@ -100,7 +100,7 @@ namespace Spectero.daemon.Controllers
                     if (AppConfig.BindToUnbound || availableIPs.Contains(holder) || holder.Equals(IPAddress.Any))
                         continue;
                     Logger.LogError("CCHH: Invalid listener request for " + holder + " found.");
-                    _response.Errors.Add(Errors.INVALID_IP_AS_LISTENER_REQUEST);
+                    _response.Errors.Add(Errors.INVALID_IP_AS_LISTENER_REQUEST, "");
                     break;
                 }
             }

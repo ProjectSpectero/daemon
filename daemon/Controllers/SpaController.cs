@@ -50,6 +50,7 @@ namespace Spectero.daemon.Controllers
                 catch (IOException e)
                 {
                     Logger.LogError(e, "Could not serve SPA app: ");
+                    return NotFound();
                 }
 
             }
