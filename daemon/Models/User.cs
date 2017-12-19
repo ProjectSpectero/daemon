@@ -150,6 +150,9 @@ namespace Spectero.daemon.Models
                     .Matches(@"^[a-zA-Z][\w]*$")
                         .WithMessage(FormatValidationError(Errors.FIELD_REGEX_MATCH, "authKey", @"^[a-zA-Z][\w]*$")))
                 .Ensure(m => m.RawPassword, _ => _
+                    .Required()
+                        .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "password"))
+                        .When(m => !m.RawPassword.IsNullOrEmpty())
                     .MinLength(5)
                         .WithMessage(FormatValidationError(Errors.FIELD_MINLENGTH, "password", "5"))
                         .When(m => !m.RawPassword.IsNullOrEmpty())
