@@ -1,4 +1,5 @@
 ﻿@using System.Net
+@using ServiceStack
 @using Spectero.daemon.Libraries.Core
 @model Spectero.daemon.Libraries.Services.OpenVPN.OpenVPNConfig
 @{
@@ -181,10 +182,13 @@ ifconfig-pool-persist ipp.txt
     string tmp = "";
     foreach (var option in Model.redirectGateway)
     {
-        tmp += option.ToString() + " ";
+        tmp += option.ToString().ToLower() + " ";
     }
     tmp = tmp.Trim();
-    @:push "@tmp"
+    if (!tmp.IsNullOrEmpty())
+    {
+        @:push "redirect-gateway @tmp"
+    }        
 }
 
 # Certain Windows-specific network settings
