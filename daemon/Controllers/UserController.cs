@@ -181,10 +181,16 @@ namespace Spectero.daemon.Controllers
                 return StatusCode(403, _response);
             }
 
-
             if (!user.AuthKey.IsNullOrEmpty() && !fetchedUser.AuthKey.Equals(user.AuthKey))
+            {
+                if (!user.AuthKey.ToLower().Equals(user.AuthKey))
+                {
+                    user.AuthKey = user.AuthKey.ToLower();
+                    _response.Message = Messages.USER_AUTHKEY_FLATTENED;
+                }
                 fetchedUser.AuthKey = user.AuthKey;
-
+            }
+                
             if (!user.Password.IsNullOrEmpty())
                 fetchedUser.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
 
