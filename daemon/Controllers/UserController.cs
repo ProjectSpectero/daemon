@@ -15,6 +15,7 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Models;
+using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
 namespace Spectero.daemon.Controllers
 {
@@ -60,6 +61,12 @@ namespace Spectero.daemon.Controllers
             long userId = -1;
             user.CreatedDate = DateTime.Now;
             user.Source = Models.User.SourceTypes.Local;
+
+            if (!user.AuthKey.ToLower().Equals(user.AuthKey))
+            {
+                user.AuthKey = user.AuthKey.ToLower();
+                _response.Message = Messages.USER_AUTHKEY_FLATTENED;
+            }
 
             // TODO: Generate a cert and a certkey when creating user
 
