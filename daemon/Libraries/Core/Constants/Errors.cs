@@ -3,6 +3,7 @@
     public static class Errors
     {
         public const string VALIDATION_FAILED = "VALIDATION_FAILED";
+        public const string OBJECT_PERSIST_FAILED = "OBJECT_PERSIST_FAILED";
 
         public const string FIELD_REQUIRED = "FIELD_REQUIRED";
         public const string FIELD_MAXLENGTH = "FIELD_MAXLENGTH";

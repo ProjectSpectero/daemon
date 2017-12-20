@@ -77,7 +77,7 @@ namespace Spectero.daemon.Controllers
             catch (DbException e)
             {
                 Logger.LogError(e.Message);
-                _response.Errors.Add(e.Message, ""); // Poor man's fluent validation, fix later. Here's to hoping DB validation actually works.
+                _response.Errors.Add(Errors.OBJECT_PERSIST_FAILED, e.Message); // Poor man's fluent validation, fix later. Here's to hoping DB validation actually works.
             }
 
             if (HasErrors())
