@@ -1,14 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RazorLight;
-using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
@@ -16,7 +15,6 @@ using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
-using Spectero.daemon.Libraries.Services.OpenVPN;
 using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Controllers
@@ -36,19 +34,23 @@ namespace Spectero.daemon.Controllers
 
         public DebugController(IOptionsSnapshot<AppConfig> appConfig, ILogger<DebugController> logger,
             IDbConnection db, IServiceManager serviceManager,
-            IStatistician statistician, IIdentityProvider identityProvider,
-            IRazorLightEngine engine)
+            IServiceConfigManager serviceConfigManager, IStatistician statistician,
+            IIdentityProvider identityProvider, IRazorLightEngine engine)
             : base(appConfig, logger, db)
         {
             _engine = engine;
             _identity = identityProvider;
+            _serviceConfigManager = serviceConfigManager;
 
         }
         // GET
         [HttpGet("", Name = "DebugTest")]
         public async Task<IActionResult> Index()
         {
-            return Ok(Defaults.OpenVPN.Value);
+            var type = Utility.GetServiceType("OpenVPN");
+            var config = _serviceConfigManager.Generate(type).First();
+
+            return Ok(await config.GetStringConfig());
         }
 
         [HttpPost("testUser")]
