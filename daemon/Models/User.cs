@@ -146,7 +146,7 @@ namespace Spectero.daemon.Models
                     .Required()
                         .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "authKey"))
                     .MaxLength(50)
-                        .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "authKey"))
+                        .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "authKey", "50"))
                     .Matches(@"^[a-zA-Z][\w]*$")
                         .WithMessage(FormatValidationError(Errors.FIELD_REGEX_MATCH, "authKey", @"^[a-zA-Z][\w]*$")))
                 .Ensure(m => m.RawPassword, _ => _
