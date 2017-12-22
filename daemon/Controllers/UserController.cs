@@ -29,7 +29,6 @@ namespace Spectero.daemon.Controllers
     {
         private readonly IMemoryCache _cache;
         private readonly ICryptoService _cryptoService;
-        private readonly IIdentityProvider _identityProvider;
 
         public UserController(IOptionsSnapshot<AppConfig> appConfig, ILogger<UserController> logger,
             IDbConnection db, IMemoryCache cache,
@@ -38,7 +37,6 @@ namespace Spectero.daemon.Controllers
         {
             _cache = cache;
             _cryptoService = cryptoService;
-            _identityProvider = identityProvider;
         }
 
         [HttpPost("", Name = "CreateUser")]
@@ -75,9 +73,7 @@ namespace Spectero.daemon.Controllers
             }
 
             user.CertKey = PasswordUtils.GeneratePassword(48, 6);
-            var userCertBytes = _cryptoService.IssueUserChain(
-                "CN=" + user.AuthKey + ".users." + _identityProvider.GetGuid() + ".instance.spectero.io",
-                new[] {KeyPurposeID.IdKPServerAuth}, user.CertKey);
+            var userCertBytes = _cryptoService.IssueUserChain(user.AuthKey, new[] {KeyPurposeID.IdKPServerAuth}, user.CertKey);
 
             user.Cert = Convert.ToBase64String(userCertBytes);
 

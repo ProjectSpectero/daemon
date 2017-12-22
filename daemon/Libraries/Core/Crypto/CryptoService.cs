@@ -19,6 +19,7 @@ using Org.BouncyCastle.X509;
 using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Core.Constants;
+using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Models;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 
@@ -39,10 +40,13 @@ namespace Spectero.daemon.Libraries.Core.Crypto
     public class CryptoService : ICryptoService
     {
         private readonly IDbConnection _db;
+        private readonly IIdentityProvider _identityProvider;
         private SymmetricSecurityKey jwtKey;
-        public CryptoService(IDbConnection db)
+
+        public CryptoService(IDbConnection db, IIdentityProvider identityProvider)
         {
             _db = db;
+            _identityProvider = identityProvider;
         }
 
         public SymmetricSecurityKey GetJWTSigningKey()
@@ -76,7 +80,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             File.WriteAllBytes(outputFileName, GetCertificateBytes(certificate, password));
         }
 
-        public byte[] IssueUserChain(string subjectName, KeyPurposeID[] usages, string password = null)
+        public byte[] IssueUserChain(string userAuthKey, KeyPurposeID[] usages, string password = null)
         {
             var caConfig = _db.Select<Configuration>(x => x.Key.Contains("crypto.ca."));
             string caBlob = "", caPassword = "";
@@ -98,6 +102,8 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
             var caBytes = Convert.FromBase64String(caBlob);
             var ca = LoadCertificate(caBytes, caPassword);
+
+            var subjectName = "CN=" + userAuthKey + ".users." + _identityProvider.GetGuid() + ".instance.spectero.io";
 
             var userCert = IssueCertificate(subjectName, ca, null, usages, password);
 
