@@ -66,22 +66,17 @@ namespace Spectero.daemon.Models
         {
             set
             {
-                RawPassword = value;
-                Password = BCrypt.Net.BCrypt.HashPassword(value);
+                if (!value.IsEmpty())
+                {
+                    RawPassword = value;
+                    Password = BCrypt.Net.BCrypt.HashPassword(value);
+                }
             }  
         }
 
         public string Cert { get; set; }
 
-        [JsonIgnore] // Prevent JSON serialization
         public string CertKey { get; set; }
-
-        [JsonProperty("certKey")]
-        [Ignore]
-        public string CertKeySetter
-        {
-            set => CertKey = value;
-        }
 
         public long SpecteroEngagementId = 0;
 

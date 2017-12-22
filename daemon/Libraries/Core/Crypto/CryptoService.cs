@@ -54,14 +54,6 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             return jwtKey;
         }
 
-        public byte[] ExportCertificateChain(X509Certificate2 cert, X509Certificate2 ca)
-        {
-            var collection = new X509Certificate2Collection();
-            collection.Add(new X509Certificate2(ca.RawData));
-            collection.Add(cert);
-            return collection.Export(X509ContentType.Pfx, null);
-        }
-
         public X509Certificate2 LoadCertificate(string issuerFileName, string password = null)
         {
             // We need to pass 'Exportable', otherwise we can't get the private key.
@@ -83,6 +75,43 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             // This password is the one attached to the PFX file. Use 'null' for no password.
             File.WriteAllBytes(outputFileName, GetCertificateBytes(certificate, password));
         }
+
+        public byte[] IssueUserChain(string subjectName, KeyPurposeID[] usages, string password = null)
+        {
+            var caConfig = _db.Select<Configuration>(x => x.Key.Contains("crypto.ca."));
+            string caBlob = "", caPassword = "";
+            foreach (var config in caConfig)
+            {
+                switch (config.Key)
+                {
+                    case ConfigKeys.CertificationAuthority:
+                        caBlob = config.Value;
+                        break;
+                    case ConfigKeys.CeritificationAuthorityPassword:
+                        caPassword = config.Value;
+                        break;
+                }
+            }
+
+            if (caBlob.IsEmpty() || caPassword.IsEmpty())
+                return new byte[] { };
+
+            var caBytes = Convert.FromBase64String(caBlob);
+            var ca = LoadCertificate(caBytes, caPassword);
+
+            var userCert = IssueCertificate(subjectName, ca, null, usages, password);
+
+            return ExportCertificateChain(userCert, ca, password);
+        }
+
+        public byte[] ExportCertificateChain(X509Certificate2 cert, X509Certificate2 ca, string storePassword = null)
+        {
+            var collection = new X509Certificate2Collection();
+            collection.Add(new X509Certificate2(ca.RawData));
+            collection.Add(cert);
+            return collection.Export(X509ContentType.Pfx, storePassword);
+        }
+
 
         public X509Certificate2 IssueCertificate(string subjectName, X509Certificate2 issuerCertificate, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null)
         {

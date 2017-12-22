@@ -16,8 +16,6 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly IRazorLightEngine _engine;
         public readonly IIdentityProvider _identity;
 
-        private readonly string serviceName = "OpenVPN";
-
         public bool AllowMultipleConnectionsFromSameClient;
 
         [JsonIgnore]
@@ -66,18 +64,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public async Task<string> GetStringConfig()
         {
             if (_engine == null) return "# RazorEngine is missing, can't convert.";
-            var renderedTemplate = await _engine.CompileRenderAsync(serviceName, this);
+            var renderedTemplate = await _engine.CompileRenderAsync("OpenVPN", this);
             return renderedTemplate;
         }
-    }
-
-    public class POCO
-    {
-        public enum TestEnum
-        {
-            A, B
-        }
-
-        public Tuple<TestEnum, int> prop = Tuple.Create(TestEnum.A, 100);
     }
 }

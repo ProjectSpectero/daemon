@@ -13,7 +13,8 @@ namespace Spectero.daemon.Libraries.Core.Crypto
     public interface ICryptoService
     {
         SymmetricSecurityKey GetJWTSigningKey();
-        byte[] ExportCertificateChain(X509Certificate2 cert, X509Certificate2 ca);
+        byte[] ExportCertificateChain(X509Certificate2 cert, X509Certificate2 ca, string storePassword = null);
+        byte[] IssueUserChain(string subjectName, KeyPurposeID[] usages, string password = null);
 
         X509Certificate2 LoadCertificate(string issuerFileName, string password = "password");
         X509Certificate2 LoadCertificate(byte[] certBytes, string password = "password");

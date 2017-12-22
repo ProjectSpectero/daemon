@@ -55,6 +55,10 @@ namespace Spectero.daemon.Controllers
 
             if (user != null)
             {
+                // Intentionally hidden to keep the JWT length manageable
+                user.Cert = null;
+                user.CertKey = null;
+
                 var userJson = JsonConvert.SerializeObject(user);
                 var claims = new[]
                 {

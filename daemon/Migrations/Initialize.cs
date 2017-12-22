@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509;
-using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
@@ -41,6 +41,10 @@ namespace Spectero.daemon.Migrations
         {
             var instanceId = _identityProvider.GetGuid();
             long viablePasswordCost = _config.PasswordCostLowerThreshold;
+
+            string specteroCertKey = "";
+            X509Certificate2 specteroCertificate = null;
+            X509Certificate2 ca = null;
 
             if (!_db.TableExists<Configuration>())
             {
@@ -86,10 +90,15 @@ namespace Spectero.daemon.Migrations
                 // Ought to be good enough for everyone. -- The IPv4 working group, 1996
                 var caPassword = PasswordUtils.GeneratePassword(48, 12);
                 var serverPassword = PasswordUtils.GeneratePassword(48, 12);
-                var ca = _cryptoService.CreateCertificateAuthorityCertificate("CN=" + instanceId + ".ca.instance.spectero.io",
+                ca = _cryptoService.CreateCertificateAuthorityCertificate("CN=" + instanceId + ".ca.instance.spectero.io",
                     null, null, caPassword);
                 var serverCertificate = _cryptoService.IssueCertificate("CN=" + instanceId + ".instance.spectero.io",
                     ca, null, new[] { KeyPurposeID.IdKPServerAuth }, serverPassword);
+
+                specteroCertKey = PasswordUtils.GeneratePassword(48, 12);
+                specteroCertificate = _cryptoService.IssueCertificate(
+                    "CN=" + "spectero" + ".users." + instanceId + ".instance.spectero.io",
+                    ca, null, new[] {KeyPurposeID.IdKPServerAuth}, specteroCertKey);
 
                 _db.Insert(new Configuration
                 {
@@ -153,8 +162,8 @@ namespace Spectero.daemon.Migrations
                     FullName = "Spectero Administrator",
                     EmailAddress = "changeme@example.com",
                     Password = BCrypt.Net.BCrypt.HashPassword(password, (int) viablePasswordCost),
-                    Cert = null, // TODO: Fix these when fixing the VPN module
-                    CertKey = null,
+                    Cert = specteroCertificate != null && ca != null ? Convert.ToBase64String(_cryptoService.ExportCertificateChain(specteroCertificate, ca)) : "",
+                    CertKey = specteroCertKey,
                     Source = User.SourceTypes.Local,
                     CreatedDate = DateTime.Now
                 });

@@ -9,11 +9,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Org.BouncyCastle.Asn1.X509;
 using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
+using Spectero.daemon.Libraries.Core.Crypto;
+using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Models;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
@@ -25,14 +28,17 @@ namespace Spectero.daemon.Controllers
     public class UserController : BaseController
     {
         private readonly IMemoryCache _cache;
-        private readonly Regex _userRegex;
+        private readonly ICryptoService _cryptoService;
+        private readonly IIdentityProvider _identityProvider;
 
         public UserController(IOptionsSnapshot<AppConfig> appConfig, ILogger<UserController> logger,
-            IDbConnection db, IMemoryCache cache)
+            IDbConnection db, IMemoryCache cache,
+            ICryptoService cryptoService, IIdentityProvider identityProvider)
             : base(appConfig, logger, db)
         {
             _cache = cache;
-            _userRegex = new Regex(@"^[a-zA-Z][\w]*$");
+            _cryptoService = cryptoService;
+            _identityProvider = identityProvider;
         }
 
         [HttpPost("", Name = "CreateUser")]
@@ -68,7 +74,12 @@ namespace Spectero.daemon.Controllers
                 _response.Message = Messages.USER_AUTHKEY_FLATTENED;
             }
 
-            // TODO: Generate a cert and a certkey when creating user
+            user.CertKey = PasswordUtils.GeneratePassword(48, 6);
+            var userCertBytes = _cryptoService.IssueUserChain(
+                "CN=" + user.AuthKey + ".users." + _identityProvider.GetGuid() + ".instance.spectero.io",
+                new[] {KeyPurposeID.IdKPServerAuth}, user.CertKey);
+
+            user.Cert = Convert.ToBase64String(userCertBytes);
 
             try
             {
@@ -139,8 +150,8 @@ namespace Spectero.daemon.Controllers
                 await Db.DeleteByIdAsync<User>(user.Id);
                 return NoContent();
             }
-            else
-                return NotFound(_response);
+
+            return NotFound(_response);
         }
 
         [HttpPut("{id}", Name = "UpdateUser")]
