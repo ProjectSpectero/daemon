@@ -29,7 +29,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
          * string = IP address
          * int = port
          * Transportproto = tcp/udp server
-         * IPNetwork = Local subnet
+         * string = Local subnet (IPNetwork)
          */
 
         public Tuple<string, int, TransportProtocols, string> listener;

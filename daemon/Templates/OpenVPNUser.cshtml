@@ -1,18 +1,41 @@
-﻿@model Spectero.daemon.Libraries.Services.OpenVPN.OpenVPNConfig
-# Automatically generated OpenVPN client config file by @Model.Originator
+﻿@using Spectero.daemon.Libraries.Core
+@using Spectero.daemon.Models
+@inherits RazorLight.TemplatePage<dynamic>
+@{
+    DisableEncoding = true;
+    User user = Model.User;
+    IEnumerable<Tuple<string, int, TransportProtocols, string>> listeners = Model.listeners;
+    List<Tuple<string, int, string>> convertedListeners = new List<Tuple<string, int, string>>();
+    foreach (var listener in listeners)
+    {
+        string protocolType;
+        switch (listener.Item3)
+        {
+            case TransportProtocols.TCP:
+                protocolType = "tcp-client";
+                break;
+            default:
+                protocolType = "udp";
+                break;
+        }
+        convertedListeners.Add(new Tuple<string, int, string>(listener.Item1, listener.Item2, protocolType));
+    }
+}
 
-# Generated on @DateTime.Now by @Model.SourceDevice
+# Automatically generated OpenVPN client config file by Spectero Daemon
+
+# Generated on @DateTime.UtcNow by Spectero Daemon
 # Note: this config file contains inline private keys
 # and therefore should be kept confidential!
 # Note: this configuration is user-locked to the username below
-# SPECTERO_USERNAME=@Model.User.AuthKey
+# SPECTERO_USERNAME=@user.AuthKey
 
 setenv FORWARD_COMPATIBLE 1
 client
 proto udp
 server-poll-timeout 4
 nobind
-@foreach (var listener in Model.listeners)
+@foreach (var listener in convertedListeners)
 {
     @:remote listener.Item1 listener.Item2 listener.Item3
 }
@@ -23,7 +46,7 @@ ns-cert-type server
 reneg-sec 604800
 sndbuf 100000
 rcvbuf 100000
-max-routes 200
+max-routes 2048
 
 # NOTE: LZO commands are pushed by the Access Server at connect time.
 # NOTE: The below line doesn't disable LZO.
@@ -31,22 +54,25 @@ comp-lzo no
 verb 3
 setenv PUSH_PEER_INFO
 
-<ca>
-    @Model.CACert
-</ca>
+<pkcs12>
+@user.Cert
+</pkcs12>
 
-<cert>
-    @Model.User.Cert
-</cert>
-
-<key>
-    @Model.User.CertKey
-</key>
-
-key-direction 1
-<tls-auth>
-    @Model.TLSAuthStaticKey
-</tls-auth>
+# <ca>
+#     
+# </ca>
+# 
+# <cert>
+#     
+# </cert>
+# 
+# <key>
+#     
+# </key>
+# key-direction 1
+# <tls-auth>
+#     
+# </tls-auth>
 
 # Extra user-defined configuration
 cipher AES-256-CBC
