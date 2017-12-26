@@ -21,6 +21,7 @@ using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.HTTP.Middlewares;
 using Spectero.daemon.Libraries.Core.Identity;
+using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Migrations;
@@ -72,6 +73,8 @@ namespace Spectero.daemon
             services.AddSingleton<IServiceConfigManager, ServiceConfigManager>();
 
             services.AddSingleton<IServiceManager, ServiceManager>();
+
+            services.AddSingleton<IOutgoingIPResolver, OutgoingIPResolver>();
 
             services.AddSingleton<IRazorLightEngine>(c =>
                 new EngineFactory()

@@ -29,5 +29,6 @@ namespace Spectero.daemon.Libraries.Config
         public string LoggingConfig { get; set; }
         public string SpaFileName { get; set; }
         public int SpaCacheTime { get; set; }
+        public string DefaultOutgoingIPResolver { get; set; }
     }
 }

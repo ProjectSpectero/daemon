@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +18,9 @@ using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Identity;
+using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
+using Spectero.daemon.Libraries.Services.HTTPProxy;
+using Spectero.daemon.Libraries.Services.OpenVPN;
 using Spectero.daemon.Models;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
@@ -28,14 +33,19 @@ namespace Spectero.daemon.Controllers
     {
         private readonly IMemoryCache _cache;
         private readonly ICryptoService _cryptoService;
+        private readonly IServiceConfigManager _serviceConfigManager;
+        private readonly IOutgoingIPResolver _ipResolver;
 
         public UserController(IOptionsSnapshot<AppConfig> appConfig, ILogger<UserController> logger,
             IDbConnection db, IMemoryCache cache,
-            ICryptoService cryptoService, IIdentityProvider identityProvider)
+            ICryptoService cryptoService, IIdentityProvider identityProvider,
+            IServiceConfigManager serviceConfigManager, IOutgoingIPResolver ipResolver)
             : base(appConfig, logger, db)
         {
             _cache = cache;
             _cryptoService = cryptoService;
+            _serviceConfigManager = serviceConfigManager;
+            _ipResolver = ipResolver;
         }
 
         [HttpPost("", Name = "CreateUser")]
@@ -254,6 +264,44 @@ namespace Spectero.daemon.Controllers
             {
                 _cache.Remove(key);
             }
+        }
+
+        [HttpGet("{id}/service-resources/{name}")]
+        public async Task<IActionResult> GetUserServiceSetupResources(int id, string name)
+        {
+            if (Defaults.ValidServices.Any(s => s == name))
+            {
+                var type = Utility.GetServiceType(name);
+                object response = null;
+
+                // Giant hack, but hey, it works ┐(´∀｀)┌ﾔﾚﾔﾚ
+                switch (true)
+                {
+                    case bool _ when type == typeof(HTTPProxy):
+                        var config = (HTTPConfig) _serviceConfigManager.Generate(type).First();
+                        var proxies = new List<string>();
+                        foreach (var listener in config.listeners)
+                        {
+                            if (listener.Item1.Equals(IPAddress.Any.ToString()))
+                                proxies.Add(await _ipResolver.Resolve() + ":" + listener.Item2);
+                            else
+                                proxies.Add(listener.Item1 + ":" + listener.Item2);
+                        }
+                            
+                        response = proxies;
+                        break;
+                    case bool _ when type == typeof(OpenVPN):
+
+                        break;
+                }
+
+                _response.Result = response;
+                return Ok(_response);
+            }
+            
+            _response.Errors.Add(Errors.INVALID_SERVICE_OR_ACTION_ATTEMPT, "");
+            return BadRequest(_response);
+
         }
     }
 }

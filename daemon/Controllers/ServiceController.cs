@@ -28,9 +28,6 @@ namespace Spectero.daemon.Controllers
     public class ServiceController : BaseController
     {
         private readonly IServiceManager _serviceManager;
-        private readonly string[] _validActions = {"start", "stop", "restart", "config"};
-
-        private readonly string[] _validServices = {"HTTPProxy", "OpenVPN", "ShadowSOCKS", "SSHTunnel"};
 
         private readonly IServiceConfigManager _serviceConfigManager;
 
@@ -59,8 +56,8 @@ namespace Spectero.daemon.Controllers
         [HttpGet("{name}/{task}", Name = "ManageServices")]
         public IActionResult Manage(string name, string task)
         {
-            if (_validServices.Any(s => name == s) &&
-                _validActions.Any(s => task == s))
+            if (Defaults.ValidServices.Any(s => name == s) &&
+                Defaults.ValidActions.Any(s => task == s))
             {
                 if (task.Equals("config"))
                 {
@@ -74,7 +71,9 @@ namespace Spectero.daemon.Controllers
                 _response.Message = _serviceManager.Process(name, task);
                 return Ok(_response);
             }
-            throw new EInvalidRequest();
+
+            _response.Errors.Add(Errors.INVALID_SERVICE_OR_ACTION_ATTEMPT, "");
+            return BadRequest(_response);
         }
 
         [HttpPut("HTTPProxy/config", Name = "HandleHTTPProxyConfigUpdate")]

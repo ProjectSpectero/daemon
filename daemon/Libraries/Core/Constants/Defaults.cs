@@ -10,6 +10,9 @@ namespace Spectero.daemon.Libraries.Core.Constants
 {
     public static class Defaults
     {
+        public static readonly string[] ValidServices = { "HTTPProxy", "OpenVPN", "ShadowSOCKS", "SSHTunnel" };
+        public static readonly string[] ValidActions = { "start", "stop", "restart", "config" };
+
         public static Lazy<HTTPConfig> HTTP
         {
             get
