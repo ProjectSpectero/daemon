@@ -7,5 +7,7 @@ namespace Spectero.daemon.Libraries.Core.OutgoingIPResolver
     public interface IOutgoingIPResolver
     {
         Task<IPAddress> Resolve();
+        Task<IPAddress> Translate(IPAddress address);
+        Task<IPAddress> Translate(string stringAddress);
     }
 }

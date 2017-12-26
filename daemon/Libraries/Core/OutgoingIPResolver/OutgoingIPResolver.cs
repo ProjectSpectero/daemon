@@ -10,28 +10,44 @@ namespace Spectero.daemon.Libraries.Core.OutgoingIPResolver
     // ReSharper disable once ClassNeverInstantiated.Global
     public class OutgoingIPResolver : IOutgoingIPResolver
     {
-        private IPAddress address;
+        private IPAddress _address;
         private readonly AppConfig _appConfig;
 
         public OutgoingIPResolver(IOptionsMonitor<AppConfig> configMonitor)
         {
             _appConfig = configMonitor.CurrentValue;
-            address = null;
+            _address = null;
         }
 
         public async Task<IPAddress> Resolve()
         {
-            if (address != null)
-                return address;
+            if (_address != null)
+                return _address;
 
             var client = new HttpClient();
             client.DefaultRequestHeaders.Add("User-Agent", "Spectero Daemon");
             var ipAddressString = await client.GetStringAsync(_appConfig.DefaultOutgoingIPResolver);
 
             if (IPAddress.TryParse(ipAddressString, out var parsedAddress))
-                address = parsedAddress;
+                _address = parsedAddress;
 
-            return address;
+            return _address;
+        }
+
+        public async Task<IPAddress> Translate(IPAddress ipAddress)
+        {
+            if (ipAddress.Equals(IPAddress.Any))
+                return await Resolve();
+
+            return ipAddress;
+        }
+
+        public async Task<IPAddress> Translate(string stringAddress)
+        {
+            if (IPAddress.TryParse(stringAddress, out var parsedAddress))
+                return await Translate(parsedAddress);
+
+            return null;
         }
     }
 }

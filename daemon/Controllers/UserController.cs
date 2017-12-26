@@ -11,6 +11,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Org.BouncyCastle.Asn1.X509;
+using RazorLight;
 using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
@@ -35,17 +36,20 @@ namespace Spectero.daemon.Controllers
         private readonly ICryptoService _cryptoService;
         private readonly IServiceConfigManager _serviceConfigManager;
         private readonly IOutgoingIPResolver _ipResolver;
+        private readonly IRazorLightEngine _razorLightEngine;
 
         public UserController(IOptionsSnapshot<AppConfig> appConfig, ILogger<UserController> logger,
             IDbConnection db, IMemoryCache cache,
             ICryptoService cryptoService, IIdentityProvider identityProvider,
-            IServiceConfigManager serviceConfigManager, IOutgoingIPResolver ipResolver)
+            IServiceConfigManager serviceConfigManager, IOutgoingIPResolver ipResolver,
+            IRazorLightEngine razorLightEngine)
             : base(appConfig, logger, db)
         {
             _cache = cache;
             _cryptoService = cryptoService;
             _serviceConfigManager = serviceConfigManager;
             _ipResolver = ipResolver;
+            _razorLightEngine = razorLightEngine;
         }
 
         [HttpPost("", Name = "CreateUser")]
@@ -273,24 +277,36 @@ namespace Spectero.daemon.Controllers
             {
                 var type = Utility.GetServiceType(name);
                 object response = null;
+                var configs = _serviceConfigManager.Generate(type);
+                var user = await Db.SingleByIdAsync<User>(id);
 
+                if (configs == null)
+                    _response.Errors.Add(Errors.STORED_CONFIG_WAS_NULL, "");
+                if (user == null)
+                    _response.Errors.Add(Errors.USER_NOT_FOUND, "");
+
+                if (HasErrors())
+                    return BadRequest(_response);
+                
                 // Giant hack, but hey, it works ┐(´∀｀)┌ﾔﾚﾔﾚ
                 switch (true)
                 {
                     case bool _ when type == typeof(HTTPProxy):
-                        var config = (HTTPConfig) _serviceConfigManager.Generate(type).First();
+                        // HTTPProxy has a global config, and thus only one instance
+                        var config = (HTTPConfig) configs.First();
                         var proxies = new List<string>();
                         foreach (var listener in config.listeners)
                         {
-                            if (listener.Item1.Equals(IPAddress.Any.ToString()))
-                                proxies.Add(await _ipResolver.Resolve() + ":" + listener.Item2);
-                            else
-                                proxies.Add(listener.Item1 + ":" + listener.Item2);
+                            // Gotta translate 0.0.0.0 into something people can actually connect to
+                            // This is currently replaced by the default outgoing IP, which should work assuming NAT port forwarding succeeded
+                            // Or there is no NAT involved.
+                            proxies.Add(await _ipResolver.Translate(listener.Item1) + ":" + listener.Item2);
                         }
                             
                         response = proxies;
                         break;
                     case bool _ when type == typeof(OpenVPN):
+                        // OpenVPN is a multi-instance service
 
                         break;
                 }
