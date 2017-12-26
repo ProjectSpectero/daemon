@@ -6,6 +6,10 @@
     User user = Model.User;
     IEnumerable<Tuple<string, int, TransportProtocols, string>> listeners = Model.listeners;
     List<Tuple<string, int, string>> convertedListeners = new List<Tuple<string, int, string>>();
+
+    var pkcs12Header = user.Cert.Substring(0, 64);
+    var pkcs12Remainder = user.Cert.Substring(64);
+
     foreach (var listener in listeners)
     {
         string protocolType;
@@ -21,10 +25,9 @@
         convertedListeners.Add(new Tuple<string, int, string>(listener.Item1, listener.Item2, protocolType));
     }
 }
-
 # Automatically generated OpenVPN client config file by Spectero Daemon
 
-# Generated on @DateTime.UtcNow by Spectero Daemon
+# Generated on @DateTime.UtcNow (UTC) by Spectero Daemon
 # Note: this config file contains inline private keys
 # and therefore should be kept confidential!
 # Note: this configuration is user-locked to the username below
@@ -37,7 +40,7 @@ server-poll-timeout 4
 nobind
 @foreach (var listener in convertedListeners)
 {
-    @:remote listener.Item1 listener.Item2 listener.Item3
+    @:remote @listener.Item1 @listener.Item2 @listener.Item3
 }
 
 dev tun
@@ -55,7 +58,8 @@ verb 3
 setenv PUSH_PEER_INFO
 
 <pkcs12>
-@user.Cert
+@pkcs12Header
+@pkcs12Remainder
 </pkcs12>
 
 # <ca>

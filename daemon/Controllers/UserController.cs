@@ -293,7 +293,9 @@ namespace Spectero.daemon.Controllers
                 {
                     case bool _ when type == typeof(HTTPProxy):
                         // HTTPProxy has a global config, and thus only one instance
-                        var config = (HTTPConfig) configs.First();
+                        // Guaranteed to not be null, so inspection is not needed.
+                        // ReSharper disable once AssignNullToNotNullAttribute
+                        var config = (HTTPConfig) configs.First() as HTTPConfig;
                         var proxies = new List<string>();
                         foreach (var listener in config.listeners)
                         {
@@ -307,7 +309,25 @@ namespace Spectero.daemon.Controllers
                         break;
                     case bool _ when type == typeof(OpenVPN):
                         // OpenVPN is a multi-instance service
+                        var allListeners = new List<Tuple<string, int, TransportProtocols, string>>();
+                        foreach (var vpnConfig in configs)
+                        {
+                            var castConfig = vpnConfig as OpenVPNConfig;
+                            if (castConfig?.listener != null)
+                            {
+                                var translatedIP = await _ipResolver.Translate(castConfig.listener.Item1);
+                                allListeners.Add(new Tuple<string, int, TransportProtocols, string>(translatedIP.ToString(), castConfig.listener.Item2,
+                                    castConfig.listener.Item3, castConfig.listener.Item4));
+                            }
+                        }
 
+
+
+                        response = await _razorLightEngine.CompileRenderAsync("OpenVPNUser", new
+                        {
+                            listeners = allListeners,
+                            User = user
+                        });
                         break;
                 }
 
