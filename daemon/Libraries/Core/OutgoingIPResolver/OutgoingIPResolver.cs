@@ -36,7 +36,7 @@ namespace Spectero.daemon.Libraries.Core.OutgoingIPResolver
 
         public async Task<IPAddress> Translate(IPAddress ipAddress)
         {
-            if (ipAddress.Equals(IPAddress.Any))
+            if (ipAddress.Equals(IPAddress.Any) || ipAddress.Equals(IPAddress.Loopback))
                 return await Resolve();
 
             return ipAddress;

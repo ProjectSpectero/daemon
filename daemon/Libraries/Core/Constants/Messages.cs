@@ -12,5 +12,7 @@
         public const string SERVICE_RESTART_NEEDED = "SERVICE_RESTART_NEEDED";
         public const string JWT_TOKEN_ISSUED = "JWT_TOKEN_ISSUED";
         public const string USER_AUTHKEY_FLATTENED = "USER_AUTHKEY_FLATTENED";
+
+        public const string SPECTERO_USERNAME_PASSWORD = "SPECTERO_USERNAME_PASSWORD";
     }
 }

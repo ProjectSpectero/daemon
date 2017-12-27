@@ -5,6 +5,8 @@
     DisableEncoding = true;
     User user = Model.User;
     IEnumerable<Tuple<string, int, TransportProtocols, string>> listeners = Model.listeners;
+    string systemId = Model.identity.ToString();
+
     List<Tuple<string, int, string>> convertedListeners = new List<Tuple<string, int, string>>();
 
     var pkcs12Header = user.Cert.Substring(0, 64);
@@ -26,12 +28,12 @@
     }
 }
 # Automatically generated OpenVPN client config file by Spectero Daemon
-
-# Generated on @DateTime.UtcNow (UTC) by Spectero Daemon
+# Generated on @DateTime.UtcNow (UTC) by @systemId
 # Note: this config file contains inline private keys
 # and therefore should be kept confidential!
 # Note: this configuration is user-locked to the username below
 # SPECTERO_USERNAME=@user.AuthKey
+# SPECTERO_INSTANCE_ID=@systemId
 
 setenv FORWARD_COMPATIBLE 1
 client
@@ -40,7 +42,7 @@ server-poll-timeout 4
 nobind
 @foreach (var listener in convertedListeners)
 {
-    @:remote @listener.Item1 @listener.Item2 @listener.Item3
+@:remote @listener.Item1 @listener.Item2 @listener.Item3
 }
 
 dev tun

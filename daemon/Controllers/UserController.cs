@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -37,6 +36,7 @@ namespace Spectero.daemon.Controllers
         private readonly IServiceConfigManager _serviceConfigManager;
         private readonly IOutgoingIPResolver _ipResolver;
         private readonly IRazorLightEngine _razorLightEngine;
+        private readonly IIdentityProvider _identityProvider;
 
         public UserController(IOptionsSnapshot<AppConfig> appConfig, ILogger<UserController> logger,
             IDbConnection db, IMemoryCache cache,
@@ -47,6 +47,7 @@ namespace Spectero.daemon.Controllers
         {
             _cache = cache;
             _cryptoService = cryptoService;
+            _identityProvider = identityProvider;
             _serviceConfigManager = serviceConfigManager;
             _ipResolver = ipResolver;
             _razorLightEngine = razorLightEngine;
@@ -97,7 +98,7 @@ namespace Spectero.daemon.Controllers
             catch (DbException e)
             {
                 Logger.LogError(e.Message);
-                _response.Errors.Add(Errors.OBJECT_PERSIST_FAILED, e.Message); // Poor man's fluent validation, fix later. Here's to hoping DB validation actually works.
+                _response.Errors.Add(Errors.OBJECT_PERSIST_FAILED, e.Message);
             }
 
             if (HasErrors())
@@ -276,7 +277,6 @@ namespace Spectero.daemon.Controllers
             if (Defaults.ValidServices.Any(s => s == name))
             {
                 var type = Utility.GetServiceType(name);
-                object response = null;
                 var configs = _serviceConfigManager.Generate(type);
                 var user = await Db.SingleByIdAsync<User>(id);
 
@@ -284,6 +284,8 @@ namespace Spectero.daemon.Controllers
                     _response.Errors.Add(Errors.STORED_CONFIG_WAS_NULL, "");
                 if (user == null)
                     _response.Errors.Add(Errors.USER_NOT_FOUND, "");
+
+                var serviceReference = new UserServiceResource();
 
                 if (HasErrors())
                     return BadRequest(_response);
@@ -304,8 +306,8 @@ namespace Spectero.daemon.Controllers
                             // Or there is no NAT involved.
                             proxies.Add(await _ipResolver.Translate(listener.Item1) + ":" + listener.Item2);
                         }
-                            
-                        response = proxies;
+                        serviceReference.AccessReference = proxies;
+                        serviceReference.AccessCredentials = Messages.SPECTERO_USERNAME_PASSWORD;
                         break;
                     case bool _ when type == typeof(OpenVPN):
                         // OpenVPN is a multi-instance service
@@ -315,23 +317,24 @@ namespace Spectero.daemon.Controllers
                             var castConfig = vpnConfig as OpenVPNConfig;
                             if (castConfig?.listener != null)
                             {
+                                // ReSharper disable once InconsistentNaming
                                 var translatedIP = await _ipResolver.Translate(castConfig.listener.Item1);
                                 allListeners.Add(new Tuple<string, int, TransportProtocols, string>(translatedIP.ToString(), castConfig.listener.Item2,
                                     castConfig.listener.Item3, castConfig.listener.Item4));
                             }
                         }
 
-
-
-                        response = await _razorLightEngine.CompileRenderAsync("OpenVPNUser", new
+                        serviceReference.AccessConfig = await _razorLightEngine.CompileRenderAsync("OpenVPNUser", new
                         {
                             listeners = allListeners,
-                            User = user
+                            User = user,
+                            identity = _identityProvider.GetGuid()
                         });
+                        serviceReference.AccessCredentials = user?.CertKey;
                         break;
                 }
 
-                _response.Result = response;
+                _response.Result = serviceReference;
                 return Ok(_response);
             }
             
