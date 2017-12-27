@@ -152,13 +152,15 @@ namespace Spectero.daemon.Libraries.Config
                             cfg.pushedNetworks = baseOpenVPNConfig.pushedNetworks;
                         }
 
-                        // TODO: Expand API to allow exporting an IEnurable<IServiceConfig> instead
                         return configs;
                     }
                 }
             };
 
-            return processors[type]();
+            if (processors.TryGetValue(type, out var value))
+                return value();
+
+            return null;
         }
     }
 }

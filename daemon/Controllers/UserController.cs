@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -19,6 +20,7 @@ using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
+using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
 using Spectero.daemon.Models;
@@ -271,76 +273,100 @@ namespace Spectero.daemon.Controllers
             }
         }
 
-        [HttpGet("{id}/service-resources/{name}")]
-        public async Task<IActionResult> GetUserServiceSetupResources(int id, string name)
+        private async Task<UserServiceResource> GenerateUserServiceResource(User user, Type type, IEnumerable<IServiceConfig> configs)
         {
-            if (Defaults.ValidServices.Any(s => s == name))
+            var serviceReference = new UserServiceResource();
+            // Giant hack, but hey, it works ┐(´∀｀)┌ﾔﾚﾔﾚ
+            switch (true)
             {
-                var type = Utility.GetServiceType(name);
-                var configs = _serviceConfigManager.Generate(type);
-                var user = await Db.SingleByIdAsync<User>(id);
-
-                if (configs == null)
-                    _response.Errors.Add(Errors.STORED_CONFIG_WAS_NULL, "");
-                if (user == null)
-                    _response.Errors.Add(Errors.USER_NOT_FOUND, "");
-
-                var serviceReference = new UserServiceResource();
-
-                if (HasErrors())
-                    return BadRequest(_response);
-                
-                // Giant hack, but hey, it works ┐(´∀｀)┌ﾔﾚﾔﾚ
-                switch (true)
-                {
-                    case bool _ when type == typeof(HTTPProxy):
-                        // HTTPProxy has a global config, and thus only one instance
-                        // Guaranteed to not be null, so inspection is not needed.
-                        // ReSharper disable once AssignNullToNotNullAttribute
-                        var config = (HTTPConfig) configs.First() as HTTPConfig;
-                        var proxies = new List<string>();
-                        foreach (var listener in config.listeners)
+                case bool _ when type == typeof(HTTPProxy):
+                    // HTTPProxy has a global config, and thus only one instance
+                    // Guaranteed to not be null, so inspection is not needed.
+                    // ReSharper disable once AssignNullToNotNullAttribute
+                    var config = (HTTPConfig) configs.First() as HTTPConfig;
+                    var proxies = new List<string>();
+                    foreach (var listener in config.listeners)
+                    {
+                        // Gotta translate 0.0.0.0 into something people can actually connect to
+                        // This is currently replaced by the default outgoing IP, which should work assuming NAT port forwarding succeeded
+                        // Or there is no NAT involved.
+                        proxies.Add(await _ipResolver.Translate(listener.Item1) + ":" + listener.Item2);
+                    }
+                    serviceReference.AccessReference = proxies;
+                    serviceReference.AccessCredentials = Messages.SPECTERO_USERNAME_PASSWORD;
+                    break;
+                case bool _ when type == typeof(OpenVPN):
+                    // OpenVPN is a multi-instance service
+                    var allListeners = new List<Tuple<string, int, TransportProtocols, string>>();
+                    foreach (var vpnConfig in configs)
+                    {
+                        var castConfig = vpnConfig as OpenVPNConfig;
+                        if (castConfig?.listener != null)
                         {
-                            // Gotta translate 0.0.0.0 into something people can actually connect to
-                            // This is currently replaced by the default outgoing IP, which should work assuming NAT port forwarding succeeded
-                            // Or there is no NAT involved.
-                            proxies.Add(await _ipResolver.Translate(listener.Item1) + ":" + listener.Item2);
+                            // ReSharper disable once InconsistentNaming
+                            var translatedIP = await _ipResolver.Translate(castConfig.listener.Item1);
+                            allListeners.Add(new Tuple<string, int, TransportProtocols, string>(translatedIP.ToString(), castConfig.listener.Item2,
+                                castConfig.listener.Item3, castConfig.listener.Item4));
                         }
-                        serviceReference.AccessReference = proxies;
-                        serviceReference.AccessCredentials = Messages.SPECTERO_USERNAME_PASSWORD;
-                        break;
-                    case bool _ when type == typeof(OpenVPN):
-                        // OpenVPN is a multi-instance service
-                        var allListeners = new List<Tuple<string, int, TransportProtocols, string>>();
-                        foreach (var vpnConfig in configs)
-                        {
-                            var castConfig = vpnConfig as OpenVPNConfig;
-                            if (castConfig?.listener != null)
-                            {
-                                // ReSharper disable once InconsistentNaming
-                                var translatedIP = await _ipResolver.Translate(castConfig.listener.Item1);
-                                allListeners.Add(new Tuple<string, int, TransportProtocols, string>(translatedIP.ToString(), castConfig.listener.Item2,
-                                    castConfig.listener.Item3, castConfig.listener.Item4));
-                            }
-                        }
+                    }
 
-                        serviceReference.AccessConfig = await _razorLightEngine.CompileRenderAsync("OpenVPNUser", new
-                        {
-                            listeners = allListeners,
-                            User = user,
-                            identity = _identityProvider.GetGuid()
-                        });
-                        serviceReference.AccessCredentials = user?.CertKey;
-                        break;
-                }
-
-                _response.Result = serviceReference;
-                return Ok(_response);
+                    serviceReference.AccessConfig = await _razorLightEngine.CompileRenderAsync("OpenVPNUser", new
+                    {
+                        listeners = allListeners,
+                        User = user,
+                        identity = _identityProvider.GetGuid()
+                    });
+                    serviceReference.AccessCredentials = user?.CertKey;
+                    break;
             }
-            
+
+            return serviceReference;
+        }
+
+        [HttpGet("{id}/service-resources/{name?}")]
+        public async Task<IActionResult> GetUserServiceSetupResources(int id, string name = "")
+        {
+            var user = await Db.SingleByIdAsync<User>(id);
+            if (user == null)
+                _response.Errors.Add(Errors.USER_NOT_FOUND, "");
+
+            if (HasErrors())
+                return BadRequest(_response);
+
+            // TODO: Add checks for whether an user is allowed to access a specific service before generating config for them.
+            if (Defaults.ValidServices.Any(s => s == name) || name.IsEmpty())
+            {
+                if (!name.IsEmpty())
+                {
+                    var type = Utility.GetServiceType(name);
+                    var configs = _serviceConfigManager.Generate(type);
+                    _response.Result = await GenerateUserServiceResource(user, type, configs);
+                }
+                else
+                {
+                    var resultDictionary = new Dictionary<string, UserServiceResource>();
+                    foreach (var serviceName in Defaults.ValidServices)
+                    {
+                        var type = Utility.GetServiceType(serviceName);
+                        // TODO: Fix this constraint once the other services are implemented.
+                        // The config manager's dictionary cannot lookup a null value, this fixes that (since GetServiceType returns null for ShadowSOCKS/SSHTunnel)
+                        if (type != null)
+                        {
+                            var configs = _serviceConfigManager.Generate(type);
+                            resultDictionary.Add(serviceName,
+                                await GenerateUserServiceResource(user, type, configs));
+                        }                  
+                    }
+
+                    _response.Result = resultDictionary;
+                }                 
+            }
+
+            if (_response.Result != null)
+                return Ok(_response);
+
             _response.Errors.Add(Errors.INVALID_SERVICE_OR_ACTION_ATTEMPT, "");
             return BadRequest(_response);
-
         }
     }
 }
