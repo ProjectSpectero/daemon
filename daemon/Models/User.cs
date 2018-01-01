@@ -147,13 +147,13 @@ namespace Spectero.daemon.Models
                 .Ensure(m => m.RawPassword, _ => _
                     .Required()
                         .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "password"))
-                        .When(m => operation.Equals(CRUDOperation.Create))
+                        .When(m => operation.Equals(CRUDOperation.Create) || operation.Equals(CRUDOperation.Update) && !m.RawPassword.IsNullOrEmpty())
                     .MinLength(5)
                         .WithMessage(FormatValidationError(Errors.FIELD_MINLENGTH, "password", "5"))
-                        .When(m => operation.Equals(CRUDOperation.Create))
+                        .When(m => operation.Equals(CRUDOperation.Create) || operation.Equals(CRUDOperation.Update) && !m.RawPassword.IsNullOrEmpty())
                     .MaxLength(72)
                         .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "password", "72"))
-                        .When(m => operation.Equals(CRUDOperation.Create)))
+                        .When(m => operation.Equals(CRUDOperation.Create) || operation.Equals(CRUDOperation.Update) && !m.RawPassword.IsNullOrEmpty()))
                 .Ensure(m => m.FullName, _ => _
                     .MaxLength(50)
                         .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "fullName", "50"))
@@ -161,10 +161,8 @@ namespace Spectero.daemon.Models
                 .Ensure(m => m.EmailAddress, _ => _
                     .Required()
                         .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "email"))
-                        .When(m => operation.Equals(CRUDOperation.Create))
                     .Email()
                         .WithMessage(FormatValidationError(Errors.FIELD_EMAIL, "email"))
-                        .When(m => operation.Equals(CRUDOperation.Create))
                 )
                 .For(this)
                 .Validate();

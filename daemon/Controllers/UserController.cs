@@ -179,7 +179,7 @@ namespace Spectero.daemon.Controllers
         {
             if (ModelState.IsValid)
             {
-                if (!user.Validate(out var validationErrors))
+                if (!user.Validate(out var validationErrors, CRUDOperation.Update))
                     _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
             }
             else
