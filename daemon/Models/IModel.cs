@@ -2,8 +2,13 @@
 
 namespace Spectero.daemon.Models
 {
+    public enum CRUDOperation
+    {
+        Create, Update
+    }
+
     public interface IModel
     {
-        bool Validate(out ImmutableArray<string> errors);
+        bool Validate(out ImmutableArray<string> errors, CRUDOperation operation = CRUDOperation.Create);
     }
 }

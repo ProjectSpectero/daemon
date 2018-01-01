@@ -9,7 +9,8 @@ namespace Spectero.daemon.Models
         public string AuthKey;
         public string Password;
 
-        public override bool Validate(out ImmutableArray<string> errors)
+        // The operation param is useless here, for it is not used.
+        public override bool Validate(out ImmutableArray<string> errors, CRUDOperation operation = CRUDOperation.Create)
         {
             IValitResult result = ValitRules<TokenRequest>
                 .Create()

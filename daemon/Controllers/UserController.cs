@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using RazorLight;
+using ServiceStack;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -11,8 +12,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Org.BouncyCastle.Asn1.X509;
-using RazorLight;
-using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
@@ -60,6 +59,7 @@ namespace Spectero.daemon.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Invoked with default operation = create param
                 if (!user.Validate(out var validationErrors))
                     _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
             }           
@@ -92,6 +92,14 @@ namespace Spectero.daemon.Controllers
             var userCertBytes = _cryptoService.IssueUserChain(user.AuthKey, new[] {KeyPurposeID.IdKPServerAuth}, user.CertKey);
 
             user.Cert = Convert.ToBase64String(userCertBytes);
+
+            var existingUser = await Db.SingleAsync<User>(x => x.AuthKey == user.AuthKey);
+            if (existingUser != null)
+            {
+                // Some user already exists with this authkey, let's bail
+                _response.Errors.Add(Errors.RESOURCE_CREATION_FAILED, "");
+                return StatusCode(409, _response);
+            }
 
             try
             {
@@ -273,6 +281,8 @@ namespace Spectero.daemon.Controllers
             }
         }
 
+        // TODO: Look into whether making this a responsibility of the service itself (generation) is a more sane appraoch
+        // This would foster loose coupling
         private async Task<UserServiceResource> GenerateUserServiceResource(User user, Type type, IEnumerable<IServiceConfig> configs)
         {
             var serviceReference = new UserServiceResource();
@@ -283,7 +293,7 @@ namespace Spectero.daemon.Controllers
                     // HTTPProxy has a global config, and thus only one instance
                     // Guaranteed to not be null, so inspection is not needed.
                     // ReSharper disable once AssignNullToNotNullAttribute
-                    var config = (HTTPConfig) configs.First() as HTTPConfig;
+                    var config = (HTTPConfig) configs.First();
                     var proxies = new List<string>();
                     foreach (var listener in config.listeners)
                     {

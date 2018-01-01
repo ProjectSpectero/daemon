@@ -133,7 +133,7 @@ namespace Spectero.daemon.Models
          * Built in object validator
          */
 
-        public override bool Validate(out ImmutableArray<string> errors)
+        public override bool Validate(out ImmutableArray<string> errors, CRUDOperation operation = CRUDOperation.Create)
         {
             IValitResult result = ValitRules<User>
                 .Create()
@@ -147,21 +147,24 @@ namespace Spectero.daemon.Models
                 .Ensure(m => m.RawPassword, _ => _
                     .Required()
                         .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "password"))
-                        .When(m => !m.RawPassword.IsNullOrEmpty())
+                        .When(m => operation.Equals(CRUDOperation.Create))
                     .MinLength(5)
                         .WithMessage(FormatValidationError(Errors.FIELD_MINLENGTH, "password", "5"))
-                        .When(m => !m.RawPassword.IsNullOrEmpty())
+                        .When(m => operation.Equals(CRUDOperation.Create))
                     .MaxLength(72)
                         .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "password", "72"))
-                        .When(m => !m.RawPassword.IsNullOrEmpty()))
+                        .When(m => operation.Equals(CRUDOperation.Create)))
                 .Ensure(m => m.FullName, _ => _
                     .MaxLength(50)
                         .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "fullName", "50"))
                         .When(m => ! m.FullName.IsNullOrEmpty()))
                 .Ensure(m => m.EmailAddress, _ => _
+                    .Required()
+                        .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "email"))
+                        .When(m => operation.Equals(CRUDOperation.Create))
                     .Email()
                         .WithMessage(FormatValidationError(Errors.FIELD_EMAIL, "email"))
-                        .When(m => ! m.EmailAddress.IsNullOrEmpty())
+                        .When(m => operation.Equals(CRUDOperation.Create))
                 )
                 .For(this)
                 .Validate();
