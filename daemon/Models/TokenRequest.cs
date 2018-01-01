@@ -16,16 +16,10 @@ namespace Spectero.daemon.Models
                 .Create()
                 .Ensure(m => m.AuthKey, _ => _
                     .Required()
-                        .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "authKey"))
-                    .Matches(@"^[a-zA-Z][\w]*$")
-                    .WithMessage(FormatValidationError(Errors.FIELD_REGEX_MATCH, "authKey", @"^[a-zA-Z][\w]*$")))
+                        .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "authKey")))
                 .Ensure(m => m.Password, _ => _
                     .Required()
-                        .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "password"))
-                    .MinLength(5)
-                        .WithMessage(FormatValidationError(Errors.FIELD_MINLENGTH, "password", "5"))
-                    .MaxLength(72)
-                        .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "password", "72")))
+                        .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "password")))
                 .For(this)
                 .Validate();
 
