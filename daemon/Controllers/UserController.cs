@@ -98,6 +98,7 @@ namespace Spectero.daemon.Controllers
             {
                 // Some user already exists with this authkey, let's bail
                 _response.Errors.Add(Errors.RESOURCE_CREATION_FAILED, "");
+                _response.Errors.Add(Errors.USER_AUTHKEY_ALREADY_EXISTS, "");
                 return StatusCode(409, _response);
             }
 

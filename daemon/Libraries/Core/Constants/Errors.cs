@@ -14,6 +14,7 @@
 
         public const string MISSING_BODY = "MISSING_BODY";
         public const string USER_NOT_FOUND = "USER_NOT_FOUND";
+        public const string USER_AUTHKEY_ALREADY_EXISTS = "USER_AUTHKEY_ALREADY_EXISTS";
         public const string AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED";
         public const string ROLE_VALIDATION_FAILED = "ROLE_VALIDATION_FAILED";
 
