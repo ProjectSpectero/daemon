@@ -224,7 +224,7 @@ namespace Spectero.daemon.Controllers
             }
                 
             if (!user.Password.IsNullOrEmpty())
-                fetchedUser.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+                fetchedUser.Password = user.Password;
 
             if (!user.FullName.IsNullOrEmpty())
                 fetchedUser.FullName = user.FullName;
