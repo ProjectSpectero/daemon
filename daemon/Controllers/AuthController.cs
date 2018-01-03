@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
@@ -59,7 +60,13 @@ namespace Spectero.daemon.Controllers
                 user.Cert = null;
                 user.CertKey = null;
 
-                var userJson = JsonConvert.SerializeObject(user);
+                var userJson = JsonConvert.SerializeObject(user,
+                    new JsonSerializerSettings
+                    {
+                        ContractResolver = new CamelCasePropertyNamesContractResolver()
+                    }
+                );
+
                 var claims = new[]
                 {
                     new Claim(ClaimTypes.UserData, userJson),
