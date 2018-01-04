@@ -2,6 +2,7 @@
 using RazorLight;
 using ServiceStack;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -97,8 +98,9 @@ namespace Spectero.daemon.Controllers
             if (existingUser != null)
             {
                 // Some user already exists with this authkey, let's bail
-                _response.Errors.Add(Errors.RESOURCE_CREATION_FAILED, "");
-                _response.Errors.Add(Errors.USER_AUTHKEY_ALREADY_EXISTS, "");
+                _response.Errors.Add(Errors.CRUD_OPERATION_FAILED, "");
+                _response.Errors.Add(Errors.VALIDATION_FAILED,
+                    new[] {Errors.RESOURCE_EXISTS + ":authKey:" + user.AuthKey});
                 return StatusCode(409, _response);
             }
 
