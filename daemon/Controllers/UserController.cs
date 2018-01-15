@@ -124,6 +124,14 @@ namespace Spectero.daemon.Controllers
 
         }
 
+        [HttpGet("self", Name = "GetCurrentUserByAuthToken")]
+        public IActionResult GetCurrentUserByAuthToken()
+        {
+            _response.Result = CurrentUser();
+            return Ok(_response);
+        }
+
+
         [HttpGet("{id}", Name = "GetUserById")]
         public async Task<IActionResult> GetUserById(long id)
         {
