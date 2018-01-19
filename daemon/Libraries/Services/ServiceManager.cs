@@ -44,15 +44,19 @@ namespace Spectero.daemon.Libraries.Services
         }
 
 
-        public string Process(string name, string action)
+        public string Process(string name, string action, out String error)
         {
+            error = null;
             Type type = Utility.GetServiceType(name);
             var service = GetService(type);
             string message = null;
 
             if (service == null)
             {
-                _logger.LogError("NAP: Resolved service was null when processing name -> " + name + ", action -> " + action);
+                var errorMessage = "NAP: Resolved service was null when processing name-> " + name + ", action-> " +
+                                   action;
+                error = errorMessage;
+                _logger.LogError(errorMessage);
                 return Messages.ACTION_FAILED;
             }
 
@@ -102,6 +106,7 @@ namespace Spectero.daemon.Libraries.Services
                     }
 
                     _logger.LogError(e, errorBuilder.ToString());
+                    error = errorBuilder.ToString();
                     alreadyLogged = true;
 
                     // To ensure consistency, FORCE a stop
@@ -110,10 +115,13 @@ namespace Spectero.daemon.Libraries.Services
 
                 message = Messages.ACTION_FAILED;
 
-                if (! alreadyLogged)
+                if (!alreadyLogged)
+                {
                     _logger.LogError(e, message);
+                    error = e.Message;
+                }
+                    
             }
-
 
             return message;
         }

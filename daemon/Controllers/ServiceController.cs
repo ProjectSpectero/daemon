@@ -67,8 +67,15 @@ namespace Spectero.daemon.Controllers
                     return Ok(_response);
                 }
 
-                _serviceManager.Process(name, task);
-                _response.Message = _serviceManager.Process(name, task);
+                var message = _serviceManager.Process(name, task, out var error);
+
+                if (error != null)
+                {
+                    _response.Errors.Add(message, error);
+                    return StatusCode(500, _response);
+                }                 
+
+                _response.Message = message;
                 return Ok(_response);
             }
 

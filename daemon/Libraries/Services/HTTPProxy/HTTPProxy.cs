@@ -183,7 +183,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 }
         }
 
-        private void CheckLanProtection(string host, ref string failReason)
+        private void CheckLanProtection(string host, ref string failReason, ref string blockedAddress)
         {           
             if (failReason.IsNullOrEmpty() && _appConfig.LocalSubnetBanEnabled)
             {
@@ -196,6 +196,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     if (!IPNetwork.Contains(network, address)) continue;
                     _logger.LogDebug("ESO: Found access attempt to LAN (" + address + " is in " + network + ")");
                     failReason = BlockedReasons.LanProtection;
+                    blockedAddress = address.ToString();
                     break;
                 }
             }
@@ -213,6 +214,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             _logger.LogDebug("ESO: Processing request to " + eventArgs.WebSession.Request.Url);
 
             string failReason = null;
+            var data = "";
 
             var request = eventArgs.WebSession.Request;
             var requestUri = request.RequestUri;
@@ -223,14 +225,15 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
             CheckProxyMode(host, ref failReason);
             CheckBannedDomain(host, ref failReason);
-            CheckLanProtection(host, ref failReason);
+
+            CheckLanProtection(host, ref failReason, ref data);
 
             SetUpstreamAddress(ref eventArgs);
 
 
             if (failReason != null)
                 await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, failReason,
-                    Uri.EscapeDataString(requestUri.ToString())));
+                    Uri.EscapeDataString(requestUri.ToString()), data));
         }
 
         private async Task OnTunnelConnectResponse(object sender, TunnelConnectSessionEventArgs eventArgs)

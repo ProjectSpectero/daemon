@@ -5,7 +5,7 @@ namespace Spectero.daemon.Libraries.Services
 {
     public interface IServiceManager
     {
-        string Process(string name, string action);
+        string Process(string name, string action, out String error);
         ConcurrentDictionary<Type, IService> GetServices();
         IService GetService(Type type);
 
