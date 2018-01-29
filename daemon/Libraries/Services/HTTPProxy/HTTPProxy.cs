@@ -70,7 +70,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             if (State == ServiceState.Halted)
             {
                 if (serviceConfig != null)
-                    _proxyConfig = (HTTPConfig) serviceConfig.First();
+                    SetConfig(serviceConfig);
+                
 
                 // Stop proxy server if it's somehow internally running due to a mismatched state (due to errors on a previous startup)
                 if (_proxyServer.ProxyRunning)
@@ -97,7 +98,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     };
 
                     _proxyServer.AddEndPoint(endpoint);
-                    _logger.LogDebug("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
+                    _logger.LogInformation("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
                 }
 
                 _proxyServer.ProxyRealm = "Spectero";
@@ -139,7 +140,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         public void Reload(IEnumerable<IServiceConfig> serviceConfig)
         {
-            _proxyConfig = (HTTPConfig) serviceConfig.First();
+            SetConfig(serviceConfig);
         }
 
         public void LogState(string caller)
@@ -228,7 +229,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     if (failReason.IsNullOrEmpty())
                         cacheTarget.Add("matched", false.ToString());
 
-                    AddToCache(key, cacheTarget);
+                    // Cache the result for 15 minutes
+                    AddToCache(key, cacheTarget, 15);
                 }
       
             }
@@ -383,9 +385,16 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
           
         }
 
-        private void AddToCache (String key, Object data)
+        private void AddToCache (String key, Object data, int expiryTimespan = 0)
         {
-            _cache.Set(key, data);
+            if (expiryTimespan != 0)
+            {
+                var span = TimeSpan.FromMinutes(expiryTimespan);
+                _cache.Set(key, data, span);
+            }
+            else
+                _cache.Set(key, data);
+
             _cacheKeys.Add(key);
         }
 
