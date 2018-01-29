@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
@@ -28,11 +29,13 @@ namespace Spectero.daemon.Libraries.Services
         private readonly IServiceConfigManager _serviceConfigManager;
         private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
         private readonly IStatistician _statistician;
+        private readonly IMemoryCache _cache;
 
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
-            IStatistician statistician, IServiceConfigManager serviceConfigManager)
+            IStatistician statistician, IServiceConfigManager serviceConfigManager,
+            IMemoryCache cache)
         {
             _appConfig = appConfig.CurrentValue;
             _logger = logger;
@@ -40,6 +43,7 @@ namespace Spectero.daemon.Libraries.Services
             _authenticator = authenticator;
             _statistician = statistician;
             _serviceConfigManager = serviceConfigManager;
+            _cache = cache;
             InitiateServices();
         }
 
@@ -154,7 +158,7 @@ namespace Spectero.daemon.Libraries.Services
             {
                 _logger.LogDebug("IS: Processing activation request for " + serviceType);
                 var service = (IService) Activator.CreateInstance(serviceType, _appConfig, _logger, _db, _authenticator,
-                    _localNetworks, _localAddresses, _statistician);
+                    _localNetworks, _localAddresses, _statistician, _cache);
                 var config = _serviceConfigManager.Generate(serviceType);
                 service.SetConfig(config);
                 _logger.LogDebug("IS: Activation succeeded for " + serviceType);

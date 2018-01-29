@@ -106,7 +106,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 _proxyServer.BeforeResponse += OnResponse;
                 _proxyServer.TunnelConnectRequest += OnTunnelConnectRequest;
                 _proxyServer.TunnelConnectResponse += OnTunnelConnectResponse;
-                _proxyServer.ExceptionFunc = exception => _logger.LogDebug(exception.Message);
+                _proxyServer.ExceptionFunc = exception => _logger.LogDebug(exception, "Internal error on the proxy engine: ");
 
 
                 _proxyServer.Start();
@@ -201,11 +201,14 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 else
                 {
                     // Not in cache, likely an host we're seeing for the first time.
-                    var cacheTarget = new Dictionary<String, String>();
-                    cacheTarget.Add("host", host);
+                    var cacheTarget = new Dictionary<string, string> {{"host", host}};
 
                     var hostAddresses = Dns.GetHostAddresses(host);
-                    if (hostAddresses.Length == 0) return;
+                    if (hostAddresses.Length == 0)
+                    {
+                        _logger.LogDebug("ESO: Could not resolve " + host + ", LAN protection bypassed.");
+                        return;
+                    }
 
                     foreach (var network in _localNetworks)
                         foreach (var address in hostAddresses)
@@ -222,9 +225,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                             break;
                         }
 
-                    cacheTarget.Add("matched", false.ToString());
+                    if (failReason.IsNullOrEmpty())
+                        cacheTarget.Add("matched", false.ToString());
 
-                    _cache.Set(key, cacheTarget);
+                    AddToCache(key, cacheTarget);
                 }
       
             }
@@ -353,17 +357,24 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             // This service does not support "instances," i.e: the first config is the only useful one.
             _proxyConfig = (HTTPConfig) config.First();
 
-            foreach (var domain in _proxyConfig.allowedDomains)
+            if (_proxyConfig.allowedDomains != null)
             {
-                var key = FormatCacheKey(domain, "allowedDomains");
-                AddToCache(key, true);
+                foreach (var domain in _proxyConfig.allowedDomains)
+                {
+                    var key = FormatCacheKey(domain, "allowedDomains");
+                    AddToCache(key, true);
+                }
             }
 
-            foreach (var domain in _proxyConfig.bannedDomains)
+            if (_proxyConfig.bannedDomains != null)
             {
-                var key = FormatCacheKey(domain, "bannedDomains");
-                AddToCache(key, true);
-            } 
+                foreach (var domain in _proxyConfig.bannedDomains)
+                {
+                    var key = FormatCacheKey(domain, "bannedDomains");
+                    AddToCache(key, true);
+                }
+            }
+          
         }
 
         private void AddToCache (String key, Object data)

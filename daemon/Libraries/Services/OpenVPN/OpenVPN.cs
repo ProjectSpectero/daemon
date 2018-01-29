@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Net;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
@@ -19,6 +20,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly IEnumerable<IPAddress> _localAddresses;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
+        private readonly IMemoryCache _cache;
         private IEnumerable<OpenVPNConfig> _vpnConfig;
         private readonly ServiceState State = ServiceState.Halted;
 
@@ -29,7 +31,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public OpenVPN(AppConfig appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
             IEnumerable<IPNetwork> localNetworks, IEnumerable<IPAddress> localAddresses,
-            IStatistician statistician)
+            IStatistician statistician, IMemoryCache cache)
         {
             _appConfig = appConfig;
             _logger = logger;
@@ -37,6 +39,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _authenticator = authenticator;
             _localNetworks = localNetworks;
             _statistician = statistician;
+            _cache = cache;
             _localAddresses = localAddresses;
         }
 
