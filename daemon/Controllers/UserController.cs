@@ -2,7 +2,6 @@
 using RazorLight;
 using ServiceStack;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -16,6 +15,7 @@ using Org.BouncyCastle.Asn1.X509;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
+using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Identity;
@@ -285,7 +285,7 @@ namespace Spectero.daemon.Controllers
         // Used to invalidate a cached user if they are deleted / updated
         private void ClearUserFromCacheIfExists(string username)
         {
-            var key = Utility.GenerateCacheKey(username);
+            var key = AuthUtils.GetCachedUserKey(username);
             if (_cache.Get<User>(key) != null)
             {
                 _cache.Remove(key);

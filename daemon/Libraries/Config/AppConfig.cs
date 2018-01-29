@@ -30,5 +30,8 @@ namespace Spectero.daemon.Libraries.Config
         public string SpaFileName { get; set; }
         public int SpaCacheTime { get; set; }
         public string DefaultOutgoingIPResolver { get; set; }
+
+        public bool InMemoryAuth { get; set; }
+        public int InMemoryAuthCacheMinutes { get; set; }
     }
 }

@@ -32,7 +32,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
         {
             _logger.LogDebug("UPA: Attempting to verify auth for " + username);
 
-            var user = _cache.Get<User>(Utility.GenerateCacheKey(username));
+            var user = _cache.Get<User>(AuthUtils.GetCachedUserKey(username));
 
             if (user == null)
             {
@@ -40,13 +40,35 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                 var dbQuery = await _db.SelectAsync<User>(x => x.AuthKey == username);
                 user = dbQuery.FirstOrDefault();
                 if (user != null)
-                    _cache.Set(Utility.GenerateCacheKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
+                    _cache.Set(AuthUtils.GetCachedUserKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
             }
 
             if (user != null)
             {
                 _logger.LogDebug("UPA: User " + username + " was found, executing auth flow.");
-                var passwordVerified = BCrypt.Net.BCrypt.Verify(password, user.Password);
+
+                // This verification is a reason for performance problems on rapid fire services like the proxy,
+                // where requests are authenticated on every request
+                bool passwordVerified = false;
+
+                if (_appConfig.InMemoryAuth && _cache.TryGetValue(AuthUtils.GetCachedUserPasswordKey(username), out var cachedPassword))
+                {
+                    _logger.LogDebug("UPA: In-memory password cache used.");
+                    var cachedString = (string) cachedPassword;
+
+                    if (cachedString.Equals(password))
+                        passwordVerified = true;
+                }
+                else
+                {
+                    passwordVerified = BCrypt.Net.BCrypt.Verify(password, user.Password);
+
+                    // Only put the user in the cache if In-memory auth data caching is enabled and PW was verified
+                    if (_appConfig.InMemoryAuth && passwordVerified)
+                        _cache.Set(AuthUtils.GetCachedUserPasswordKey(username), password, TimeSpan.FromMinutes(_appConfig.InMemoryAuthCacheMinutes));
+                }
+                    
+
                 _logger.LogDebug("UPA: Password verification -> " + passwordVerified);
                 if (passwordVerified && user.Can(action))
                     return user;

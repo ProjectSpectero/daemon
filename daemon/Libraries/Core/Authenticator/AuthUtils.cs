@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace Spectero.daemon.Libraries.Core.Authenticator
 {
@@ -22,6 +23,16 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
             if (cost + 1 < costThreshold)
                 return costThreshold;
             return cost + 1;
+        }
+
+        public static string GetCachedUserPasswordKey(string username)
+        {
+            return "auth.user.inmemory." + username;
+        }
+
+        public static string GetCachedUserKey(string username)
+        {
+            return "auth.user." + username;
         }
     }
 }
