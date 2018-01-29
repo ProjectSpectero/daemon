@@ -13,7 +13,6 @@ using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Statistics;
-using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Models;

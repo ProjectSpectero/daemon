@@ -5,6 +5,12 @@
     <ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Libraries\NewFolder\**" />
+    <Content Remove="Libraries\NewFolder\**" />
+    <EmbeddedResource Remove="Libraries\NewFolder\**" />
+    <None Remove="Libraries\NewFolder\**" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Remove="Libraries\Core\HTTP\Template.cs" />
     <Compile Remove="Models\Error.cs" />
   </ItemGroup>

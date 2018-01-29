@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using ServiceStack;
 using Spectero.daemon.Libraries.Config;
@@ -31,9 +32,11 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly IEnumerable<IPAddress> _localAddresses;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
-        private readonly ProxyServer _proxyServer = new ProxyServer();
+        private readonly IMemoryCache _cache;
 
+        private readonly ProxyServer _proxyServer = new ProxyServer();
         private HTTPConfig _proxyConfig;
+        private List<String> _cacheKeys;
         
 
         private ServiceState State = ServiceState.Halted;
@@ -41,7 +44,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
             IEnumerable<IPNetwork> localNetworks, IEnumerable<IPAddress> localAddresses,
-            IStatistician statistician)
+            IStatistician statistician, IMemoryCache cache)
         {
             _appConfig = appConfig;
             _logger = logger;
@@ -50,6 +53,9 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             _localNetworks = localNetworks;
             _localAddresses = localAddresses;
             _statistician = statistician;
+            _cache = cache;
+
+            _cacheKeys = new List<string>();
         }
 
         public HTTPProxy()
@@ -152,15 +158,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             {
                 if (_proxyConfig.allowedDomains != null)
                 {
-                    var matchFound = false;
-                    foreach (var allowedHost in _proxyConfig.allowedDomains)
-                        if (host.Equals(allowedHost))
-                        {
-                            matchFound = true;
-                            break;
-                        }
-                    if (!matchFound)
-                        failReason = BlockedReasons.ExclusiveAllow;
+                    if (! _cache.TryGetValue(FormatCacheKey(host, "allowedDomains"), out var test))
+                        failReason = BlockedReasons.ExclusiveAllow;      
                 }
                 else
                 {
@@ -173,35 +172,63 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         private void CheckBannedDomain(string host, ref string failReason)
         {
-            if (failReason.IsNullOrEmpty() && _proxyConfig.bannedDomains != null)
-                foreach (var blockedUri in _proxyConfig.bannedDomains)
-                {
-                    if (!host.Equals(blockedUri)) continue;
-                    _logger.LogDebug("ESO: Blocked host " + host + " found.");
-                    failReason = BlockedReasons.BlockedUri;
-                    break;
-                }
+            if (failReason.IsNullOrEmpty() && _proxyConfig.bannedDomains != null &&
+                _cache.TryGetValue(FormatCacheKey(host, "bannedDomains"), out var test))
+            {
+                _logger.LogDebug("ESO: Blocked host " + host + " found.");
+                failReason = BlockedReasons.BlockedUri;
+            }
         }
 
         private void CheckLanProtection(string host, ref string failReason, ref string blockedAddress)
         {           
             if (failReason.IsNullOrEmpty() && _appConfig.LocalSubnetBanEnabled)
             {
-                var hostAddresses = Dns.GetHostAddresses(host);
-                if (hostAddresses.Length == 0) return;
+                var key = FormatCacheKey(host, "lanProtection");
 
-                foreach (var network in _localNetworks)
-                foreach (var address in hostAddresses)
+                if (_cache.TryGetValue(key, out var matchResult))
                 {
-                    if (!IPNetwork.Contains(network, address)) continue;
-                    _logger.LogDebug("ESO: Found access attempt to LAN (" + address + " is in " + network + ")");
-                    failReason = BlockedReasons.LanProtection;
-                    blockedAddress = address.ToString();
-                    break;
+                    var result = (Dictionary<string, string>) matchResult;
+                    var matched = bool.Parse(result["matched"]);
+
+                    if (matched)
+                    {
+                        _logger.LogDebug("ESO-CACHE: Found access attempt to LAN (" + result["address"] + " is in " + result["network"] + ")");
+                        failReason = BlockedReasons.LanProtection;
+                        blockedAddress = result["address"];
+                    }
                 }
+                else
+                {
+                    // Not in cache, likely an host we're seeing for the first time.
+                    var cacheTarget = new Dictionary<String, String>();
+                    cacheTarget.Add("host", host);
+
+                    var hostAddresses = Dns.GetHostAddresses(host);
+                    if (hostAddresses.Length == 0) return;
+
+                    foreach (var network in _localNetworks)
+                        foreach (var address in hostAddresses)
+                        {
+                            if (!IPNetwork.Contains(network, address)) continue;
+
+                            _logger.LogDebug("ESO-LOOP: Found access attempt to LAN (" + address + " is in " + network + ")");
+                            failReason = BlockedReasons.LanProtection;
+                            blockedAddress = address.ToString();
+
+                            cacheTarget.Add("matched", true.ToString());
+                            cacheTarget.Add("address", address.ToString());
+                            cacheTarget.Add("network", network.ToString());
+                            break;
+                        }
+
+                    cacheTarget.Add("matched", false.ToString());
+
+                    _cache.Set(key, cacheTarget);
+                }
+      
             }
         }
-
 
 
         private async Task OnTunnelConnectRequest(object sender, TunnelConnectSessionEventArgs eventArgs)
@@ -321,8 +348,47 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
         {
+            ClearLocalCache();
+
             // This service does not support "instances," i.e: the first config is the only useful one.
             _proxyConfig = (HTTPConfig) config.First();
+
+            foreach (var domain in _proxyConfig.allowedDomains)
+            {
+                var key = FormatCacheKey(domain, "allowedDomains");
+                AddToCache(key, true);
+            }
+
+            foreach (var domain in _proxyConfig.bannedDomains)
+            {
+                var key = FormatCacheKey(domain, "bannedDomains");
+                AddToCache(key, true);
+            } 
+        }
+
+        private void AddToCache (String key, Object data)
+        {
+            _cache.Set(key, data);
+            _cacheKeys.Add(key);
+        }
+
+        private void RemoveFromCache(String key)
+        {
+            _cache.Remove(key);
+            _cacheKeys.Remove(key);
+        }
+
+        private void ClearLocalCache()
+        {
+            foreach (var key in _cacheKeys)
+            {
+                RemoveFromCache(key);
+            }
+        }
+
+        private String FormatCacheKey(String key, String type)
+        {
+            return "services.httpproxy." + type + "." + key;
         }
     }
 }
