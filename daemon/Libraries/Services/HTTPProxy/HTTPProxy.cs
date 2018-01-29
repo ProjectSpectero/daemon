@@ -286,24 +286,26 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 Utility.ExtractHeader(eventArgs.WebSession.Request.Headers, "X-SPECTERO-UPSTREAM-IP")
                     .FirstOrDefault();
 
+            IPAddress requestedAddress = null;
+
             if (requestedUpstream != null)
             {
                 // Found a request for a specific upstream
-                IPAddress requestedAddress;
+                
                 if (IPAddress.TryParse(requestedUpstream.Value, out requestedAddress))
                 {
                     _logger.LogDebug("ES: Proxy request received with upstream request of " + requestedAddress);
+
+                    // This lookup is possibly slow, TBD.
                     if (_localAddresses.Contains(requestedAddress))
-                    {
                         _logger.LogDebug("ES: Requested address is valid (" + requestedAddress + ")");
-                        eventArgs.WebSession.UpStreamEndPoint = new IPEndPoint(requestedAddress, 0);
-                    }
+                      
                     else
-                        _logger.LogDebug(
-                            "ES: Requested address is NOT valid for this system (" + requestedAddress + ")");
+                        _logger.LogWarning(
+                            "ES: Requested address is NOT valid for this system (" + requestedAddress + "), silently ignored. Request originated with system default IP.");
                 }
                 else
-                    _logger.LogDebug("ES: Invalid X-SPECTERO-UPSTREAM-IP header.");
+                    _logger.LogWarning("ES: Invalid X-SPECTERO-UPSTREAM-IP header.");
             }
             else
             {
@@ -314,9 +316,13 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 
                 if (Utility.CheckIPFilter(endpoint.IpAddress, Utility.IPComparisonReasons.FOR_PROXY_OUTGOING) && _appConfig.RespectEndpointToOutgoingMapping)
                 {
-                    _logger.LogDebug("ES: No header upstream was requested, using endpoint default of " + endpoint.IpAddress + " as it was determined valid and RespectEndpointToOutgoingMapping is enabled.");
-                    eventArgs.WebSession.UpStreamEndPoint = new IPEndPoint(endpoint.IpAddress, 0);
+                    requestedAddress = endpoint.IpAddress;
+                    _logger.LogDebug("ES: No header upstream was requested, using endpoint default of " + requestedAddress + " as it was determined valid" 
+                                     + " and RespectEndpointToOutgoingMapping is enabled.");                
                 }
+
+                if (requestedAddress != null)
+                    eventArgs.WebSession.UpStreamEndPoint = new IPEndPoint(requestedAddress, 0);
                 
             }
                 
