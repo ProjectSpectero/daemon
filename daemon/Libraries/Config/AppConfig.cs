@@ -33,5 +33,6 @@ namespace Spectero.daemon.Libraries.Config
 
         public bool InMemoryAuth { get; set; }
         public int InMemoryAuthCacheMinutes { get; set; }
+        public bool AutoStartServices { get; set; }
     }
 }

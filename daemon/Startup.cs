@@ -105,14 +105,17 @@ namespace Spectero.daemon
                         .AllowCredentials());
             });
 
+            services.AddSingleton<IAutoStarter, AutoStarter>();
+
             services.AddMvc();
             services.AddMemoryCache();
 
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IOptionsSnapshot<AppConfig> configMonitor, IApplicationBuilder app, IHostingEnvironment env,
-            ILoggerFactory loggerFactory, IMigration migration)
+        public void Configure(IOptionsSnapshot<AppConfig> configMonitor, IApplicationBuilder app,
+            IHostingEnvironment env, ILoggerFactory loggerFactory,
+            IMigration migration, IAutoStarter autoStarter)
         {
             var appConfig = configMonitor.Value;
             var webRootPath = Path.Combine(_currentDirectory, appConfig.WebRoot);
@@ -148,6 +151,7 @@ namespace Spectero.daemon
             app.AddNLogWeb();
 
             migration.Up();
+            autoStarter.Startup();
         }
 
         private IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)
