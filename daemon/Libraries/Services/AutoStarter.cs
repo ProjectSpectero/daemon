@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core.Constants;
 
 namespace Spectero.daemon.Libraries.Services
 {
@@ -24,9 +25,14 @@ namespace Spectero.daemon.Libraries.Services
 
             foreach (var entry in _manager.GetServices())
             {
-                var service = entry.Value;
-                service.Start();
-                _logger.LogInformation("S: Processed autostartup for " + entry.Key);
+                var service = entry.Value.GetType().Name;
+
+                var result = _manager.Process(service, "start", out var error);
+
+                if (result == Messages.ACTION_FAILED)
+                    _logger.LogError("Autostart: processing failed for " + service + "." + error);
+                else
+                    _logger.LogInformation("Autostart: Processed autostartup for " + service);
             }
 
         }

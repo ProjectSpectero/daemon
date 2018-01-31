@@ -98,7 +98,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     };
 
                     _proxyServer.AddEndPoint(endpoint);
-                    _logger.LogInformation("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
+                    _logger.LogDebug("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
                 }
 
                 _proxyServer.ProxyRealm = "Spectero";
@@ -112,6 +112,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
                 _proxyServer.Start();
                 State = ServiceState.Running;
+                _logger.LogInformation("SS: now listening on " + _proxyConfig.listeners.Count + " endpoints.");
             }
             LogState("Start");
         }
