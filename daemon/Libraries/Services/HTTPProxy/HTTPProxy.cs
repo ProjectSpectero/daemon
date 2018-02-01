@@ -227,6 +227,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                         failReason = BlockedReasons.LanProtection;
                         blockedAddress = result["address"];
                     }
+                    else
+                        _logger.LogDebug("ESO-CACHE: " + host + " verified, LAN protection bypassed.");
                 }
                 else
                 {

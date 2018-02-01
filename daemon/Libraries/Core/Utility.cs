@@ -55,7 +55,7 @@ namespace Spectero.daemon.Libraries.Core
                 var properties = nic.GetIPProperties();
                 var addresses = properties.UnicastAddresses;
                 var selection = addresses
-                    .Where<UnicastIPAddressInformation>((Func<UnicastIPAddressInformation, bool>)
+                    .Where((Func<UnicastIPAddressInformation, bool>)
                         (
                             t => CheckIPFilter(t, IPComparisonReasons.FOR_PROXY_OUTGOING)
                         )

@@ -40,7 +40,7 @@
     <PackageReference Include="RazorLight" Version="2.0.0-alpha3" />
     <PackageReference Include="ServiceStack.OrmLite.Sqlite.Core" Version="1.0.44" />
     <PackageReference Include="ServiceStack.Text.Core" Version="1.0.44" />
-    <PackageReference Include="Titanium.Web.Proxy" Version="3.0.207-beta" />
+    <PackageReference Include="Titanium.Web.Proxy" Version="3.0.213" />
     <PackageReference Include="Valit" Version="0.2.0" />
   </ItemGroup>
   <ItemGroup>

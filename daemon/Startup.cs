@@ -32,20 +32,28 @@ namespace Spectero.daemon
 {
     public class Startup
     {
-        private readonly string _currentDirectory = System.IO.Directory.GetCurrentDirectory();
+        private static readonly string CurrentDirectory = System.IO.Directory.GetCurrentDirectory();
+        private IConfiguration Configuration { get; }
 
         public Startup(IHostingEnvironment env)
         {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", false, true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true)
-                .AddJsonFile("hosting.json", optional: true)
-                .AddEnvironmentVariables();
-            Configuration = builder.Build();
+            Configuration = BuildConfiguration(env.EnvironmentName);
         }
 
-        private IConfiguration Configuration { get; }
+        // Dirty hack? Absolutely.
+        // Avoids this bullshit though: https://github.com/aspnet/Hosting/issues/766
+        public static IConfiguration BuildConfiguration(String envName)
+        {
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(CurrentDirectory)
+                .AddJsonFile("appsettings.json", false, true)
+                .AddJsonFile($"appsettings.{envName}.json", true)
+                .AddJsonFile("hosting.json", optional: true)
+                .AddEnvironmentVariables();
+
+            return builder.Build();
+        }
+ 
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -79,7 +87,7 @@ namespace Spectero.daemon
 
             services.AddSingleton<IRazorLightEngine>(c =>
                 new EngineFactory()
-                    .ForFileSystem(System.IO.Path.Combine(_currentDirectory, appConfig["TemplateDirectory"]))
+                    .ForFileSystem(System.IO.Path.Combine(CurrentDirectory, appConfig["TemplateDirectory"]))
             );
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -120,7 +128,7 @@ namespace Spectero.daemon
             IMigration migration, IAutoStarter autoStarter)
         {
             var appConfig = configMonitor.Value;
-            var webRootPath = Path.Combine(_currentDirectory, appConfig.WebRoot);
+            var webRootPath = Path.Combine(CurrentDirectory, appConfig.WebRoot);
 
             if (env.IsDevelopment())
             {
