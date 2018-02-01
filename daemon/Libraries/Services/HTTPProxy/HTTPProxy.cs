@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -13,6 +15,7 @@ using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
+using Titanium.Web.Proxy.Exceptions;
 using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 
@@ -32,13 +35,13 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly IEnumerable<IPAddress> _localAddresses;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
-        private readonly IMemoryCache _cache;
+        private readonly List<String> _cacheKeys;
+
+        private IMemoryCache _cache;
 
         private readonly ProxyServer _proxyServer = new ProxyServer();
         private HTTPConfig _proxyConfig;
-        private List<String> _cacheKeys;
         
-
         private ServiceState State = ServiceState.Halted;
 
         public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger,
@@ -107,7 +110,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 _proxyServer.BeforeResponse += OnResponse;
                 _proxyServer.TunnelConnectRequest += OnTunnelConnectRequest;
                 _proxyServer.TunnelConnectResponse += OnTunnelConnectResponse;
-                _proxyServer.ExceptionFunc = exception => _logger.LogDebug(exception, "Internal error on the proxy engine: ");
+                _proxyServer.ExceptionFunc = HandleInternalProxyError;
 
 
                 _proxyServer.Start();
@@ -115,6 +118,31 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 _logger.LogInformation("SS: now listening on " + _proxyConfig.listeners.Count + " endpoints.");
             }
             LogState("Start");
+        }
+
+        private void HandleInternalProxyError(Exception exception)
+        {
+            if (!_appConfig.LogCommonProxyEngineErrors)
+            {
+                
+                var wrappedError = exception?.InnerException;
+
+                if (wrappedError is IOException)
+                {
+                    var message = wrappedError.Message;
+                    if (message.StartsWith("Unable to transfer data on the transport connection")
+                    || message.StartsWith("I/O error occurred"))
+                        return;
+                }
+
+                if (wrappedError is SocketException
+                    && wrappedError.Message.StartsWith("Connection timed out")) return;
+
+                if (wrappedError is UriFormatException) return;
+            }
+            
+
+            _logger.LogError(exception, "Internal error on the proxy engine: ");
         }
 
         public void Stop()
@@ -160,7 +188,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             {
                 if (_proxyConfig.allowedDomains != null)
                 {
-                    if (! _cache.TryGetValue(FormatCacheKey(host, "allowedDomains"), out var test))
+                    if (! GetFromCache(FormatCacheKey(host, "allowedDomains"), out var test))
                         failReason = BlockedReasons.ExclusiveAllow;      
                 }
                 else
@@ -175,7 +203,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private void CheckBannedDomain(string host, ref string failReason)
         {
             if (failReason.IsNullOrEmpty() && _proxyConfig.bannedDomains != null &&
-                _cache.TryGetValue(FormatCacheKey(host, "bannedDomains"), out var test))
+                GetFromCache(FormatCacheKey(host, "bannedDomains"), out var test))
             {
                 _logger.LogDebug("ESO: Blocked host " + host + " found.");
                 failReason = BlockedReasons.BlockedUri;
@@ -188,7 +216,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             {
                 var key = FormatCacheKey(host, "lanProtection");
 
-                if (_cache.TryGetValue(key, out var matchResult))
+                if (GetFromCache(key, out var matchResult))
                 {
                     var result = (Dictionary<string, string>) matchResult;
                     var matched = bool.Parse(result["matched"]);
@@ -208,7 +236,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     var hostAddresses = Dns.GetHostAddresses(host);
                     if (hostAddresses.Length == 0)
                     {
-                        _logger.LogDebug("ESO: Could not resolve " + host + ", LAN protection bypassed.");
+                        _logger.LogInformation("ESO: Could not resolve " + host + ", LAN protection bypassed.");
                         return;
                     }
 
@@ -264,9 +292,9 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
             SetUpstreamAddress(ref eventArgs);
 
-
             if (failReason != null)
-                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri, failReason,
+                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri,
+                    failReason,
                     Uri.EscapeDataString(requestUri.ToString()), data));
         }
 
@@ -386,34 +414,69 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
           
         }
 
-        private void AddToCache (String key, Object data, int expiryTimespan = 0)
+        private bool GetFromCache(string key, out object value)
         {
-            if (expiryTimespan != 0)
-            {
-                var span = TimeSpan.FromMinutes(expiryTimespan);
-                _cache.Set(key, data, span);
-            }
-            else
-                _cache.Set(key, data);
+            CheckAndFixCacheIfNeeded();
 
+            return _cache.TryGetValue(key, out value);
+        }
+
+        private void AddToCache (string key, object data, int expiryTimespan = 0)
+        {
+            CheckAndFixCacheIfNeeded();
+            var cacheExpirationOptions =
+                new MemoryCacheEntryOptions
+                {
+                    Priority = CacheItemPriority.NeverRemove,
+                };
+
+            if (expiryTimespan != 0)
+                cacheExpirationOptions.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(expiryTimespan);
+
+            _cache.Set(key, data, cacheExpirationOptions);
             _cacheKeys.Add(key);
         }
 
-        private void RemoveFromCache(String key)
+        private void RemoveFromCache(string key, bool removeKey = true)
         {
+            CheckAndFixCacheIfNeeded();
             _cache.Remove(key);
-            _cacheKeys.Remove(key);
+
+            if (removeKey)
+                _cacheKeys.Remove(key);
         }
 
         private void ClearLocalCache()
         {
             foreach (var key in _cacheKeys)
             {
-                RemoveFromCache(key);
+                // Why? Can't operate on list we're currently enumerating
+                RemoveFromCache(key, false);
+            }
+
+            _cacheKeys.Clear();
+        }
+
+        private void CheckAndFixCacheIfNeeded()
+        {
+            // This is a very dirty hack
+            // TODO: assess whether we actually need this after we have a few days worth of runtime data.
+            try
+            {
+                _cache.TryGetValue("this.is.a.test", out var discarded);
+            }
+            catch (Exception e) when (e is ObjectDisposedException || e is NullReferenceException)
+            {
+                _logger.LogCritical("HTTPProxy (cache): object was either disposed or null, this is NOT supposed to happen.");
+                _logger.LogCritical(e, "Exception was: ");
+                _cache = new MemoryCache(new MemoryCacheOptions
+                {
+                    ExpirationScanFrequency = TimeSpan.FromMinutes(5)
+                });
             }
         }
 
-        private String FormatCacheKey(String key, String type)
+        private string FormatCacheKey(string key, string type)
         {
             return "services.httpproxy." + type + "." + key;
         }
