@@ -127,18 +127,21 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 
                 var wrappedError = exception?.InnerException;
 
-                if (wrappedError is IOException)
+                switch (wrappedError)
                 {
-                    var message = wrappedError.Message;
-                    if (message.StartsWith("Unable to transfer data on the transport connection")
-                    || message.StartsWith("I/O error occurred"))
+                    case IOException _:
+                        var message = wrappedError.Message;
+                        if (message.StartsWith("Unable to transfer data on the transport connection")
+                            || message.StartsWith("I/O error occurred"))
+                            return;
+                        break;
+                    case SocketException _ when wrappedError.Message.StartsWith("Connection timed out"):
+                        return;
+                    case UriFormatException _:
+                        return;
+                    case ArgumentNullException _:
                         return;
                 }
-
-                if (wrappedError is SocketException
-                    && wrappedError.Message.StartsWith("Connection timed out")) return;
-
-                if (wrappedError is UriFormatException) return;
             }
             
 
