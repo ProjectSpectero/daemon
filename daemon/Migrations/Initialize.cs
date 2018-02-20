@@ -55,7 +55,14 @@ namespace Spectero.daemon.Migrations
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.SystemIdentity,
-                    Value = _identityProvider.GetGuid().ToString()
+                    Value = Guid.NewGuid().ToString()
+                });
+
+                // Cloud Connectivity
+                _db.Insert(new Configuration
+                {
+                    Key = ConfigKeys.CloudConnectStatus,
+                    Value = false.ToString()
                 });
 
                 // HTTP proxy

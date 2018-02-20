@@ -20,5 +20,9 @@
         //JWT
         public const string JWTSymmetricSecurityKey = "crypto.jwt.key";
 
+        //CloudConnect
+        public const string CloudConnectStatus = "cloud.connect.status";
+        public const string CloudConnectIdentifier = "cloud.connect.id";
+
     }
 }

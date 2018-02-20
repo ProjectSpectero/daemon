@@ -1,20 +1,29 @@
 ﻿using System;
+using System.Data;
+using ServiceStack.OrmLite;
+using Spectero.daemon.Libraries.Core.Constants;
+using Spectero.daemon.Libraries.Errors;
+using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Libraries.Core.Identity
 {
     public class IdentityProvider : IIdentityProvider
     {
-        private Guid identifier;
+        private readonly IDbConnection _db;
 
-        public IdentityProvider ()
+        public IdentityProvider (IDbConnection db)
         {
-            
+            _db = db;
         }
 
         public Guid GetGuid()
         {
-            // Todo: fetch identity from the Spectero cloud
-            return Guid.NewGuid();
+            var identityKey = _db.Single<Configuration>(x => x.Key == ConfigKeys.SystemIdentity);
+
+            if (Guid.TryParse(identityKey.Value, out var result))
+                return result;
+
+            throw new EInternalError();
         }
     }
 }

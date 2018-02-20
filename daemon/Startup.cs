@@ -181,7 +181,7 @@ namespace Spectero.daemon
                     model.UpdatedDate = DateTime.UtcNow;
             };
 
-            OrmLiteConnectionFactory factory = new OrmLiteConnectionFactory(connectionString, provider);
+            var factory = new OrmLiteConnectionFactory(connectionString, provider);
             
             IDbConnection databaseContext = null;
 

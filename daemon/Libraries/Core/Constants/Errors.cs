@@ -28,5 +28,8 @@
         public const string INVALID_HTTP_MODE_REQUEST = "INVALID_HTTP_MODE_REQUEST";
         public const string STORED_CONFIG_WAS_NULL = "STORED_CONFIG_WAS_NULL";
         public const string AT_LEAST_ONE_SUPERADMIN_MUST_REMAIN = "AT_LEAST_ONE_SUPERADMIN_MUST_REMAIN";
+
+        // CLoud Connect
+        public const string CLOUD_ALREADY_CONNECTED = "CLOUD_ALREADY_CONNECTED";
     }
 }
