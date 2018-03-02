@@ -86,6 +86,9 @@ namespace Spectero.daemon.Models
         [DataType(DataType.Date)]
         public DateTime LastLoginDate { get; set; }
 
+        [DataType(DataType.Date)]
+        public DateTime CloudSyncDate { get; set; }
+
         public override string ToString()
         {
             return "Id -> " + Id + ", AuthKey -> " + AuthKey + ", Password -> " + Password + ", Created At -> " + CreatedDate;
