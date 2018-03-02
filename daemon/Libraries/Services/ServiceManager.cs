@@ -31,6 +31,8 @@ namespace Spectero.daemon.Libraries.Services
         private readonly IStatistician _statistician;
         private readonly IMemoryCache _cache;
 
+        private bool initiated = false;
+
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
@@ -44,12 +46,12 @@ namespace Spectero.daemon.Libraries.Services
             _statistician = statistician;
             _serviceConfigManager = serviceConfigManager;
             _cache = cache;
-            InitiateServices();
         }
 
 
         public string Process(string name, string action, out String error)
         {
+            InitiateServices();
             error = null;
             Type type = Utility.GetServiceType(name);
             var service = GetService(type);
@@ -133,6 +135,7 @@ namespace Spectero.daemon.Libraries.Services
 
         public IService GetService (Type type)
         {
+            InitiateServices();
             if (_services.ContainsKey(type))
                 return _services[type];
             else
@@ -144,6 +147,9 @@ namespace Spectero.daemon.Libraries.Services
 
         private void InitiateServices()
         {
+            if (initiated)
+                return;
+            
             var type = typeof(IService);
             var implementers = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
@@ -165,6 +171,7 @@ namespace Spectero.daemon.Libraries.Services
                 _services.TryAdd(serviceType, service);
             }
             _logger.LogDebug("IS: Successfully initialized " + _services.Count + " service(s).");
+            initiated = true;
         }
 
         public ConcurrentDictionary<Type, IService> GetServices()

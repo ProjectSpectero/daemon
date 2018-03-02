@@ -78,7 +78,7 @@ namespace Spectero.daemon.Models
 
         public string CertKey { get; set; }
 
-        public long SpecteroEngagementId = 0;
+        public long EngagementId { get; set; }
 
         public string FullName { get; set; }
         public string EmailAddress { get; set; }

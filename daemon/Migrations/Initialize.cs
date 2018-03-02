@@ -39,7 +39,7 @@ namespace Spectero.daemon.Migrations
 
         public void Up()
         {
-            var instanceId = _identityProvider.GetGuid();
+            var instanceId = Guid.NewGuid().ToString();
             long viablePasswordCost = _config.PasswordCostLowerThreshold;
 
             string specteroCertKey = "";
@@ -55,7 +55,7 @@ namespace Spectero.daemon.Migrations
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.SystemIdentity,
-                    Value = Guid.NewGuid().ToString()
+                    Value = instanceId
                 });
 
                 // Cloud Connectivity
@@ -89,20 +89,20 @@ namespace Spectero.daemon.Migrations
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.JWTSymmetricSecurityKey,
-                    Value = PasswordUtils.GeneratePassword(48, 12)
+                    Value = PasswordUtils.GeneratePassword(48, 8)
                 });
 
                 // Crypto
                 // 48 characters len with 12 non-alpha-num characters
                 // Ought to be good enough for everyone. -- The IPv4 working group, 1996
-                var caPassword = PasswordUtils.GeneratePassword(48, 12);
-                var serverPassword = PasswordUtils.GeneratePassword(48, 12);
+                var caPassword = PasswordUtils.GeneratePassword(48, 8);
+                var serverPassword = PasswordUtils.GeneratePassword(48, 8);
                 ca = _cryptoService.CreateCertificateAuthorityCertificate("CN=" + instanceId + ".ca.instance.spectero.io",
                     null, null, caPassword);
                 var serverCertificate = _cryptoService.IssueCertificate("CN=" + instanceId + ".instance.spectero.io",
                     ca, null, new[] { KeyPurposeID.IdKPServerAuth }, serverPassword);
 
-                specteroCertKey = PasswordUtils.GeneratePassword(48, 12);
+                specteroCertKey = PasswordUtils.GeneratePassword(48, 8);
                 specteroCertificate = _cryptoService.IssueCertificate(
                     "CN=" + "spectero" + ".users." + instanceId + ".instance.spectero.io",
                     ca, null, new[] {KeyPurposeID.IdKPServerAuth}, specteroCertKey);
