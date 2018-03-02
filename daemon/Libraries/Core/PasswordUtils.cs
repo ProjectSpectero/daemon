@@ -43,7 +43,7 @@ namespace Spectero.daemon.Libraries.Core
                 "0123456789",                   // digits
                 "!$?_-"                        // non-alphanumeric
             };
-            var rand = new Random(Environment.TickCount);
+            var rand = new Random();
             var chars = new List<char>();
 
             if (opts.RequireUppercase)
