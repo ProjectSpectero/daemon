@@ -176,6 +176,7 @@ namespace Spectero.daemon.Libraries.Services
 
         public ConcurrentDictionary<Type, IService> GetServices()
         {
+            InitiateServices();
             return _services;
         }
     }
