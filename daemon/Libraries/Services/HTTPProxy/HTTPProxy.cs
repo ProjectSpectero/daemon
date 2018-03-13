@@ -126,26 +126,42 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             {
                 
                 var wrappedError = exception?.InnerException;
+                var message = wrappedError?.Message;
 
                 switch (wrappedError)
                 {
                     case IOException _:
-                        var message = wrappedError.Message;
                         if (message.StartsWith("Unable to transfer data on the transport connection")
-                            || message.StartsWith("I/O error occurred"))
+                            || message.StartsWith("I/O error occurred")
+                            || message.StartsWith("Unable to write data to the transport connection"))
                             return;
                         break;
-                    case SocketException _ when wrappedError.Message.StartsWith("Connection timed out"):
-                        return;
+
+                    case SocketException _:
+                        if (message.StartsWith("Connection timed out")
+                            || message.StartsWith("No such device or address")
+                            || message.StartsWith("Broken pipe"))
+                            return;
+                        break;
+
+                    case ProxyHttpException _:
+                        if (message.StartsWith("Error occured whilst handling session response"))
+                            return;
+                        break;
+
                     case UriFormatException _:
                         return;
                     case ArgumentNullException _:
                         return;
+
+                    case Exception _ when message.StartsWith("Index is out of buffer size"): // Lame upstream problem
+                        return;
+
                 }
             }
             
 
-            _logger.LogError(exception, "Internal error on the proxy engine: ");
+            _logger.LogWarning(exception, "Internal error on the proxy engine: ");
         }
 
         public void Stop()
@@ -263,8 +279,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     if (failReason.IsNullOrEmpty())
                         cacheTarget.Add("matched", false.ToString());
 
-                    // Cache the result for 15 minutes
-                    AddToCache(key, cacheTarget, 15);
+                    // Cache the result for 5 minutes
+                    AddToCache(key, cacheTarget, 5);
                 }
       
             }
@@ -364,7 +380,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 
         }
 
-        private long CalculateObjectSize(Request request)
+        private static long CalculateObjectSize(Request request)
         {
             long ret = 0;
             if (request.ContentLength > 0)
@@ -376,7 +392,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             return ret;
         }
 
-        private long CalculateObjectSize(Response response)
+        private static long CalculateObjectSize(Response response)
         {
             long ret = 0;
             if (response.ContentLength > 0)
@@ -429,11 +445,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private void AddToCache (string key, object data, int expiryTimespan = 0)
         {
             CheckAndFixCacheIfNeeded();
-            var cacheExpirationOptions =
-                new MemoryCacheEntryOptions
-                {
-                    Priority = CacheItemPriority.NeverRemove,
-                };
+            var cacheExpirationOptions = new MemoryCacheEntryOptions();
+
 
             if (expiryTimespan != 0)
                 cacheExpirationOptions.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(expiryTimespan);
@@ -468,7 +481,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             // TODO: assess whether we actually need this after we have a few days worth of runtime data.
             try
             {
-                _cache.TryGetValue("this.is.a.test", out var discarded);
+                // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+                _cache.ToString();
             }
             catch (Exception e) when (e is ObjectDisposedException || e is NullReferenceException)
             {
@@ -481,7 +495,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             }
         }
 
-        private string FormatCacheKey(string key, string type)
+        private static string FormatCacheKey(string key, string type)
         {
             return "services.httpproxy." + type + "." + key;
         }
