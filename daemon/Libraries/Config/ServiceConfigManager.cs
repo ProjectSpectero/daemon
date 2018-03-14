@@ -134,8 +134,7 @@ namespace Spectero.daemon.Libraries.Config
                        
                         foreach (var listener in listeners)
                         {
-                            var localConfig = new OpenVPNConfig(_engine, _identity);
-                            localConfig.listener = listener;
+                            var localConfig = new OpenVPNConfig(_engine, _identity) {listener = listener};
                             configs.Add(localConfig);
                         }
 

@@ -106,7 +106,7 @@ namespace Spectero.daemon.Controllers
 
             try
             {
-                userId = await Db.InsertAsync<User>(user, true);
+                userId = await Db.InsertAsync(user, true);
             }
             catch (DbException e)
             {

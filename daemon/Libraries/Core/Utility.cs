@@ -64,14 +64,9 @@ namespace Spectero.daemon.Libraries.Core
 
         private static int GetPrefixLengthFromNetmask(IPAddress netmask)
         {
-            var str = netmask.GetAddressBytes().Select(x => Convert.ToString(Int32.Parse(x.ToString()), 2).PadLeft(8, '0'));
-            var ret = 0;
-            foreach (var element in str)
-            {
-                ret += element.Count(x => x.Equals('1'));
-            }
+            var str = netmask.GetAddressBytes().Select(x => Convert.ToString(int.Parse(x.ToString()), 2).PadLeft(8, '0'));
 
-            return ret;
+            return str.Sum(element => element.Count(x => x.Equals('1')));
         }
 
         public enum IPComparisonReasons
