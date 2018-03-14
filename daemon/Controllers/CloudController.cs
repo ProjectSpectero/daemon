@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Data;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using RestSharp;
 using ServiceStack;
 using ServiceStack.OrmLite;
+using Spectero.daemon.Libraries;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
@@ -72,14 +75,19 @@ namespace Spectero.daemon.Controllers
             return null;
         }
 
+        // This allows anonymous, but only from the local loopback.
         [HttpPost("connect", Name = "ConnectToSpecteroCloud")]
+        [AllowAnonymous]
         public async Task<IActionResult> CloudConnect([FromBody] CloudConnectRequest connectRequest)
         {
             if (! ModelState.IsValid || connectRequest.NodeKey.IsNullOrEmpty())
-            {
                 _response.Errors.Add(Errors.VALIDATION_FAILED, "FIELD_REQUIRED:NodeKey");
+            
+            if (! Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
+                _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
+
+            if (HasErrors())
                 return StatusCode(403, _response);
-            }
 
             // First check is to verify that we aren't already connected
             var storedConfig = await Db
@@ -101,12 +109,16 @@ namespace Spectero.daemon.Controllers
             // Ok, we aren't already connected. Let's go try talking to the backend and set ourselves up.
             var client = new RestClient(AppConfig.ApiBaseUri);
             var request = new RestRequest("unauth/node", Method.POST);
+            request.RequestFormat = DataFormat.Json;
 
-            var generatedPassword = PasswordUtils.GeneratePassword(24, 6);
+            var generatedPassword = PasswordUtils.GeneratePassword(24, 0);
             var body = new UnauthNodeAddRequest {InstallId = _identityProvider.GetGuid().ToString()};
 
             var ownIp = await _ipResolver.Resolve();
             body.Ip = ownIp.ToString();
+
+            body.Port = 6024; // TODO: read your own port and use that.
+            body.Protocol = "http"; // TODO: figure out own listening protocol, use that.
 
             body.NodeKey = connectRequest.NodeKey;
             body.AccessToken = cloudUserName + ":" + generatedPassword;
@@ -130,17 +142,13 @@ namespace Spectero.daemon.Controllers
                 await Db.InsertAsync(user);
 
             // Ok, we got the user created. Everything is ready, let's send off the request.
-            request.AddObject(body);
+            request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(body), ParameterType.RequestBody);
+
 
             var response = client.Execute(request);
-            _response.Result = response;
+            _response.Result = response.Content;
 
             return Ok(_response);
-        }
-
-        private string buildUri(string endpoint)
-        {
-            return AppConfig.ApiBaseUri + "/" + endpoint;
         }
     }
 }

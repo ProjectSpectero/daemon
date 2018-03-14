@@ -36,6 +36,6 @@ namespace Spectero.daemon.Libraries.Config
         public bool AutoStartServices { get; set; }
         public bool LogCommonProxyEngineErrors { get; set; }
         public bool IgnoreRFC1918 { get; set; }
-        public static readonly string ApiBaseUri = $"https://dev.spectero.com/v1"; //Hardcoded for now, we'll decide on making it configurable later.
+        public static readonly string ApiBaseUri = $"http://homestead.marketplace/v1"; //TODO: Hardcoded for now, fix into prod URL before releasing for prod.
     }
 }

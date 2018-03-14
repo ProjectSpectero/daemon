@@ -31,5 +31,6 @@
 
         // CLoud Connect
         public const string CLOUD_ALREADY_CONNECTED = "CLOUD_ALREADY_CONNECTED";
+        public const string LOOPBACK_ACCESS_ONLY = "LOOPBACK_ACCESS_ONLY";
     }
 }

@@ -2,6 +2,7 @@
 {
     public class CloudConnectRequest
     {
+
         public string NodeKey { get; set; }
     }
 }
