@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509;
 using ServiceStack.OrmLite;
+using Spectero.daemon.Libraries;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
@@ -42,9 +44,12 @@ namespace Spectero.daemon.Migrations
             var instanceId = Guid.NewGuid().ToString();
             long viablePasswordCost = _config.PasswordCostLowerThreshold;
 
-            string specteroCertKey = "";
+            var specteroCertKey = "";
             X509Certificate2 specteroCertificate = null;
             X509Certificate2 ca = null;
+
+            var localIPs = Utility.GetLocalIPs();
+                
 
             if (!_db.TableExists<Configuration>())
             {
@@ -66,10 +71,21 @@ namespace Spectero.daemon.Migrations
                 });
 
                 // HTTP proxy
+                var httpSkeleton = Defaults.HTTP.Value;
+                if (_config.IgnoreRFC1918)
+                {
+                    localIPs = localIPs.Where(x => !x.IsInternal())
+                        .ToArray();
+                }
+                var proposedListeners = localIPs.Select(ip => Tuple.Create(ip.ToString(), 10240))
+                    .ToList();
+                if (proposedListeners.Count > 0)
+                    httpSkeleton.listeners = proposedListeners;
+
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.HttpConfig,
-                    Value = JsonConvert.SerializeObject(Defaults.HTTP.Value)
+                    Value = JsonConvert.SerializeObject(httpSkeleton)
                 });
 
                 // Password Hashing

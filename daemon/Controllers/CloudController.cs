@@ -54,6 +54,12 @@ namespace Spectero.daemon.Controllers
             return Ok(_response);
         }
 
+        [HttpGet(Name = "GetCloudConnectStatus")]
+        public async Task<IActionResult> ShowStatus()
+        {
+            return null;
+        }
+
         [HttpPost("connect", Name = "ConnectToSpecteroCloud")]
         public async Task<IActionResult> CloudConnect()
         {

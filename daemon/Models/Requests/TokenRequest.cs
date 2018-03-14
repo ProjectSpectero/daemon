@@ -2,7 +2,7 @@
 using Spectero.daemon.Libraries.Core.Constants;
 using Valit;
 
-namespace Spectero.daemon.Models
+namespace Spectero.daemon.Models.Requests
 {
     public class TokenRequest : BaseModel
     {

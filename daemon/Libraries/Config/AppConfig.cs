@@ -35,5 +35,6 @@ namespace Spectero.daemon.Libraries.Config
         public int InMemoryAuthCacheMinutes { get; set; }
         public bool AutoStartServices { get; set; }
         public bool LogCommonProxyEngineErrors { get; set; }
+        public bool IgnoreRFC1918 { get; set; }
     }
 }

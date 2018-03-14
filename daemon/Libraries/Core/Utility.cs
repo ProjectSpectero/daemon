@@ -55,15 +55,8 @@ namespace Spectero.daemon.Libraries.Core
                 var properties = nic.GetIPProperties();
                 var addresses = properties.UnicastAddresses;
                 var selection = addresses
-                    .Where((Func<UnicastIPAddressInformation, bool>)
-                        (
-                            t => CheckIPFilter(t, IPComparisonReasons.FOR_PROXY_OUTGOING)
-                        )
-                    );
-                foreach (var unicastIpAddressInformation in selection)
-                {
-                    output.Add(unicastIpAddressInformation.Address);
-                }
+                    .Where(t => CheckIPFilter(t, IPComparisonReasons.FOR_PROXY_OUTGOING));
+                output.AddRange(selection.Select(unicastIpAddressInformation => unicastIpAddressInformation.Address));
             }
 
             return output;
@@ -92,7 +85,7 @@ namespace Spectero.daemon.Libraries.Core
             var ipString = address.ToString();
             var ret = true;
 
-            if (ipString.StartsWith("fe80:"))
+            if (ipString.StartsWith("fe"))
                 ret = false;
             else if (ipString.StartsWith("169.254"))
                 ret = false;
@@ -103,7 +96,9 @@ namespace Spectero.daemon.Libraries.Core
             {
                 if (ipString.StartsWith("127"))
                     ret = false;
-                else if (ipString.Equals("::1"))
+                else if (ipString.StartsWith("fc")
+                         || ipString.StartsWith("fd")
+                         || ipString.StartsWith("fe"))
                     ret = false;
                 else if (ipString.Equals("0.0.0.0"))
                     ret = false;
@@ -111,7 +106,8 @@ namespace Spectero.daemon.Libraries.Core
 
             return ret;
         }
-        public static bool CheckIPFilter(UnicastIPAddressInformation ipAddressInformation, IPComparisonReasons reason)
+
+        private static bool CheckIPFilter(UnicastIPAddressInformation ipAddressInformation, IPComparisonReasons reason)
         {
             return CheckIPFilter(ipAddressInformation.Address, reason);
         }

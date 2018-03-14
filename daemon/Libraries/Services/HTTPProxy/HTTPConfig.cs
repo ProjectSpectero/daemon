@@ -17,7 +17,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             this.bannedDomains = bannedDomains;
         }
 
-        public List<Tuple<string, int>> listeners { get; }
+        public List<Tuple<string, int>> listeners { get; set; }
         public List<string> allowedDomains { get; }
         public List<string> bannedDomains { get; }
 
