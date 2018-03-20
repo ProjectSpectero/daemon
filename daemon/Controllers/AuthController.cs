@@ -50,8 +50,8 @@ namespace Spectero.daemon.Controllers
 
             if (HasErrors()) return StatusCode(403, _response);
 
-            string username = request.AuthKey;
-            string password = request.Password;
+            var username = request.AuthKey;
+            var password = request.Password;
             var user = await _authenticator.Authenticate(username, password, Models.User.Action.ManageApi);
 
             if (user != null)

@@ -37,13 +37,13 @@ namespace Spectero.daemon.Controllers
             return _response.Errors.Count > 0;
         }
 
-        protected IEnumerable<Claim> GetClaims()
+        private IEnumerable<Claim> GetClaims()
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             return identity?.Claims;
         }
 
-        protected Claim GetClaim(string type)
+        private Claim GetClaim(string type)
         {
             return GetClaims().FirstOrDefault(x => x.Type == type);
         }
@@ -53,16 +53,15 @@ namespace Spectero.daemon.Controllers
             if (_currentUser != null)
                 return _currentUser;
 
-            string userData = GetClaim(ClaimTypes.UserData)?.Value;
+            var userData = GetClaim(ClaimTypes.UserData)?.Value;
             var user = JsonConvert.DeserializeObject<User>(userData);
 
-            if (user != null && user.Id != 0)
-            {
-                _currentUser = Db.SingleById<User>(user.Id);
-                return _currentUser;
-            }
+            if (user == null || user.Id == 0) return null;
 
-            return null;
+            // Some caching would be good here, but this really doesn't service enough requests to justify it.
+            _currentUser = Db.SingleById<User>(user.Id);
+            return _currentUser;
+
         }
 
         protected async Task<Configuration> CreateOrUpdateConfig(string key, string value)

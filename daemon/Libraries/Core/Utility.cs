@@ -47,7 +47,7 @@ namespace Spectero.daemon.Libraries.Core
             return ipNetworks;
         }
 
-        public static IEnumerable<IPAddress> GetLocalIPs()
+        public static IEnumerable<IPAddress> GetLocalIPs(bool ignoreRFC1918 = false)
         {
             var output = new List<IPAddress>();
             foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
@@ -59,7 +59,7 @@ namespace Spectero.daemon.Libraries.Core
                 output.AddRange(selection.Select(unicastIpAddressInformation => unicastIpAddressInformation.Address));
             }
 
-            return output;
+            return ignoreRFC1918 ? output.Where(x => !x.IsInternal()) : output;
         }
 
         private static int GetPrefixLengthFromNetmask(IPAddress netmask)

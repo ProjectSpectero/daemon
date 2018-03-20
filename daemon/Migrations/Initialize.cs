@@ -48,7 +48,7 @@ namespace Spectero.daemon.Migrations
             X509Certificate2 specteroCertificate = null;
             X509Certificate2 ca = null;
 
-            var localIPs = Utility.GetLocalIPs();
+            var localIPs = Utility.GetLocalIPs(_config.IgnoreRFC1918);
                 
 
             if (!_db.TableExists<Configuration>())
@@ -72,11 +72,6 @@ namespace Spectero.daemon.Migrations
 
                 // HTTP proxy
                 var httpSkeleton = Defaults.HTTP.Value;
-                if (_config.IgnoreRFC1918)
-                {
-                    localIPs = localIPs.Where(x => !x.IsInternal())
-                        .ToArray();
-                }
                 var proposedListeners = localIPs.Select(ip => Tuple.Create(ip.ToString(), 10240))
                     .ToList();
                 if (proposedListeners.Count > 0)

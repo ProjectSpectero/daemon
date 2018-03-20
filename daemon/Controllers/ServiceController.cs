@@ -12,6 +12,7 @@ using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
+using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
@@ -27,16 +28,18 @@ namespace Spectero.daemon.Controllers
     public class ServiceController : BaseController
     {
         private readonly IServiceManager _serviceManager;
-
         private readonly IServiceConfigManager _serviceConfigManager;
+        private readonly IOutgoingIPResolver _outgoingIpResolver;
 
         public ServiceController(IOptionsSnapshot<AppConfig> appConfig, ILogger<ServiceController> logger,
             IDbConnection db, IServiceManager serviceManager,
-            IServiceConfigManager serviceConfigManager, IStatistician statistician)
+            IServiceConfigManager serviceConfigManager, IStatistician statistician,
+            IOutgoingIPResolver outgoingIpResolver)
             : base(appConfig, logger, db)
         {
             _serviceManager = serviceManager;
             _serviceConfigManager = serviceConfigManager;
+            _outgoingIpResolver = outgoingIpResolver;
         }
 
         [HttpGet("", Name = "IndexServices")]
@@ -141,14 +144,17 @@ namespace Spectero.daemon.Controllers
         }
 
         [HttpGet("ips", Name = "GetLocalIPs")]
-        public IActionResult GetLocalIPs()
+        public async Task<IActionResult> GetLocalIPs()
         {
-            var ips = Utility.GetLocalIPs();
-            var addresses = new List<string>();
-            foreach (var ip in ips)
+            var ips = Utility.GetLocalIPs(AppConfig.IgnoreRFC1918);
+            var addresses = ips.Select(ip => ip.ToString()).ToList();
+
+            if (addresses.Count == 0)
             {
+                var ip = await _outgoingIpResolver.Resolve();
                 addresses.Add(ip.ToString());
             }
+               
             _response.Result = addresses;
             return Ok(_response);
         }

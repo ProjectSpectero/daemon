@@ -112,6 +112,7 @@ namespace Spectero.daemon.Controllers
                 return StatusCode(403, _response);
 
             // First check is to verify that we aren't already connected
+            // TODO: Use CloudUtils.
             var storedConfig = await Db
                 .SingleAsync<Configuration>(x => x.Key == ConfigKeys.CloudConnectStatus);
 
