@@ -2,7 +2,7 @@
 {
     public class CloudUtils
     {
-        public static bool isListed()
+        public static bool isConnected ()
         {
             return false;
         }

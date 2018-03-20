@@ -74,7 +74,26 @@ namespace Spectero.daemon.Controllers
         [HttpGet(Name = "GetCloudConnectStatus")]
         public async Task<IActionResult> ShowStatus()
         {
-            return null;
+            // What is DRY? ;V
+            if (!Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
+                _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
+
+            if (HasErrors())
+                return StatusCode(403, _response);
+
+            var status = await Db
+                .SingleAsync<Configuration>(x => x.Key == ConfigKeys.CloudConnectStatus);
+            var identifier = await Db
+                .SingleAsync<Configuration>(x => x.Key == ConfigKeys.CloudConnectIdentifier);
+
+            var responseDict = new Dictionary<string, object>
+            {
+                { ConfigKeys.CloudConnectStatus, status?.Value },
+                { ConfigKeys.CloudConnectIdentifier, identifier?.Value }               
+            };
+
+            _response.Result = responseDict;
+            return Ok(_response);
         }
 
         // This allows anonymous, but only from the local loopback.
@@ -84,7 +103,8 @@ namespace Spectero.daemon.Controllers
         {
             if (! ModelState.IsValid || connectRequest.NodeKey.IsNullOrEmpty())
                 _response.Errors.Add(Errors.VALIDATION_FAILED, "FIELD_REQUIRED:NodeKey");
-            
+
+            // What is DRY? ;V
             if (! Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
                 _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
 
