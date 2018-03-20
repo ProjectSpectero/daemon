@@ -20,7 +20,7 @@
       "commandName": "Project",
       "launchUrl": "api/values",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Production"
+        "ASPNETCORE_ENVIRONMENT": "local"
       },
       "applicationUrl": ""
     }

@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -61,6 +63,26 @@ namespace Spectero.daemon.Controllers
             }
 
             return null;
+        }
+
+        protected async Task<Configuration> CreateOrUpdateConfig(string key, string value)
+        {
+            var tmp =
+                await Db.SingleAsync<Configuration>(x => x.Key == key) ??
+                new Configuration();
+
+            tmp.Value = value;
+
+            if (tmp.Id != 0L)
+                await Db.UpdateAsync(tmp);
+            else
+            {
+                tmp.Key = key;
+                await Db.InsertAsync(tmp);
+            }
+                
+
+            return tmp;
         }
     }
 }

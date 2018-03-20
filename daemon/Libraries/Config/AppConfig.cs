@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Spectero.daemon.Libraries.Config
 {
     public class AppConfig
     {
-        public string Key { get; set; }
         public string BlockedRedirectUri { get; set; }
         public string DatabaseFile { get; set; }
         public double AuthCacheMinutes { get; set; }
@@ -36,6 +36,22 @@ namespace Spectero.daemon.Libraries.Config
         public bool AutoStartServices { get; set; }
         public bool LogCommonProxyEngineErrors { get; set; }
         public bool IgnoreRFC1918 { get; set; }
-        public static readonly string ApiBaseUri = $"http://homestead.marketplace/v1"; //TODO: Hardcoded for now, fix into prod URL before releasing for prod.
+
+        public static string ApiBaseUri
+        {
+            // Mostly hardcoded, a discovery service is not planned for the MVP
+            get
+            {
+                switch (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")?.ToLower())
+                {
+                    case "development":
+                        return $"https://dev.spectero.com";
+                    case "local":
+                        return $"http://homestead.marketplace";
+                    default:
+                        return $"https://api.spectero.com";
+                }
+            }
+        }
     }
 }
