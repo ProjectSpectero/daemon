@@ -66,22 +66,17 @@ namespace Spectero.daemon.Controllers
 
         protected async Task<Configuration> CreateOrUpdateConfig(string key, string value)
         {
-            var tmp =
-                await Db.SingleAsync<Configuration>(x => x.Key == key) ??
-                new Configuration();
+            return await ConfigUtils.CreateOrUpdateConfig(Db, key, value);
+        }
 
-            tmp.Value = value;
+        protected async Task<Configuration> GetConfig(string key)
+        {
+            return await ConfigUtils.GetConfig(Db, key);
+        }
 
-            if (tmp.Id != 0L)
-                await Db.UpdateAsync(tmp);
-            else
-            {
-                tmp.Key = key;
-                await Db.InsertAsync(tmp);
-            }
-                
-
-            return tmp;
+        protected async Task<int> DeleteConfigIfExists(string key)
+        {
+            return await ConfigUtils.DeleteConfigIfExists(Db, key);
         }
     }
 }

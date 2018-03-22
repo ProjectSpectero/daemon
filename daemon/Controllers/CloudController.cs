@@ -12,6 +12,7 @@ using RestSharp;
 using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries;
+using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
@@ -81,18 +82,36 @@ namespace Spectero.daemon.Controllers
             if (HasErrors())
                 return StatusCode(403, _response);
 
-            var status = await Db
-                .SingleAsync<Configuration>(x => x.Key == ConfigKeys.CloudConnectStatus);
-            var identifier = await Db
-                .SingleAsync<Configuration>(x => x.Key == ConfigKeys.CloudConnectIdentifier);
+            // We DRY now fam
+            var status = await GetConfig(ConfigKeys.CloudConnectStatus);
+            var identifier = await GetConfig(ConfigKeys.CloudConnectIdentifier);
+            var nodeKey = await GetConfig(ConfigKeys.CloudConnectNodeKey);
 
             var responseDict = new Dictionary<string, object>
             {
                 { ConfigKeys.CloudConnectStatus, status?.Value },
-                { ConfigKeys.CloudConnectIdentifier, identifier?.Value }               
+                { ConfigKeys.CloudConnectIdentifier, identifier?.Value },
+                { ConfigKeys.CloudConnectNodeKey, nodeKey?.Value }
             };
 
             _response.Result = responseDict;
+            return Ok(_response);
+        }
+
+        [HttpPost("manual", Name = "ManuallyConnectToSpecteroCloud")]
+        public async Task<IActionResult> ManualCloudConnect([FromBody] ManualCloudConnectRequest connectRequest)
+        {
+            if (await CloudUtils.IsConnected(Db)
+                && connectRequest.force != true)
+            {
+                // TODO: Throw exception, raise a stink.
+            }
+
+            // Well ok, let's get it over with.
+            await CreateOrUpdateConfig(ConfigKeys.CloudConnectStatus, true.ToString());
+            await CreateOrUpdateConfig(ConfigKeys.CloudConnectIdentifier, connectRequest.NodeId.ToString());
+            await CreateOrUpdateConfig(ConfigKeys.CloudConnectNodeKey, connectRequest.NodeKey);
+
             return Ok(_response);
         }
 
@@ -177,6 +196,7 @@ namespace Spectero.daemon.Controllers
 
                     await CreateOrUpdateConfig(ConfigKeys.CloudConnectStatus, true.ToString());
                     await CreateOrUpdateConfig(ConfigKeys.CloudConnectIdentifier, parsedResponse.result.id.ToString());
+                    await CreateOrUpdateConfig(ConfigKeys.CloudConnectNodeKey, connectRequest.NodeKey);
 
                     _response.Result = parsedResponse;
                 

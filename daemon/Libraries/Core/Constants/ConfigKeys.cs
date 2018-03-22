@@ -23,6 +23,7 @@
         //CloudConnect
         public const string CloudConnectStatus = "cloud.connect.status";
         public const string CloudConnectIdentifier = "cloud.connect.id";
+        public const string CloudConnectNodeKey = "cloud.connect.node-key";
 
     }
 }
