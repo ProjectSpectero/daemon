@@ -4,7 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <RootNamespace>Spectero.daemon.CLI</RootNamespace>
-    <StartupObject>cli.Program</StartupObject>
+    <StartupObject>Spectero.daemon.CLI.Program</StartupObject>
+    <AssemblyName>Spectero.daemon.CLI</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
