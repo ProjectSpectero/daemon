@@ -36,6 +36,7 @@ namespace Spectero.daemon.Libraries.Config
         public bool AutoStartServices { get; set; }
         public bool LogCommonProxyEngineErrors { get; set; }
         public bool IgnoreRFC1918 { get; set; }
+        public string JobsConnectionString { get; set; }
 
         public static string ApiBaseUri
         {

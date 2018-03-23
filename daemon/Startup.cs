@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Data;
 using System.IO;
+using Hangfire;
+using Hangfire.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -119,6 +121,13 @@ namespace Spectero.daemon
 
             services.AddMvc();
             services.AddMemoryCache();
+            services.AddHangfire(config =>
+                {
+                    config.UseSQLiteStorage(appConfig["JobsConnectionString"], new SQLiteStorageOptions());
+                    config.UseNLogLogProvider();
+                });
+
+
 
         }
 
@@ -145,6 +154,11 @@ namespace Spectero.daemon
 
             app.UseAddRequestIdHeader();
 
+            var option = new BackgroundJobServerOptions { WorkerCount = 1 }; // Limited by SQLite, can't deal with concurrency welp.
+
+            app.UseHangfireServer(option);
+            app.UseHangfireDashboard();
+
             app.UseMvc(routes =>
             {
                 if (appConfig.SpaMode)
@@ -162,6 +176,8 @@ namespace Spectero.daemon
 
             migration.Up();
             autoStarter.Startup();
+
+
         }
 
         private IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)
