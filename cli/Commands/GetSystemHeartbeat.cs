@@ -1,4 +1,8 @@
 ﻿using NClap.Metadata;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Spectero.daemon.CLI.Requests;
+using System;
 
 namespace Spectero.daemon.CLI.Commands
 {
@@ -6,7 +10,17 @@ namespace Spectero.daemon.CLI.Commands
     {
         public override CommandResult Execute()
         {
-            throw new System.NotImplementedException();
+            var request = new GetSystemHeartbeatRequest(ServiceProvider);
+
+            var response = request.Perform();
+
+            string json = JsonConvert.SerializeObject(response);
+
+            string jsonFormatted = JValue.Parse(json).ToString(Formatting.Indented);
+
+            Console.WriteLine(jsonFormatted);
+
+            return CommandResult.Success;
         }
     }
 }
