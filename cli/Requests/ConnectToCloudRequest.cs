@@ -1,25 +1,32 @@
 ﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using RestSharp;
 using Spectero.daemon.Libraries.Core.HTTP;
 
 namespace Spectero.daemon.CLI.Requests
 {
-    class ConnectToCloudRequest : IRequest
-    {
-        private readonly IRestClient client;
+    internal class ConnectToCloudRequest : BaseRequest
+    { 
+    
 
-        public ConnectToCloudRequest(IRestClient client)
+        public ConnectToCloudRequest(IServiceProvider serviceProvider) : base (serviceProvider)
         {
-            this.client = client;
+
         }
 
-        public APIResponse Perform(string requestBody = null)
+        public override APIResponse Perform(string requestBody = null)
         {
-            var request = new RestRequest("cloud/connect", Method.POST);
-            request.AddParameter("nodeKey", requestBody);
+            var request = new RestRequest("cloud/connect", Method.POST) { RequestFormat = DataFormat.Json };
+            var requestParams = new Dictionary<string, string>
+            {
+                {"nodeKey", requestBody}
+            };
 
-            var response = client.Execute(request);
+            request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(requestParams), ParameterType.RequestBody);
+
+            var response = _client.Execute(request);
+
             return JsonConvert.DeserializeObject<APIResponse>(response.Content);
         }
     }

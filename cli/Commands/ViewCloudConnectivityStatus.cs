@@ -2,7 +2,7 @@
 
 namespace Spectero.daemon.CLI.Commands
 {
-    public class ViewCloudConnectivityStatus : SynchronousCommand
+    public class ViewCloudConnectivityStatus : BaseJob
     {
         public override CommandResult Execute()
         {

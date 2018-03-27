@@ -5,6 +5,7 @@ namespace Spectero.daemon.CLI.Commands
 {
     public abstract class BaseJob : SynchronousCommand
     {
-        protected IServiceProvider ServiceProvider = Startup.GetServiceProvider();
+        protected readonly IServiceProvider ServiceProvider 
+            = Startup.GetServiceProvider();
     }
 }

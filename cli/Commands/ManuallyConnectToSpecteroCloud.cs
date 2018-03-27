@@ -2,7 +2,7 @@
 
 namespace Spectero.daemon.CLI.Commands
 {
-    public class ManuallyConnectToSpecteroCloud : SynchronousCommand
+    public class ManuallyConnectToSpecteroCloud : BaseJob
     {
         public override CommandResult Execute()
         {

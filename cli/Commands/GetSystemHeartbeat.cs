@@ -2,7 +2,7 @@
 
 namespace Spectero.daemon.CLI.Commands
 {
-    public class GetSystemHeartbeat : SynchronousCommand
+    public class GetSystemHeartbeat : BaseJob
     {
         public override CommandResult Execute()
         {

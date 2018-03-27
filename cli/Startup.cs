@@ -4,14 +4,14 @@ using RestSharp;
 
 namespace Spectero.daemon.CLI
 {
-    public class Startup
+    public static class Startup
     {
-        private static IServiceProvider serviceProvider;
+        private static IServiceProvider ServiceProvider { get; set; }
 
         public static IServiceProvider GetServiceProvider()
         {
-            if (serviceProvider != null)
-                return serviceProvider;
+            if (ServiceProvider != null)
+                return ServiceProvider;
 
             var serviceCollection = new ServiceCollection()
                 .AddLogging()
@@ -19,9 +19,9 @@ namespace Spectero.daemon.CLI
                     new RestClient("http://127.0.0.1:6024/v1") // Be dynamic, read this off the env file.
                 );
 
-            serviceProvider = serviceCollection.BuildServiceProvider();
+            ServiceProvider = serviceCollection.BuildServiceProvider();
 
-            return serviceProvider;
+            return ServiceProvider;
         }
     }
 }
