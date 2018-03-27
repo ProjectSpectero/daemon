@@ -15,7 +15,7 @@ namespace Spectero.daemon.CLI.Requests
 
         }
 
-        public override APIResponse Perform(string requestBody = null)
+        public override APIResponse Perform(Dictionary<string, object> requestBody = null)
         {
             var request = new RestRequest("/cloud/heartbeat", Method.GET);
 

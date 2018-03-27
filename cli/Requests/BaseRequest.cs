@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using RestSharp;
 using Spectero.daemon.Libraries.Core.HTTP;
@@ -17,7 +18,7 @@ namespace Spectero.daemon.CLI.Requests
 
         }
 
-        public virtual APIResponse Perform(string requestBody = null)
+        public virtual APIResponse Perform(Dictionary<string, object> requestBody = null)
         {
             throw new NotImplementedException();
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RestSharp;
@@ -16,7 +17,7 @@ namespace Spectero.daemon.CLI.Requests
 
         // Synchronus for now
         // TODO: @alex - write the other cloud related daemon endpoint requests too.
-        public override APIResponse Perform(string requestBody = null)
+        public override APIResponse Perform(Dictionary<string, object> requestBody = null)
         {
             var request = new RestRequest("/cloud", Method.GET);
 

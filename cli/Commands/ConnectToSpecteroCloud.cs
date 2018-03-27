@@ -3,6 +3,7 @@ using Spectero.daemon.CLI.Requests;
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace Spectero.daemon.CLI.Commands
 {
@@ -14,7 +15,10 @@ namespace Spectero.daemon.CLI.Commands
         public override CommandResult Execute()
         {
             var request = new ConnectToCloudRequest(ServiceProvider);
-            var response = request.Perform(NodeKey);
+            var response = request.Perform(new Dictionary<string, object>
+            {
+                {"nodeKey", NodeKey }
+            });
 
             string json = JsonConvert.SerializeObject(response);
 
