@@ -1,5 +1,8 @@
 ﻿using NClap.Metadata;
 using Spectero.daemon.CLI.Requests;
+using System;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Spectero.daemon.CLI.Commands
 {
@@ -10,10 +13,14 @@ namespace Spectero.daemon.CLI.Commands
 
         public override CommandResult Execute()
         {
-            // TODO: @alex, invoke the right request, get the response, parse it and show the user the right output.
-
             var request = new ConnectToCloudRequest(ServiceProvider);
-            var response = request.Perform(NodeKey); // TODO: parse this and tell the user what's up
+            var response = request.Perform(NodeKey);
+
+            string json = JsonConvert.SerializeObject(response);
+
+            string jsonFormatted = JValue.Parse(json).ToString(Formatting.Indented);
+
+            Console.WriteLine(jsonFormatted);
 
             return CommandResult.Success;
         }
