@@ -124,29 +124,28 @@ namespace Spectero.daemon
             services.AddMemoryCache();
             services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
 
-            services.AddScoped<IJob, FetchCloudEngagementsJob>(); // TODO: fix this trainwreck, this is severely limiting. We do get auto activation with this though.
-
+            services.AddScoped<FetchCloudEngagementsJob, FetchCloudEngagementsJob>(); // TODO: fix this trainwreck, this is severely limiting. We do get auto activation with this though.
+           
             services.AddMvc();
 
 
+            var builtProvider = services.BuildServiceProvider();
             services.AddHangfire(config =>
             {
                 config.UseSQLiteStorage(appConfig["JobsConnectionString"], new SQLiteStorageOptions());
                 config.UseNLogLogProvider();
-                // Please ENSURE that this is the VERY last call in this method body. 
+                // Please ENSURE that this is the VERY last call (to add services) in this method body. 
                 // Provider once built is not retroactively updated from the collection.
                 // If further dependencies are registered AFTER it is built, we'll get nothing.
-                config.UseActivator(new JobActivator(services.BuildServiceProvider())); 
-            });
-
-
-
+                config.UseActivator(new JobActivator(builtProvider)); 
+            });        
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IOptionsSnapshot<AppConfig> configMonitor, IApplicationBuilder app,
             IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IMigration migration, IAutoStarter autoStarter)
+            IMigration migration, IAutoStarter autoStarter,
+            IServiceProvider serviceProvider)
         {
             var appConfig = configMonitor.Value;
             var webRootPath = Path.Combine(CurrentDirectory, appConfig.WebRoot);
@@ -188,6 +187,15 @@ namespace Spectero.daemon
 
             migration.Up();
             autoStarter.Startup();
+
+            foreach (var implementer in serviceProvider.GetServices<IJob>())
+            {
+                if (!implementer.IsEnabled())
+                    continue;
+
+                // Magic, autowiring is magic.
+                RecurringJob.AddOrUpdate(() => implementer.Perform(), implementer.GetSchedule);
+            }
         }
 
         private static IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)

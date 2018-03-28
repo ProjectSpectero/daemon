@@ -25,6 +25,7 @@ namespace Spectero.daemon.Jobs
             _db = db;
             _identityProvider = identityProvider;
             _logger = logger;
+            logger.LogDebug("FCEJ init: successful, dependencies processed.");
         }
 
         public string GetSchedule()
@@ -63,6 +64,10 @@ namespace Spectero.daemon.Jobs
             request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(dataMap), ParameterType.RequestBody);
 
             var response = _restClient.Execute(request);
+
+            if (response.ErrorException != null)
+                throw response.ErrorException;
+
             _logger.LogInformation(response.Content);
 
         }
@@ -71,11 +76,6 @@ namespace Spectero.daemon.Jobs
         {
             return CloudUtils.IsConnected(_db).Result; // Async sadness :(
            
-        }
-
-        public bool IsRecurring()
-        {
-            throw new NotImplementedException();
         }
     }
 }
