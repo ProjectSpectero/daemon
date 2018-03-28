@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using Hangfire;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RestSharp;
+using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
+using Spectero.daemon.Models;
 using Spectero.daemon.Models.Responses;
 
 namespace Spectero.daemon.Jobs
@@ -99,6 +103,39 @@ namespace Spectero.daemon.Jobs
                  * If not, we insert a brand new user.
                  * TODO: @alex (do ^), to learn how, see the UserController.
                  */
+                var existingUser = _db.Single<User>(x => x.AuthKey == engagement.username);
+                if (existingUser != null)
+                {
+                    if (existingUser.Password != engagement.password)
+                    {
+                        try
+                        {
+                            existingUser.Password = engagement.password;
+                            _db.Update(existingUser);
+                        }
+                        catch (DbException e)
+                        {
+                            _logger.LogError(e.Message);
+                        }
+                    }
+                }
+                else
+                {
+                    User user = new User
+                    {
+                        AuthKey = engagement.username,
+                        Password = engagement.password,
+                        CreatedDate = DateTime.Now,
+                    };
+                    try
+                    {
+                        _db.Insert(user);
+                    }
+                    catch (DbException e)
+                    {
+                        _logger.LogError(e.Message);
+                    }
+                }
             }
 
             _logger.LogInformation(response.Content);
