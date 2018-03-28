@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using Hangfire;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RestSharp;
@@ -8,6 +9,7 @@ using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
+using Spectero.daemon.Models.Responses;
 
 namespace Spectero.daemon.Jobs
 {
@@ -33,6 +35,7 @@ namespace Spectero.daemon.Jobs
             return "*/6 * * * *"; // This sets it every 6 minutes, in cron expression.
         }
 
+        [AutomaticRetry(Attempts = 1)]
         public void Perform()
         {
             if (!IsEnabled())
@@ -65,8 +68,38 @@ namespace Spectero.daemon.Jobs
 
             var response = _restClient.Execute(request);
 
+            // Yes, can more or less throw unchecked exceptions. Hangfire will pick it up and mark the job as failed.
             if (response.ErrorException != null)
                 throw response.ErrorException;
+
+            /*
+             * This is what we have to parse out of the response.
+             * {
+                   "errors": [],
+                   "result": [
+                       {
+                           "engagement_id": 3,
+                           "username": "0fe421935462b8fcfd99d30df00610f7",
+                           "password": "$2y$10$flUlsbAED\/h7YvDLInBlguCBhE3UJ8CXf1sG\/s.fcH8YISHUlwJtO",
+                           "sync_timestamp": "2018-03-22 23:24:27"
+                       }
+                   ],
+                   "message": null,
+                   "version": "v1"
+               }
+             */
+
+            // World's unsafest cast contender? Taking bets now.
+            var parsedResponse = JsonConvert.DeserializeObject<CloudAPIResponse<List<Engagement>>>(response.Content);
+            var engagements = parsedResponse.result;
+            foreach (var engagement in engagements)
+            {
+                /*
+                 * First see if user already exists, and if pw is different. If yes, look it up, and replace it fully.
+                 * If not, we insert a brand new user.
+                 * TODO: @alex (do ^), to learn how, see the UserController.
+                 */
+            }
 
             _logger.LogInformation(response.Content);
 

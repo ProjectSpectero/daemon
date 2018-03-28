@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Spectero.daemon.Jobs
 {
@@ -13,7 +15,8 @@ namespace Spectero.daemon.Jobs
 
         public override object ActivateJob(Type jobType)
         {
-            return _serviceProvider.GetService(jobType);
+            return _serviceProvider.GetServices<IJob>()
+                    .FirstOrDefault(job => job.GetType() == jobType);
         }
     }
 }

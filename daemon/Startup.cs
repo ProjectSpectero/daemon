@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.IO;
-using System.Linq;
 using Hangfire;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,7 +8,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -124,7 +122,9 @@ namespace Spectero.daemon
             services.AddMemoryCache();
             services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
 
-            services.AddScoped<FetchCloudEngagementsJob, FetchCloudEngagementsJob>(); // TODO: fix this trainwreck, this is severely limiting. We do get auto activation with this though.
+            services.AddScoped<IJob, FetchCloudEngagementsJob>();
+
+            //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
            
             services.AddMvc();
 
@@ -190,7 +190,7 @@ namespace Spectero.daemon
 
             foreach (var implementer in serviceProvider.GetServices<IJob>())
             {
-                if (!implementer.IsEnabled())
+                if (! implementer.IsEnabled())
                     continue;
 
                 // Magic, autowiring is magic.

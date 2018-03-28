@@ -21,4 +21,12 @@ namespace Spectero.daemon.Models.Responses
         public string user_id;
         public string market_model;
     }
+
+    public class Engagement
+    {
+        public long engagement_id;
+        public string username;
+        public string password;
+        public string sync_timestamp;
+    }
 }
