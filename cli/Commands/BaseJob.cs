@@ -18,7 +18,7 @@ namespace Spectero.daemon.CLI.Commands
             {
                 foreach (KeyValuePair<string, object> error in response.Errors)
                 {
-                    Console.WriteLine(error);
+                    Console.WriteLine(error.Key + ":" + error.Value);
                 }
             }
             else
