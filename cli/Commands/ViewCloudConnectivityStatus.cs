@@ -14,11 +14,7 @@ namespace Spectero.daemon.CLI.Commands
 
             var response = request.Perform();
 
-            string json = JsonConvert.SerializeObject(response);
-
-            string jsonFormatted = JValue.Parse(json).ToString(Formatting.Indented);
-
-            Console.WriteLine(jsonFormatted);
+            DisplayResult(response);
 
             return CommandResult.Success;
         }

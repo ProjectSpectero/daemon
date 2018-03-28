@@ -29,11 +29,7 @@ namespace Spectero.daemon.CLI.Commands
                 {"nodeKey", NodeKey }
             });
 
-            string json = JsonConvert.SerializeObject(response);
-
-            string jsonFormatted = JValue.Parse(json).ToString(Formatting.Indented);
-
-            Console.WriteLine(jsonFormatted);
+            DisplayResult(response);
 
             return CommandResult.Success;
         }
