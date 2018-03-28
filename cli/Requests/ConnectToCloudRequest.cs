@@ -18,16 +18,13 @@ namespace Spectero.daemon.CLI.Requests
         public override APIResponse Perform(Dictionary<string, object> requestBody = null)
         {
             var request = new RestRequest("cloud/connect", Method.POST) { RequestFormat = DataFormat.Json };
-            var requestParams = new Dictionary<string, string>
-            {
-                {"nodeKey", (string) requestBody["nodeKey"]}
-            };
 
-            request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(requestParams), ParameterType.RequestBody);
+            if (requestBody != null)
+                request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(requestBody), ParameterType.RequestBody);
 
-            var response = _client.Execute(request);
+            var response = Client.Execute(request);
 
-            return JsonConvert.DeserializeObject<APIResponse>(response.Content);
+            return ParseResponse<APIResponse>(response);
         }
     }
 }

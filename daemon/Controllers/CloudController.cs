@@ -172,6 +172,14 @@ namespace Spectero.daemon.Controllers
             var response = client.Execute(request);
             var parsedResponse = JsonConvert.DeserializeObject<CloudAPIResponse<Node>>(response.Content);
 
+            if (response.ErrorException != null)
+            {
+                Logger.LogError(response.ErrorException, "CC: Connect attempt to the Spectero Cloud failed!");
+                _response.Errors.Add(Errors.FAILED_TO_CONNECT_TO_SPECTERO_CLOUD, response.ErrorMessage);
+                return StatusCode(503, _response);
+            }
+                
+
             // ReSharper disable once SwitchStatementMissingSomeCases
             switch (response.StatusCode)
             {

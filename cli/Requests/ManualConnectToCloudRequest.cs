@@ -21,9 +21,9 @@ namespace Spectero.daemon.CLI.Requests
 
             request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(requestBody), ParameterType.RequestBody);
 
-            var response = _client.Execute(request);
+            var response = Client.Execute(request);
 
-            return JsonConvert.DeserializeObject<APIResponse>(response.Content);
+            return ParseResponse<APIResponse>(response);
         }
     }
 }

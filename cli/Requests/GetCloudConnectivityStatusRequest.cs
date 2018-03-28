@@ -22,8 +22,9 @@ namespace Spectero.daemon.CLI.Requests
             var request = new RestRequest("/cloud", Method.GET);
 
             // Body is irrelevant here
-            var response = _client.Execute(request);
-            return JsonConvert.DeserializeObject<APIResponse>(response.Content);
+            var response = Client.Execute(request);
+
+            return ParseResponse<APIResponse>(response);
         }
     }
 }

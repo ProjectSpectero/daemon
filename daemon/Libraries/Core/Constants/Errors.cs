@@ -34,5 +34,6 @@
         public const string LOOPBACK_ACCESS_ONLY = "LOOPBACK_ACCESS_ONLY";
         public const string NODE_PERSIST_FAILED = "NODE_PERSIST_FAILED";
         public const string RESPONSE_CODE = "RESPONSE_CODE";
+        public const string FAILED_TO_CONNECT_TO_SPECTERO_CLOUD = "FAILED_TO_CONNECT_TO_SPECTERO_CLOUD";
     }
 }
