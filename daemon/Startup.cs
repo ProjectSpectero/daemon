@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.IO;
+using System.Linq;
 using Hangfire;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -18,7 +19,9 @@ using Microsoft.IdentityModel.Tokens;
 using NLog.Extensions.Logging;
 using NLog.Web;
 using RazorLight;
+using RestSharp;
 using ServiceStack.OrmLite;
+using Spectero.daemon.Jobs;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Crypto;
@@ -29,6 +32,7 @@ using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Migrations;
 using Spectero.daemon.Models;
+using JobActivator = Spectero.daemon.Jobs.JobActivator;
 
 namespace Spectero.daemon
 {
@@ -117,15 +121,23 @@ namespace Spectero.daemon
             });
 
             services.AddSingleton<IAutoStarter, AutoStarter>();
-            services.AddSingleton<IMemoryCache, MemoryCache>();
+            services.AddMemoryCache();
+            services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
+
+            services.AddScoped<IJob, FetchCloudEngagementsJob>(); // TODO: fix this trainwreck, this is severely limiting. We do get auto activation with this though.
 
             services.AddMvc();
-            services.AddMemoryCache();
+
+
             services.AddHangfire(config =>
-                {
-                    config.UseSQLiteStorage(appConfig["JobsConnectionString"], new SQLiteStorageOptions());
-                    config.UseNLogLogProvider();
-                });
+            {
+                config.UseSQLiteStorage(appConfig["JobsConnectionString"], new SQLiteStorageOptions());
+                config.UseNLogLogProvider();
+                // Please ENSURE that this is the VERY last call in this method body. 
+                // Provider once built is not retroactively updated from the collection.
+                // If further dependencies are registered AFTER it is built, we'll get nothing.
+                config.UseActivator(new JobActivator(services.BuildServiceProvider())); 
+            });
 
 
 
@@ -176,11 +188,9 @@ namespace Spectero.daemon
 
             migration.Up();
             autoStarter.Startup();
-
-
         }
 
-        private IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)
+        private static IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)
         {
             // Validate that the DB connection can actually be used.
             // If not, attempt to fix it (for SQLite and corrupt files.)

@@ -46,11 +46,11 @@ namespace Spectero.daemon.Libraries.Config
                 switch (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")?.ToLower())
                 {
                     case "development":
-                        return $"https://dev.spectero.com";
+                        return $"https://dev.spectero.com/v1/";
                     case "local":
-                        return $"http://homestead.marketplace";
+                        return $"http://homestead.marketplace/v1/";
                     default:
-                        return $"https://api.spectero.com";
+                        return $"https://api.spectero.com/v1/";
                 }
             }
         }

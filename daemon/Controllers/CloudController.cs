@@ -21,6 +21,7 @@ using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Models;
 using Spectero.daemon.Models.Requests;
 using Spectero.daemon.Models.Responses;
+using IRestClient = RestSharp.IRestClient;
 
 namespace Spectero.daemon.Controllers
 {
@@ -30,19 +31,20 @@ namespace Spectero.daemon.Controllers
     {
         private readonly IIdentityProvider _identityProvider;
         private readonly IOutgoingIPResolver _ipResolver;
+        private readonly IRestClient _restClient;
         private readonly string cloudUserName;
-        private readonly string versionedApiUri;
+    
 
 
         public CloudController(IOptionsSnapshot<AppConfig> appConfig, ILogger<CloudController> logger,
             IDbConnection db, IIdentityProvider identityProvider,
-            IOutgoingIPResolver outgoingIpResolver)
+            IOutgoingIPResolver outgoingIpResolver, IRestClient restClient)
             : base(appConfig, logger, db)
         {
             _identityProvider = identityProvider;
             _ipResolver = outgoingIpResolver;
             cloudUserName = "cloud";
-            versionedApiUri = AppConfig.ApiBaseUri + "/v1/";
+            _restClient = restClient;
         }
 
         [HttpGet("descriptor", Name = "GetLocalSystemConfig")]
@@ -148,8 +150,6 @@ namespace Spectero.daemon.Controllers
             }
 
             // Ok, we aren't already connected. Let's go try talking to the backend and set ourselves up.
-            var client = new RestClient(versionedApiUri);
-
             var request = new RestRequest("unauth/node", Method.POST) {RequestFormat = DataFormat.Json};
 
             var generatedPassword = PasswordUtils.GeneratePassword(24, 0);
@@ -169,12 +169,12 @@ namespace Spectero.daemon.Controllers
             // Ok, we got the user created. Everything is ready, let's send off the request.
             request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(body), ParameterType.RequestBody);
 
-            var response = client.Execute(request);
+            var response = _restClient.Execute(request);
             var parsedResponse = JsonConvert.DeserializeObject<CloudAPIResponse<Node>>(response.Content);
 
             if (response.ErrorException != null)
             {
-                Logger.LogError(response.ErrorException, "CC: Connect attempt to the Spectero Cloud failed!");
+                Logger.LogError(response.ErrorException as Exception, "CC: Connect attempt to the Spectero Cloud failed!");
                 _response.Errors.Add(Errors.FAILED_TO_CONNECT_TO_SPECTERO_CLOUD, response.ErrorMessage);
                 return StatusCode(503, _response);
             }

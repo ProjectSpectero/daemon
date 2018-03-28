@@ -4,5 +4,7 @@
     {
         string GetSchedule();
         void Perform();
+        bool IsEnabled();
+        bool IsRecurring();
     }
 }
