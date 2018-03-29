@@ -11,12 +11,7 @@ namespace Spectero.daemon.CLI.Commands
         public override CommandResult Execute()
         {
             var request = new GetCloudConnectivityStatusRequest(ServiceProvider);
-
-            var response = request.Perform();
-
-            DisplayResult(response);
-
-            return CommandResult.Success;
+            return HandleRequest(null, request);
         }
     }
 }

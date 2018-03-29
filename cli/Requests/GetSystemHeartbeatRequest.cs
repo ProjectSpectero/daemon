@@ -17,11 +17,7 @@ namespace Spectero.daemon.CLI.Requests
 
         public override APIResponse Perform(Dictionary<string, object> requestBody = null)
         {
-            var request = new RestRequest("/cloud/heartbeat", Method.GET);
-
-            var response = Client.Execute(request);
-
-            return ParseResponse<APIResponse>(response);
+            return ActualPerform("cloud/heartbeat", Method.GET, requestBody);
         }
     }
 }

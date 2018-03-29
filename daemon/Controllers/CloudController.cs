@@ -102,9 +102,12 @@ namespace Spectero.daemon.Controllers
         public async Task<IActionResult> ManualCloudConnect([FromBody] ManualCloudConnectRequest connectRequest)
         {
             if (await CloudUtils.IsConnected(Db)
-                && connectRequest.force != true)
+                && connectRequest.force)
             {
-                // TODO: Throw exception, raise a stink.
+                // TODO: Bruh, we're connected
+                _response.Errors.Add(Errors.CLOUD_ALREADY_CONNECTED, true);
+                _response.Errors.Add(Errors.FORCE_PARAMETER_REQUIRED, true);
+                return BadRequest(_response);
             }
 
             // Well ok, let's get it over with.
@@ -112,7 +115,7 @@ namespace Spectero.daemon.Controllers
             await CreateOrUpdateConfig(ConfigKeys.CloudConnectIdentifier, connectRequest.NodeId.ToString());
             await CreateOrUpdateConfig(ConfigKeys.CloudConnectNodeKey, connectRequest.NodeKey);
 
-            return Ok(_response);
+            return await ShowStatus();
         }
 
         // This allows anonymous, but only from the local loopback.
@@ -166,15 +169,29 @@ namespace Spectero.daemon.Controllers
             request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(body), ParameterType.RequestBody);
 
             var response = _restClient.Execute(request);
-            var parsedResponse = JsonConvert.DeserializeObject<CloudAPIResponse<Node>>(response.Content);
+
 
             if (response.ErrorException != null)
             {
-                Logger.LogError(response.ErrorException as Exception, "CC: Connect attempt to the Spectero Cloud failed!");
+                Logger.LogError(response.ErrorException, "CC: Connect attempt to the Spectero Cloud failed!");
                 _response.Errors.Add(Errors.FAILED_TO_CONNECT_TO_SPECTERO_CLOUD, response.ErrorMessage);
                 return StatusCode(503, _response);
             }
-                
+
+            CloudAPIResponse<Node> parsedResponse;
+            try
+            {
+                // Parse after error checking.
+                parsedResponse = JsonConvert.DeserializeObject<CloudAPIResponse<Node>>(response.Content);
+            }
+            catch (JsonReaderException e)
+            {
+                // The Cloud Backend fed us bogus stuff, let's bail.
+                Logger.LogError(e, "CC: Connect attempt to the Spectero Cloud failed!");
+                _response.Errors.Add(Errors.FAILED_TO_CONNECT_TO_SPECTERO_CLOUD, e.Message);
+                return StatusCode(503, _response);
+            }
+
 
             // ReSharper disable once SwitchStatementMissingSomeCases
             switch (response.StatusCode)
@@ -208,7 +225,7 @@ namespace Spectero.daemon.Controllers
                 default:
                     // Likely a 400 or a 409, just show the response as is.
                     _response.Errors.Add(Errors.RESPONSE_CODE, response.StatusCode);
-                    _response.Errors.Add(Errors.NODE_PERSIST_FAILED, parsedResponse);
+                    _response.Errors.Add(Errors.NODE_PERSIST_FAILED, parsedResponse.errors);
                     break;
             }
 

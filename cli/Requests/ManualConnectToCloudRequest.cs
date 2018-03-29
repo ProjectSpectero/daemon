@@ -17,13 +17,7 @@ namespace Spectero.daemon.CLI.Requests
 
         public override APIResponse Perform(Dictionary<string, object> requestBody = null)
         {
-            var request = new RestRequest("cloud/manual", Method.POST) { RequestFormat = DataFormat.Json };
-
-            request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(requestBody), ParameterType.RequestBody);
-
-            var response = Client.Execute(request);
-
-            return ParseResponse<APIResponse>(response);
+            return ActualPerform("cloud/manual", Method.POST, requestBody);
         }
     }
 }

@@ -13,7 +13,8 @@ namespace Spectero.daemon.CLI.Commands
         protected readonly IServiceProvider ServiceProvider 
             = Startup.GetServiceProvider();
 
-        protected CommandResult HandleRequest(Action<APIResponse> action, IRequest request, Dictionary<string, object> requestBody = null)
+        protected static CommandResult HandleRequest(Action<APIResponse> action, IRequest request,
+            Dictionary<string, object> requestBody = null)
         {
             try
             {
@@ -26,15 +27,16 @@ namespace Spectero.daemon.CLI.Commands
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("Failed :(: " + e.Message);
                 return CommandResult.RuntimeFailure;
             }
         }
 
-        protected static void DisplayResult(APIResponse response)
+        private static void DisplayResult(APIResponse response)
         {
             if (response.Errors.Count != 0)
             {
+                Console.WriteLine("Something went wrong :(:");
                 foreach (var error in response.Errors)
                 {
                     Console.WriteLine(error.Key + ":" + error.Value);

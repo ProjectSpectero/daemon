@@ -16,15 +16,9 @@ namespace Spectero.daemon.CLI.Requests
         }
 
         // Synchronus for now
-        // TODO: @alex - write the other cloud related daemon endpoint requests too.
         public override APIResponse Perform(Dictionary<string, object> requestBody = null)
         {
-            var request = new RestRequest("/cloud", Method.GET);
-
-            // Body is irrelevant here
-            var response = Client.Execute(request);
-
-            return ParseResponse<APIResponse>(response);
+            return ActualPerform("cloud", Method.GET, requestBody);
         }
     }
 }

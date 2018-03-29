@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using Spectero.daemon.CLI.Requests;
 using System;
 using System.Collections.Generic;
+using RestSharp;
 
 namespace Spectero.daemon.CLI.Commands
 {
@@ -11,27 +12,25 @@ namespace Spectero.daemon.CLI.Commands
     {
 
         [NamedArgument(ArgumentFlags.Required, ShortName = "id", Description = "The node's Id")]
-        public string NodeId { get; set; }
+        private string NodeId { get; set; }
 
         [NamedArgument(ArgumentFlags.Required, ShortName = "key", Description = "The node's key")]
-        public string NodeKey { get; set; }
+        private string NodeKey { get; set; }
 
         [NamedArgument(ArgumentFlags.Optional, ShortName = "force", Description = "Force connect")]
-        public bool ForceConnect = false;
+        private bool ForceConnect { get; set; }
 
         public override CommandResult Execute()
         {
             var request = new ManualConnectToCloudRequest(ServiceProvider);
-            var response = request.Perform(new Dictionary<string, object>
+            var body = new Dictionary<string, object>
             {
                 {"force", ForceConnect },
                 {"nodeId", NodeId },
                 {"nodeKey", NodeKey }
-            });
+            };
 
-            DisplayResult(response);
-
-            return CommandResult.Success;
+            return HandleRequest(null, request, body);
         }
     }
 }
