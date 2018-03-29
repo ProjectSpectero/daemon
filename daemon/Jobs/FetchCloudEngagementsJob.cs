@@ -12,7 +12,6 @@ using RestSharp;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
-using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
@@ -51,7 +50,7 @@ namespace Spectero.daemon.Jobs
         [AutomaticRetry(Attempts = 1)]
         public void Perform()
         {
-            if (!IsEnabled())
+            if (! IsEnabled())
             {
                 _logger.LogError("FCEJ: Job enabled, but matching criterion does not match. This should not happen, silently going back to sleep.");
                 return;
@@ -124,7 +123,7 @@ namespace Spectero.daemon.Jobs
             foreach (var engagement in engagements)
             {
                 /*
-                 * First see if user already exists, and if pw is different. If yes, look it up, and replace it fully.
+                 * First see if user already exists, and if details are different. If yes, look it up, and replace it fully.
                  * If not, we insert a brand new user.
                  */
                 
@@ -138,6 +137,8 @@ namespace Spectero.daemon.Jobs
                             existingUser.Cert == engagement.cert &&
                             existingUser.CertKey == engagement.cert_key) continue;
 
+                        AuthUtils.ClearUserFromCacheIfExists(_cache, existingUser.AuthKey); // Stop allowing cached logins, details are changing.
+
                         existingUser.AuthKey = engagement.username;
                         existingUser.Password = engagement.password; // This time it's already encrypted
                         existingUser.Cert = engagement.cert;
@@ -145,7 +146,6 @@ namespace Spectero.daemon.Jobs
                         existingUser.CloudSyncDate = DateTime.Now;
 
                         _db.Update(existingUser);
-                        AuthUtils.ClearUserFromCacheIfExists(_cache, existingUser.AuthKey);
                     }
                     else
                     {

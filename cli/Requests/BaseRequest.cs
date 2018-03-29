@@ -24,6 +24,18 @@ namespace Spectero.daemon.CLI.Requests
             throw new NotImplementedException();
         }
 
+        protected APIResponse ActualPerform(string endpoint, Method method, Dictionary<string, object> requestBody = null)
+        {
+            var request = new RestRequest(endpoint, method) { RequestFormat = DataFormat.Json };
+
+            if (requestBody != null)
+                request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(requestBody), ParameterType.RequestBody);
+
+            var response = Client.Execute(request);
+
+            return ParseResponse<APIResponse>(response);
+        }
+
         protected static T ParseResponse<T>(IRestResponse response)
         {
             if (response.ErrorException != null)

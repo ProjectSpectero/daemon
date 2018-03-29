@@ -32,9 +32,7 @@ namespace Spectero.daemon.Controllers
         private readonly IIdentityProvider _identityProvider;
         private readonly IOutgoingIPResolver _ipResolver;
         private readonly IRestClient _restClient;
-        private readonly string cloudUserName;
-    
-
+        private readonly string _cloudUserName;
 
         public CloudController(IOptionsSnapshot<AppConfig> appConfig, ILogger<CloudController> logger,
             IDbConnection db, IIdentityProvider identityProvider,
@@ -43,7 +41,7 @@ namespace Spectero.daemon.Controllers
         {
             _identityProvider = identityProvider;
             _ipResolver = outgoingIpResolver;
-            cloudUserName = "cloud";
+            _cloudUserName = AppConfig.CloudConnectDefaultAuthKey;
             _restClient = restClient;
         }
 
@@ -162,9 +160,7 @@ namespace Spectero.daemon.Controllers
             body.Protocol = "http"; // TODO: figure out own listening protocol, use that.
 
             body.NodeKey = connectRequest.NodeKey;
-            body.AccessToken = cloudUserName + ":" + generatedPassword;
-
-            
+            body.AccessToken = _cloudUserName + ":" + generatedPassword;  
 
             // Ok, we got the user created. Everything is ready, let's send off the request.
             request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(body), ParameterType.RequestBody);
@@ -185,11 +181,11 @@ namespace Spectero.daemon.Controllers
             {
                 case HttpStatusCode.Created:
                     // Check if the cloud connect user exists already.
-                    var user = await Db.SingleAsync<User>(x => x.AuthKey == cloudUserName) ?? new User();
+                    var user = await Db.SingleAsync<User>(x => x.AuthKey == _cloudUserName) ?? new User();
 
-                    user.AuthKey = cloudUserName;
+                    user.AuthKey = _cloudUserName;
                     user.PasswordSetter = generatedPassword;
-                    user.EmailAddress = cloudUserName + $"@spectero.com";
+                    user.EmailAddress = _cloudUserName + $"@spectero.com";
                     user.FullName = "Spectero Cloud Management User";
                     user.Roles = new List<User.Role> { Models.User.Role.SuperAdmin };
                     user.Source = Models.User.SourceTypes.SpecteroCloud;
