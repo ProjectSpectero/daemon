@@ -54,5 +54,7 @@ namespace Spectero.daemon.Libraries.Config
                 }
             }
         }
+
+        public static string CloudConnectDefaultAuthKey => "cloud";
     }
 }

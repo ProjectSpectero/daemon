@@ -168,7 +168,7 @@ namespace Spectero.daemon
             var option = new BackgroundJobServerOptions { WorkerCount = 1 }; // Limited by SQLite, can't deal with concurrency welp.
 
             app.UseHangfireServer(option);
-            app.UseHangfireDashboard();
+            app.UseHangfireDashboard($"/jobs");
 
             app.UseMvc(routes =>
             {

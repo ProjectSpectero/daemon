@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using Microsoft.Extensions.Caching.Memory;
+using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Libraries.Core.Authenticator
 {
@@ -33,6 +35,15 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
         public static string GetCachedUserKey(string username)
         {
             return "auth.user." + username;
+        }
+
+        public static void ClearUserFromCacheIfExists(IMemoryCache cache, string authKey)
+        {
+            var key = GetCachedUserKey(authKey);
+            if (cache.TryGetValue(key, out User user))
+            {
+                cache.Remove(key);
+            }
         }
     }
 }

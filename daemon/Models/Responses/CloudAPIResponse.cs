@@ -28,5 +28,7 @@ namespace Spectero.daemon.Models.Responses
         public string username;
         public string password;
         public string sync_timestamp;
+        public string cert;
+        public string cert_key;
     }
 }

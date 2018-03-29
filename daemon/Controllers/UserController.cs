@@ -63,6 +63,9 @@ namespace Spectero.daemon.Controllers
                 // Invoked with default operation = create param
                 if (!user.Validate(out var validationErrors))
                     _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
+
+                if (user.AuthKey.Equals(AppConfig.CloudConnectDefaultAuthKey))
+                    _response.Errors.Add(Errors.RESOURCE_RESERVED, "");
             }           
             else
                 _response.Errors.Add(Errors.MISSING_BODY, "");
@@ -192,6 +195,9 @@ namespace Spectero.daemon.Controllers
             {
                 if (!user.Validate(out var validationErrors, CRUDOperation.Update))
                     _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
+
+                if (user.AuthKey.Equals(AppConfig.CloudConnectDefaultAuthKey))
+                    _response.Errors.Add(Errors.RESOURCE_RESERVED, "");
             }
             else
                 _response.Errors.Add(Errors.MISSING_BODY, "");
@@ -285,11 +291,7 @@ namespace Spectero.daemon.Controllers
         // Used to invalidate a cached user if they are deleted / updated
         private void ClearUserFromCacheIfExists(string username)
         {
-            var key = AuthUtils.GetCachedUserKey(username);
-            if (_cache.Get<User>(key) != null)
-            {
-                _cache.Remove(key);
-            }
+            AuthUtils.ClearUserFromCacheIfExists(_cache, username);
         }
 
         // TODO: Look into whether making this a responsibility of the service itself (generation) is a more sane appraoch
