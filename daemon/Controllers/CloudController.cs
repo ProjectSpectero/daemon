@@ -22,17 +22,20 @@ using Spectero.daemon.Models;
 using Spectero.daemon.Models.Requests;
 using Spectero.daemon.Models.Responses;
 using IRestClient = RestSharp.IRestClient;
+using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
 namespace Spectero.daemon.Controllers
 {
     [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
     [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(CloudController))]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class CloudController : BaseController
     {
         private readonly IIdentityProvider _identityProvider;
         private readonly IOutgoingIPResolver _ipResolver;
         private readonly IRestClient _restClient;
         private readonly string _cloudUserName;
+        private bool _restartNeeded;
 
         public CloudController(IOptionsSnapshot<AppConfig> appConfig, ILogger<CloudController> logger,
             IDbConnection db, IIdentityProvider identityProvider,
@@ -46,17 +49,17 @@ namespace Spectero.daemon.Controllers
         }
 
         [HttpGet("descriptor", Name = "GetLocalSystemConfig")]
-        public IActionResult GetDescriptor()
+        public async Task<IActionResult> GetDescriptor()
         {
             var output = new Dictionary<string, object>
             {
                 {"config", AppConfig.ToObjectDictionary()},
-                {"identity", _identityProvider.GetGuid().ToString()}
+                {"identity", _identityProvider.GetGuid().ToString()},
+                { "status", await CompileCloudStatus() }
             };
 
             _response.Result = output;
             return Ok(_response);
-
         }
 
         [HttpGet("identity", Name = "GetLocalSystemIdentity")]
@@ -72,16 +75,8 @@ namespace Spectero.daemon.Controllers
             return Ok(_response);
         }
 
-        [HttpGet(Name = "GetCloudConnectStatus")]
-        public async Task<IActionResult> ShowStatus()
+        private async Task<Dictionary<string, object>> CompileCloudStatus()
         {
-            // What is DRY? ;V
-            if (!Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
-                _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
-
-            if (HasErrors())
-                return StatusCode(403, _response);
-
             // We DRY now fam
             var status = await GetConfig(ConfigKeys.CloudConnectStatus);
             var identifier = await GetConfig(ConfigKeys.CloudConnectIdentifier);
@@ -89,20 +84,36 @@ namespace Spectero.daemon.Controllers
 
             var responseDict = new Dictionary<string, object>
             {
-                { ConfigKeys.CloudConnectStatus, status?.Value },
+                { ConfigKeys.CloudConnectStatus, bool.Parse(status?.Value) },
                 { ConfigKeys.CloudConnectIdentifier, identifier?.Value },
-                { ConfigKeys.CloudConnectNodeKey, nodeKey?.Value }
+                { ConfigKeys.CloudConnectNodeKey, nodeKey?.Value },
+                { "app.restart.required", _restartNeeded }
             };
 
-            _response.Result = responseDict;
+            return responseDict;
+        }
+
+        [HttpGet(Name = "GetCloudConnectStatus")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ShowStatus()
+        {
+            // What is DRY? ;V - TODO: fix this once we have global exception handling in the HTTP pipeline working
+            if (!Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
+                _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
+
+            if (HasErrors())
+                return StatusCode(403, _response);
+
+            _response.Result = await CompileCloudStatus();
             return Ok(_response);
         }
 
         [HttpPost("manual", Name = "ManuallyConnectToSpecteroCloud")]
+        [AllowAnonymous]
         public async Task<IActionResult> ManualCloudConnect([FromBody] ManualCloudConnectRequest connectRequest)
         {
             if (await CloudUtils.IsConnected(Db)
-                && connectRequest.force)
+                && ! connectRequest.force)
             {
                 // TODO: Bruh, we're connected
                 _response.Errors.Add(Errors.CLOUD_ALREADY_CONNECTED, true);
@@ -110,10 +121,42 @@ namespace Spectero.daemon.Controllers
                 return BadRequest(_response);
             }
 
+            // What is DRY? ;V - TODO: fix this once we have global exception handling in the HTTP pipeline working
+            if (!Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
+                _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
+
+            if (HasErrors())
+                return StatusCode(403, _response);
+
             // Well ok, let's get it over with.
             await CreateOrUpdateConfig(ConfigKeys.CloudConnectStatus, true.ToString());
             await CreateOrUpdateConfig(ConfigKeys.CloudConnectIdentifier, connectRequest.NodeId.ToString());
             await CreateOrUpdateConfig(ConfigKeys.CloudConnectNodeKey, connectRequest.NodeKey);
+
+            _restartNeeded = true;
+
+            return await ShowStatus();
+        }
+
+        [HttpPost("disconnect", Name = "DisconnectFromSpecteroCloud")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Disconnect()
+        {
+            // What is DRY? ;V - TODO: fix this once we have global exception handling in the HTTP pipeline working
+            if (!Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
+                _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
+
+            if (! await CloudUtils.IsConnected(Db))
+                _response.Errors.Add(Errors.CLOUD_NOT_CONNECTED, "");
+
+            if (HasErrors())
+                return StatusCode(403, _response);
+
+            await DeleteConfigIfExists(ConfigKeys.CloudConnectNodeKey);
+            await DeleteConfigIfExists(ConfigKeys.CloudConnectIdentifier);
+            await CreateOrUpdateConfig(ConfigKeys.CloudConnectStatus, false.ToString());
+
+            _restartNeeded = true;
 
             return await ShowStatus();
         }
@@ -219,6 +262,7 @@ namespace Spectero.daemon.Controllers
                     await CreateOrUpdateConfig(ConfigKeys.CloudConnectIdentifier, parsedResponse.result.id.ToString());
                     await CreateOrUpdateConfig(ConfigKeys.CloudConnectNodeKey, connectRequest.NodeKey);
 
+                    _restartNeeded = true;
                     _response.Result = parsedResponse;
                 
                     break;
@@ -229,8 +273,8 @@ namespace Spectero.daemon.Controllers
                     break;
             }
 
-            // TODO: validate + set internal state accordingly.
 
+            _response.Message = Messages.DAEMON_RESTART_NEEDED;
             return Ok(_response);
         }
     }

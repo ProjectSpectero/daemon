@@ -32,6 +32,7 @@
 
         // CLoud Connect
         public const string CLOUD_ALREADY_CONNECTED = "CLOUD_ALREADY_CONNECTED";
+        public const string CLOUD_NOT_CONNECTED = "CLOUD_NOT_CONNECTED";
         public const string FORCE_PARAMETER_REQUIRED = "FORCE_PARAMETER_REQUIRED";
         public const string LOOPBACK_ACCESS_ONLY = "LOOPBACK_ACCESS_ONLY";
         public const string NODE_PERSIST_FAILED = "NODE_PERSIST_FAILED";
