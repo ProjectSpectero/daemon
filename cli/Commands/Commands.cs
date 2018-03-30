@@ -7,6 +7,9 @@ namespace Spectero.daemon.CLI.Commands
         [Command(typeof(ConnectToSpecteroCloud), Description = "Automagic connection to the Spectero Cloud")]
         connect,
 
+        [Command(typeof(DisconnectFromSpecteroCloud), Description = "Disconnect from the Spectero Cloud (client only)")]
+        disconnect,
+
         [Command(typeof(ManuallyConnectToSpecteroCloud), Description = "Manually Connect Daemon to Spectero Cloud")]
         manual,
 

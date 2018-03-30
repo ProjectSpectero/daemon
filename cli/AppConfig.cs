@@ -1,7 +1,7 @@
 ﻿namespace Spectero.daemon.CLI
 {
-    public class AppConfig
+    public static class AppConfig
     {
-        public bool DEebug => false;
+        public static bool Debug { get; set; }
     }
 }

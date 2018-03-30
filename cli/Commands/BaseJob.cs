@@ -27,7 +27,11 @@ namespace Spectero.daemon.CLI.Commands
             }
             catch (Exception e)
             {
-                Console.WriteLine("Failed :(: " + e.Message);
+                if (! AppConfig.Debug)
+                    Console.WriteLine("Failed :(: " + e.Message);
+                else
+                    Console.WriteLine(e);
+
                 return CommandResult.RuntimeFailure;
             }
         }
