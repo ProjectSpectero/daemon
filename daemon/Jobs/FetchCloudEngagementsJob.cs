@@ -15,8 +15,9 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
-using Spectero.daemon.Models;
+using Spectero.daemon.Models;   
 using Spectero.daemon.Models.Responses;
+using IRestClient = RestSharp.IRestClient;
 
 namespace Spectero.daemon.Jobs
 {
@@ -47,7 +48,7 @@ namespace Spectero.daemon.Jobs
             return "*/6 * * * *"; // This sets it every 6 minutes, in cron expression.
         }
 
-        [AutomaticRetry(Attempts = 1)]
+        [AutomaticRetry(Attempts = 2, OnAttemptsExceeded = AttemptsExceededAction.Delete)]
         public void Perform()
         {
             if (! IsEnabled())
@@ -67,7 +68,7 @@ namespace Spectero.daemon.Jobs
             }
 
             var slug = string.Format("unauth/node/{0}/config-pull", nodeId);
-            var request = new RestRequest(slug, Method.GET) { RequestFormat = DataFormat.Json };
+            var request = new RestRequest(slug, Method.POST) { RequestFormat = DataFormat.Json };
 
             var dataMap = new Dictionary<string, string>
             {
@@ -75,7 +76,7 @@ namespace Spectero.daemon.Jobs
                 {"install_id", localIdentity}
             };
 
-            // RFC violating GET request with a body, w0w. The things we do for the MVP ;(
+            // RFC violating no more!
             request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(dataMap), ParameterType.RequestBody);
 
             var response = _restClient.Execute(request);
@@ -101,6 +102,8 @@ namespace Spectero.daemon.Jobs
                }
              */
 
+            _logger.LogDebug("Got response from the cloud backend!: " + response.Content);
+
             // World's unsafest cast contender? Taking bets now.
             var parsedResponse = JsonConvert.DeserializeObject<CloudAPIResponse<List<Engagement>>>(response.Content);
             var engagements = parsedResponse.result;
@@ -115,6 +118,7 @@ namespace Spectero.daemon.Jobs
 
             foreach (var userToBeRemoved in currentCloudUsers.Except(usersToAllowToPersist))
             {
+                _logger.LogDebug("FCEJ: Terminating " + userToBeRemoved.AuthKey + " because cloud no longer has a reference to it.");
                 AuthUtils.ClearUserFromCacheIfExists(_cache, userToBeRemoved.AuthKey); // Order matters, let's pay attention
                 _db.Delete(userToBeRemoved);
             }
@@ -139,6 +143,8 @@ namespace Spectero.daemon.Jobs
 
                         AuthUtils.ClearUserFromCacheIfExists(_cache, existingUser.AuthKey); // Stop allowing cached logins, details are changing.
 
+                        _logger.LogDebug("FCEJ: Updating user " + existingUser.AuthKey + " with new details.");
+
                         existingUser.AuthKey = engagement.username;
                         existingUser.Password = engagement.password; // This time it's already encrypted
                         existingUser.Cert = engagement.cert;
@@ -149,6 +155,7 @@ namespace Spectero.daemon.Jobs
                     }
                     else
                     {
+                        _logger.LogDebug("FCEJ: Adding new user " + engagement.username + " as directed by the cloud.");
                         var user = new User
                         {
                             EngagementId = engagement.engagement_id,
@@ -158,7 +165,10 @@ namespace Spectero.daemon.Jobs
                             Roles = new List<User.Role> { User.Role.HTTPProxy, User.Role.OpenVPN, User.Role.SSHTunnel, User.Role.ShadowSOCKS }, // Only service access roles, no administrative access.
                             CreatedDate = DateTime.Now,
                             Cert = engagement.cert,
-                            CertKey = engagement.cert_key // TODO: The backend currently returns empty strings for these, but one day it'll be useful.
+                            CertKey = engagement.cert_key, // TODO: The backend currently returns empty strings for these, but one day it'll be useful.
+                            FullName = "Spectero Cloud User",
+                            EmailAddress = "cloud-user@spectero.com",
+                            CloudSyncDate = DateTime.Now
                         };
 
                         _db.Insert(user);

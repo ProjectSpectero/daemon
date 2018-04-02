@@ -165,6 +165,11 @@ namespace Spectero.daemon
 
             app.UseAddRequestIdHeader();
 
+            // This HAS TO BE before the AddMVC call. Route registration fails otherwise.
+            var option = new BackgroundJobServerOptions { WorkerCount = 1 }; // Limited by SQLite, can't deal with concurrency welp.
+            app.UseHangfireServer(option);
+            app.UseHangfireDashboard($"/jobs");
+
             app.UseMvc(routes =>
             {
                 if (appConfig.SpaMode)
@@ -182,10 +187,6 @@ namespace Spectero.daemon
 
             migration.Up();
             autoStarter.Startup();
-
-            var option = new BackgroundJobServerOptions { WorkerCount = 1 }; // Limited by SQLite, can't deal with concurrency welp.
-            app.UseHangfireServer(option);
-            app.UseHangfireDashboard($"/jobs");
 
             foreach (var implementer in serviceProvider.GetServices<IJob>())
             {

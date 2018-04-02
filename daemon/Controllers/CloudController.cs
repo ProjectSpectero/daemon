@@ -87,6 +87,7 @@ namespace Spectero.daemon.Controllers
                 { ConfigKeys.CloudConnectStatus, bool.Parse(status?.Value) },
                 { ConfigKeys.CloudConnectIdentifier, identifier?.Value },
                 { ConfigKeys.CloudConnectNodeKey, nodeKey?.Value },
+                { "app.version", AppConfig.version },
                 { "app.restart.required", _restartNeeded }
             };
 
