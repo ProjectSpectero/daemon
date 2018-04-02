@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -11,6 +13,7 @@ using Newtonsoft.Json;
 using RestSharp;
 using ServiceStack;
 using ServiceStack.OrmLite;
+using Spectero.daemon.Jobs;
 using Spectero.daemon.Libraries;
 using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
@@ -35,17 +38,21 @@ namespace Spectero.daemon.Controllers
         private readonly IOutgoingIPResolver _ipResolver;
         private readonly IRestClient _restClient;
         private readonly string _cloudUserName;
+        private readonly FetchCloudEngagementsJob _backgroundCloudEngagementsJob;
+
         private bool _restartNeeded;
 
         public CloudController(IOptionsSnapshot<AppConfig> appConfig, ILogger<CloudController> logger,
             IDbConnection db, IIdentityProvider identityProvider,
-            IOutgoingIPResolver outgoingIpResolver, IRestClient restClient)
+            IOutgoingIPResolver outgoingIpResolver, IRestClient restClient,
+            IEnumerable<IJob> jobs)
             : base(appConfig, logger, db)
         {
             _identityProvider = identityProvider;
             _ipResolver = outgoingIpResolver;
             _cloudUserName = AppConfig.CloudConnectDefaultAuthKey;
             _restClient = restClient;
+            _backgroundCloudEngagementsJob = jobs.FirstOrDefault(x => x.GetType() == typeof(FetchCloudEngagementsJob)) as FetchCloudEngagementsJob;            
         }
 
         [HttpGet("descriptor", Name = "GetLocalSystemConfig")]
@@ -134,7 +141,7 @@ namespace Spectero.daemon.Controllers
             await CreateOrUpdateConfig(ConfigKeys.CloudConnectIdentifier, connectRequest.NodeId.ToString());
             await CreateOrUpdateConfig(ConfigKeys.CloudConnectNodeKey, connectRequest.NodeKey);
 
-            _restartNeeded = true;
+            ManageBackgroundJob();
 
             return await ShowStatus();
         }
@@ -157,7 +164,7 @@ namespace Spectero.daemon.Controllers
             await DeleteConfigIfExists(ConfigKeys.CloudConnectIdentifier);
             await CreateOrUpdateConfig(ConfigKeys.CloudConnectStatus, false.ToString());
 
-            _restartNeeded = true;
+            ManageBackgroundJob("disconnect");
 
             return await ShowStatus();
         }
@@ -263,9 +270,11 @@ namespace Spectero.daemon.Controllers
                     await CreateOrUpdateConfig(ConfigKeys.CloudConnectIdentifier, parsedResponse.result.id.ToString());
                     await CreateOrUpdateConfig(ConfigKeys.CloudConnectNodeKey, connectRequest.NodeKey);
 
-                    _restartNeeded = true;
+                   
                     _response.Result = parsedResponse;
-                
+
+                    ManageBackgroundJob();                                            
+
                     break;
                 default:
                     // Likely a 400 or a 409, just show the response as is.
@@ -277,6 +286,30 @@ namespace Spectero.daemon.Controllers
 
             _response.Message = Messages.DAEMON_RESTART_NEEDED;
             return Ok(_response);
+        }
+
+        private void ManageBackgroundJob(string mode = "connect")
+        {
+            if (_backgroundCloudEngagementsJob != null)
+            {
+                var typeString = _backgroundCloudEngagementsJob.GetType().ToString();
+                switch (mode)
+                {
+                    case "connect":
+                        RecurringJob.AddOrUpdate(typeString, () => _backgroundCloudEngagementsJob.Perform(), _backgroundCloudEngagementsJob.GetSchedule);
+                        break;
+
+                    case "disconnect":
+                        RecurringJob.RemoveIfExists(typeString);
+                        break;
+                }
+            }
+                
+            else
+            {
+                Logger.LogError("CC: Couuld not modify the background engagement update job, please restart. (" + mode + ")");
+                _restartNeeded = true;
+            }
         }
     }
 }

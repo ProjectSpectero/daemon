@@ -194,7 +194,7 @@ namespace Spectero.daemon
                     continue;
 
                 // Magic, autowiring is magic.
-                RecurringJob.AddOrUpdate(() => implementer.Perform(), implementer.GetSchedule);
+                RecurringJob.AddOrUpdate(implementer.GetType().ToString(), () => implementer.Perform(), implementer.GetSchedule);
             }
         }
 
