@@ -112,6 +112,7 @@ namespace Spectero.daemon.Controllers
 
                     consumedListenerMap.TryGetValue(listener.Item2, out var existingListOfAddresses);
 
+                    // DAEM-58 compliance: prevent unicast.any listeners if port is not entirely free.
                     if (existingListOfAddresses != null)
                         foreach (var ipAddress in existingListOfAddresses)
                         {
@@ -128,13 +129,6 @@ namespace Spectero.daemon.Controllers
                                 break;
                             }
                         }
-
-                    // DAEM-58 compliance: prevent unicast.any listeners if port is not entirely free.
-                    if (holder.Equals(IPAddress.Any) && existingListOfAddresses != null)
-                    {
-                        
-                    }
-                        
 
                     if (!ipChecked)
                     {

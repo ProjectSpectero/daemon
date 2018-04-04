@@ -18,4 +18,13 @@
     <ProjectReference Include="..\daemon\daemon.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Tooling\spectero">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Tooling\spectero.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

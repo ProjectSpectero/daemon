@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+
+##############################################################################
+##
+##  Spectero start up script for UN*X
+##
+##############################################################################
+
+if ! [ -x "$(command -v dotnet)" ]; then
+	echo "Error: The .NET CoreCLR (runtime) is either not installed, or NOT in your PATH."
+	exit 1
+fi
+
+DOTNET_PATH=`whereis dotnet`
+SPECTERO_BASE="/opt/spectero"
+DAEMON_BASE="$SPECTERO_BASE/daemon"
+CLI_BASE="$DAEMON_BASE/cli"
+CLI_BIN="$CLI_BASE/Spectero.daemon.CLI.dll"
+
+if [ "$1" == "cli" ]; then
+		$DOTNET_PATH $CLI_BIN
+else
+	echo "No arguments specified"
+	echo "Available commands: 'cli'"
+	exit 1
+fi
