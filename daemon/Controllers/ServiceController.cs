@@ -100,22 +100,79 @@ namespace Spectero.daemon.Controllers
             var localAvailableIPs = Utility.GetLocalIPs();
             var availableIPs = localAvailableIPs as IPAddress[] ?? localAvailableIPs.ToArray();
 
+            var consumedListenerMap = new Dictionary<int, List<IPAddress>>();
+
             // Check if all listeners are valid
             foreach (var listener in config.listeners)
             {
                 if (IPAddress.TryParse(listener.Item1, out var holder))
-                {                   
-                    if (AppConfig.BindToUnbound || availableIPs.Contains(holder) || holder.Equals(IPAddress.Any))
-                        continue;
-                    Logger.LogError("CCHH: Invalid listener request for " + holder + " found.");
-                    _response.Errors.Add(Errors.INVALID_IP_AS_LISTENER_REQUEST, "");
+                {
+                    var ipChecked = AppConfig.BindToUnbound || availableIPs.Contains(holder) || holder.Equals(IPAddress.Any);
+                    var portChecked = listener.Item2 > 1023 && listener.Item2 < 65535;
+
+                    consumedListenerMap.TryGetValue(listener.Item2, out var existingListOfAddresses);
+
+                    if (existingListOfAddresses != null)
+                        foreach (var ipAddress in existingListOfAddresses)
+                        {
+                            if (ipAddress.Equals(IPAddress.Any))
+                            {
+                                _response.Errors.Add(Errors.PORT_CONFLICT_FOUND, "0.0.0.0");
+                                break;
+                            }
+
+                            // Duplicate listener found
+                            if (ipAddress.Equals(holder))
+                            {
+                                _response.Errors.Add(Errors.DUPLICATE_IP_AS_LISTENER_REQUEST, listener.Item1);
+                                break;
+                            }
+                        }
+
+                    // DAEM-58 compliance: prevent unicast.any listeners if port is not entirely free.
+                    if (holder.Equals(IPAddress.Any) && existingListOfAddresses != null)
+                    {
+                        
+                    }
+                        
+
+                    if (!ipChecked)
+                    {
+                        _response.Errors.Add(Errors.INVALID_IP_AS_LISTENER_REQUEST, listener.Item1);
+                        break;
+                    }
+
+
+                    if (!portChecked)
+                    {
+                        _response.Errors.Add(Errors.INVALID_PORT_AS_LISTENER_REQUEST, listener.Item2);
+                        break;
+                    }
+
+                    if (existingListOfAddresses == null)
+                    {
+                        existingListOfAddresses = new List<IPAddress>();
+
+                        // If it was null, that means it wasn't in the dict either.
+                        consumedListenerMap.Add(listener.Item2, existingListOfAddresses);
+                    }                            
+
+                    // List is guaranteed not null at this stage, add the IP to it.
+                    existingListOfAddresses.Add(holder);
+                }
+                else
+                {
+                    _response.Errors.Add(Errors.MALFORMED_IP_AS_LISTENER_REQUEST, listener.Item1);
                     break;
                 }
+                   
             }
 
-            if (HasErrors())              
+            if (HasErrors())
+            {
+                Logger.LogError("CCHH: Invalid listener request found.");
                 return BadRequest(_response);
-
+            }
 
             if (config.listeners != currentConfig.listeners ||
                 config.proxyMode != currentConfig.proxyMode ||
