@@ -1,0 +1,5 @@
+# This file contains environment variables needed to initialize / correctly configure the daemon
+# New variables, should they be needed should be pasted here.
+
+ASPNETCORE_ENVIRONMENT=Production
+DOTNET_PRINT_TELEMETRY_MESSAGE=false
