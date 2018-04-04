@@ -302,9 +302,11 @@ namespace Spectero.daemon.Controllers
                     case "disconnect":
                         RecurringJob.RemoveIfExists(typeString);
                         break;
+                    default:
+                        throw new NotImplementedException("Unsupported mode (" + mode + ") given.");
                 }
             }
-                
+
             else
             {
                 Logger.LogError("CC: Couuld not modify the background engagement update job, please restart. (" + mode + ")");

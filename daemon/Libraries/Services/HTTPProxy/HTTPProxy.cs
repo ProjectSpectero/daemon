@@ -35,7 +35,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly IEnumerable<IPAddress> _localAddresses;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
-        private readonly List<String> _cacheKeys;
+        private readonly List<string> _cacheKeys;
 
         private IMemoryCache _cache;
 
@@ -450,6 +450,14 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
             if (expiryTimespan != 0)
                 cacheExpirationOptions.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(expiryTimespan);
+
+            cacheExpirationOptions.RegisterPostEvictionCallback(callback: (cacheKey, value, reason, state) =>
+            {
+                _logger.LogTrace("Log entry " + key + " was evicted from the cache due to " + reason + ".");
+
+                // Stop leaking cache keys, clean it up as we go.
+                _cacheKeys.Remove(cacheKey as string);
+            });
 
             _cache.Set(key, data, cacheExpirationOptions);
             _cacheKeys.Add(key);

@@ -120,6 +120,7 @@ namespace Spectero.daemon
 
             services.AddSingleton<IAutoStarter, AutoStarter>();
             services.AddMemoryCache();
+
             services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
 
             services.AddScoped<IJob, FetchCloudEngagementsJob>();
