@@ -13,6 +13,7 @@ namespace Spectero.daemon.Libraries.Config
         public Dictionary<string, Dictionary<string, string>> Defaults { get; set; }
         public int PasswordCostLowerThreshold { get; set; }
         public int JWTTokenExpiryInMinutes { get; set; }
+        public int JWTRefreshTokenDelta { get; set; }
         public int PasswordCostCalculationIterations { get; set; }
         public string PasswordCostCalculationTestTarget { get; set; }
         public double PasswordCostTimeThreshold { get; set; }

@@ -14,7 +14,9 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
+using Spectero.daemon.Models.Opaque;
 using Spectero.daemon.Models.Requests;
+using Spectero.daemon.Models.Responses;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
 namespace Spectero.daemon.Controllers
@@ -72,18 +74,46 @@ namespace Spectero.daemon.Controllers
                     new Claim(ClaimTypes.UserData, userJson),
                     // Todo: Add roles
                 };
+
                 var key = _cryptoService.GetJWTSigningKey();
                 var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Hardcoded alg for now, perhaps allow changing later
+
+                var accessExpires =
+                    DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0
+                        ? AppConfig.JWTTokenExpiryInMinutes
+                        : 60); // 60 minutes by default
+
                 var token = new JwtSecurityToken
                 (
                     // Can't issue aud/iss since we have no idea what the accessing URL will be.
                     // This is not a typical webapp with static `Host`
                     claims: claims,
-                    expires: DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0 ? AppConfig.JWTTokenExpiryInMinutes : 60), // 60 minutes by default
+                    expires: accessExpires,
                     signingCredentials: credentials
                 );
+
+                var accessToken = new Token
+                {
+                    token = new JwtSecurityTokenHandler().WriteToken(token),
+                    expires = ((DateTimeOffset) accessExpires).ToUnixTimeSeconds()
+                };
+
+                var refreshExpires =
+                    accessExpires.AddMinutes(AppConfig.JWTRefreshTokenDelta > 0 ? AppConfig.JWTRefreshTokenDelta : 30);
+
+                var refreshToken = new Token
+                {
+                    token = null,
+                    expires = ((DateTimeOffset) refreshExpires).ToUnixTimeSeconds()
+                };
+
                 _response.Message = Messages.JWT_TOKEN_ISSUED;
-                _response.Result = new JwtSecurityTokenHandler().WriteToken(token);
+                _response.Result = new AuthResponse
+                {
+                    Access = accessToken,
+                    Refresh = refreshToken
+                };
+
                 return Ok(_response);
             }
                 
