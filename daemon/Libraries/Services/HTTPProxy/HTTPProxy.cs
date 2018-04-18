@@ -21,11 +21,6 @@ using Titanium.Web.Proxy.Models;
 
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
-    /*
-     *  TODO: c. Service restart :V
-     *  TODO: d. Mode support
-     */
-
     public class HTTPProxy : IService
     {
         private readonly AppConfig _appConfig;
@@ -97,7 +92,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     var endpoint = new ExplicitProxyEndPoint(IPAddress.Parse(listener.Item1), listener.Item2,
                         false)
                     {
-                        ExcludedHttpsHostNameRegex = new List<string> {".*"}
+                        ExcludedHttpsHostNameRegex = new List<string> {".*"} // This is what stops it from intercepting any HTTPs certificates.
                     };
 
                     _proxyServer.AddEndPoint(endpoint);
@@ -150,12 +145,14 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                         break;
 
                     case UriFormatException _:
-                        return;
                     case ArgumentNullException _:
                         return;
 
-                    case Exception _ when message.StartsWith("Index is out of buffer size"): // Lame upstream problem
-                        return;
+                    case Exception _:
+                        if (message.StartsWith("Index is out of buffer size")
+                            || message.StartsWith("Error whilst authorizing request"))// Lame upstream problem
+                            return;
+                        break;
 
                 }
             }

@@ -1,0 +1,16 @@
+[Unit]
+Description=Spectero Daemon
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/spectero/daemon/latest
+EnvironmentFile=-/opt/spectero/daemon/latest/lin-env
+ExecStart=/usr/bin/dotnet daemon.dll
+Restart=on-failure
+RestartSec=90
+StartLimitAction=reboot
+StartLimitIntervalSec=600
+StartLimitBurst=5
+[Install]
+WantedBy=multi-user.target
+Alias=spectero.service
