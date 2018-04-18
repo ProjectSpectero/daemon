@@ -37,6 +37,7 @@ namespace Spectero.daemon.Libraries.Config
         public bool AutoStartServices { get; set; }
         public bool LogCommonProxyEngineErrors { get; set; }
         public bool IgnoreRFC1918 { get; set; }
+        public bool HaltStartupIfServiceInitFails { get; set; }
         public string JobsConnectionString { get; set; }
 
         public static string ApiBaseUri
@@ -58,5 +59,6 @@ namespace Spectero.daemon.Libraries.Config
 
         public static string CloudConnectDefaultAuthKey => "cloud";
         public static string version => "0.1-alpha";
+
     }
 }

@@ -122,6 +122,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 
                 var wrappedError = exception?.InnerException;
                 var message = wrappedError?.Message;
+                var originalMessage = exception?.Message
 
                 switch (wrappedError)
                 {
@@ -150,7 +151,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
                     case Exception _:
                         if (message.StartsWith("Index is out of buffer size")
-                            || message.StartsWith("Error whilst authorizing request"))// Lame upstream problem
+                            || originalMessage.StartsWith("Error whilst authorizing request"))// Lame upstream problem
                             return;
                         break;
 

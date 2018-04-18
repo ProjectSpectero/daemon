@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
@@ -30,7 +31,14 @@ namespace Spectero.daemon.Libraries.Services
                 var result = _manager.Process(service, "start", out var error);
 
                 if (result == Messages.ACTION_FAILED)
+                {
                     _logger.LogError("Autostart: processing failed for " + service + "." + error);
+
+                    // Quit if the config dictates that we must, this allows failure tracking by NSM/SystemD/whatever else
+                    if (_appConfig.HaltStartupIfServiceInitFails)
+                        Environment.Exit(-1);
+                }
+                    
                 else
                     _logger.LogInformation("Autostart: Processed autostartup for " + service);
             }
