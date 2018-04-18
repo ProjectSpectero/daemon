@@ -6,14 +6,19 @@ After=network.target
 WorkingDirectory=/opt/spectero/daemon/latest
 EnvironmentFile=-/opt/spectero/daemon/latest/Tooling/Linux/lin-env
 ExecStart=/usr/bin/dotnet daemon.dll
+TimeoutSec=infinity
 Restart=on-failure
 RestartSec=60
+User=spectero
+Group=spectero
 
 # These options are (typically) not required for a normal daemon instance.
+# [Unit]
 # StartLimitAction=reboot
 # StartLimitIntervalSec=300
 # StartLimitBurst=5
 # Requires=haproxy.service
+
 
 [Install]
 WantedBy=multi-user.target

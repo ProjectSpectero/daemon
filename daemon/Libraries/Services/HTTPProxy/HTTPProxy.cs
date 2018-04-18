@@ -122,7 +122,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 
                 var wrappedError = exception?.InnerException;
                 var message = wrappedError?.Message;
-                var originalMessage = exception?.Message
+                var originalMessage = exception?.Message;
 
                 switch (wrappedError)
                 {
