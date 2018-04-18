@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/opt/spectero/daemon/latest
-EnvironmentFile=-/opt/spectero/daemon/latest/lin-env
+EnvironmentFile=-/opt/spectero/daemon/latest/Tooling/Linux/lin-env
 ExecStart=/usr/bin/dotnet daemon.dll
 Restart=on-failure
 RestartSec=60
@@ -13,7 +13,8 @@ RestartSec=60
 # StartLimitAction=reboot
 # StartLimitIntervalSec=300
 # StartLimitBurst=5
-# 
+# Requires=haproxy.service
+
 [Install]
 WantedBy=multi-user.target
 Alias=spectero.service
