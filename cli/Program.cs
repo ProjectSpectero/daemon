@@ -9,6 +9,8 @@ namespace Spectero.daemon.CLI
     {
         private static void Main(string[] args)
         {
+            Console.WriteLine("Spectero Console v{0}", AppConfig.version);
+
             try
             {
                 var eventLoop = new Loop(typeof(Commands.Commands));
