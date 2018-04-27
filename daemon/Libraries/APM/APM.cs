@@ -7,7 +7,7 @@ using Spectero.daemon.Libraries.Config;
 
 namespace Spectero.daemon.Libraries.APM
 {
-    public class APM
+    public class Apm
     {
         private readonly ISystemEnvironment _operatingSystemEnvironment;
 
@@ -17,7 +17,7 @@ namespace Spectero.daemon.Libraries.APM
         /// Notes(Andrew):
         /// I'd much rather this be a switch case statment, but it's WET due to implementation.
         /// </summary>
-        public APM()
+        public Apm()
         {
             // Check if we have a supported operating system.
             if (AppConfig.isWindows)
