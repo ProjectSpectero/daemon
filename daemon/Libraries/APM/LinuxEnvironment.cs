@@ -14,6 +14,12 @@ namespace Spectero.daemon.Libraries.APM
         private Dictionary<string, double> cachedProcMeminfo;
         private int threadCount;
 
+        public LinuxEnvironment()
+        {
+            ReadProcMeminfo();
+            ReadProcCpuinfo();
+        }
+
         /// <summary>
         /// Returns the Processor Manufacturer, Model and the Frequency.
         /// </summary>
