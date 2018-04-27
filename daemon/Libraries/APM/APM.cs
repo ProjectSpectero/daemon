@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Spectero.daemon.Libraries.Config;
 
 namespace Spectero.daemon.Libraries.APM
 {
@@ -19,11 +20,11 @@ namespace Spectero.daemon.Libraries.APM
         public APM()
         {
             // Check if we have a supported operating system.
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (AppConfig.isWindows)
             {
                 _operatingSystemEnvironment = new WindowsEnvironment();
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            else if (AppConfig.isLinux)
             {
                 _operatingSystemEnvironment = new LinuxEnvironment();
             }
