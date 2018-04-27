@@ -10,7 +10,7 @@ namespace Spectero.daemon.Libraries.APM
     ///
     /// Each environment should have these functions for clarity.
     /// </summary>
-    interface ISystemEnvironment
+    public interface ISystemEnvironment
     {
         // CPU
         string GetCpuName();
