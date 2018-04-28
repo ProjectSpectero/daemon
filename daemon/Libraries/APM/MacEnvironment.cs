@@ -8,31 +8,37 @@ namespace Spectero.daemon.Libraries.APM
 {
     public class MacEnvironment : ISystemEnvironment
     {
-        private Dictionary<string, object> cachedSysctlOutput;
+        private Dictionary<string, string> _cachedSysctlOutput;
 
         public MacEnvironment()
         {
+            GetSysctlOutput();
         }
 
-        public string GetCpuName()
-        {
-            return cachedSysctlOutput["machdep.cpu.brand_string"].ToString();
-        }
+        /// <summary>
+        /// Returns the processor name
+        /// Example: Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz
+        /// </summary>
+        /// <returns></returns>
+        public string GetCpuName() => _cachedSysctlOutput["machdep.cpu.brand_string"];
 
-        public int GetCpuCoreCount()
-        {
-            return int.Parse(cachedSysctlOutput["machdep.cpu.core_count"].ToString()); 
-        }
+        /// <summary>
+        /// Returns the physical count of the cores in the procecssor.
+        /// </summary>
+        /// <returns></returns>
+        public int GetCpuCoreCount() => int.Parse(_cachedSysctlOutput["hw.physicalcpu"]);
 
-        public int GetCpuThreadCount()
-        {
-            return int.Parse(cachedSysctlOutput["machdep.cpu.thread_count"].ToString());
-        }
+        /// <summary>
+        /// Returns the number of threads in the processor.
+        /// </summary>
+        /// <returns></returns>
+        public int GetCpuThreadCount() => int.Parse(_cachedSysctlOutput["hw.logicalcpu"]);
 
-        public string GetCpuCacheSize()
-        {
-            return cachedSysctlOutput["machdep.cpu.cache.size"].ToString();
-        }
+        /// <summary>
+        /// Gets the L2 Cache size of the processor.
+        /// </summary>
+        /// <returns></returns>
+        public string GetCpuCacheSize() => _cachedSysctlOutput["machdep.cpu.cache.size"];
 
         public long GetPhysicalMemoryUsed()
         {
@@ -44,10 +50,11 @@ namespace Spectero.daemon.Libraries.APM
             throw new NotImplementedException();
         }
 
-        public long GetPhysicalMemoryTotal()
-        {
-            throw new NotImplementedException();
-        }
+        /// <summary>
+        /// Get the total amount of RAM the system has in bytes.
+        /// </summary>
+        /// <returns></returns>
+        public long GetPhysicalMemoryTotal() => long.Parse(_cachedSysctlOutput["hw.memsize"]);
 
         /// <summary>
         /// Get information about the memory on the system in the form of a dictionary.
@@ -56,7 +63,7 @@ namespace Spectero.daemon.Libraries.APM
         public Dictionary<string, object> GetMemoryDetails()
         {
             // Get Physical Memory
-            Dictionary<string, object> physicalMemoryObjects = new Dictionary<string, object>()
+            var physicalMemoryObjects = new Dictionary<string, object>()
             {
                 {"Used", GetPhysicalMemoryUsed()},
                 {"Free", GetPhysicalMemoryFree()},
@@ -123,14 +130,19 @@ namespace Spectero.daemon.Libraries.APM
             return Environment.Is64BitOperatingSystem;
         }
 
-        public Dictionary<string, object> GetSysctlOutput(bool clearCache = false)
+        /// <summary>
+        /// Use Medallion Shell to get the output out of Sysctl -a
+        /// </summary>
+        /// <param name="clearCache"></param>
+        /// <returns></returns>
+        public Dictionary<string, string> GetSysctlOutput(bool clearCache = false)
         {
-            if (clearCache || cachedSysctlOutput == null)
+            if (clearCache || _cachedSysctlOutput == null)
             {
-                Dictionary<string, object> sysctlOutput = new Dictionary<string, object>();
+                var sysctlOutput = new Dictionary<string, string>();
 
                 // Run the command and get what we can out of the system environ,emt.
-                Command sysctlCommand = Command.Run("sysctl", "-a machdep");
+                var sysctlCommand = Command.Run("sysctl", "-a");
 
                 // Iterate though each like and parse it to the format that we need.
                 foreach (string row in sysctlCommand.StandardOutput.GetLines().ToList())
@@ -140,10 +152,10 @@ namespace Spectero.daemon.Libraries.APM
                 }
 
                 // Update the cache
-                cachedSysctlOutput = sysctlOutput;
+                _cachedSysctlOutput = sysctlOutput;
             }
 
-            return cachedSysctlOutput;
+            return _cachedSysctlOutput;
         }
     }
 }

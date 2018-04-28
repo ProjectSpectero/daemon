@@ -20,10 +20,8 @@ namespace Spectero.daemon.Libraries.APM
         /// Get the processor name from the environment.
         /// </summary>
         /// <returns></returns>
-        public string GetCpuName()
-        {
-            return Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER");
-        }
+        public string GetCpuName() =>
+            Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER");
 
         /// <summary>
         /// Get the number of cores from WMI.
@@ -34,8 +32,7 @@ namespace Spectero.daemon.Libraries.APM
             int coreCount = 0;
 
             // Iterate through each item in the management object.
-            foreach (var managementItem in new System.Management.ManagementObjectSearcher(
-                "Select * from Win32_Processor").Get())
+            foreach (var managementItem in new ManagementObjectSearcher("Select * from Win32_Processor").Get())
             {
                 // Parse the value we need and add it to the count.
                 coreCount += int.Parse(managementItem["NumberOfCores"].ToString());
@@ -51,10 +48,8 @@ namespace Spectero.daemon.Libraries.APM
         /// It should be worth noting this is the "logical" processor count on windows.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuThreadCount()
-        {
-            return Environment.ProcessorCount;
-        }
+        public int GetCpuThreadCount() =>
+            Environment.ProcessorCount;
 
         /// <summary>
         /// Get L2 Cache Size
@@ -64,7 +59,7 @@ namespace Spectero.daemon.Libraries.APM
         /// <returns></returns>
         public string GetCpuCacheSize()
         {
-            ManagementObject managementObject = new ManagementObject("Win32_Processor.DeviceID='CPU0'");
+            var managementObject = new ManagementObject("Win32_Processor.DeviceID='CPU0'");
             try
             {
                 return managementObject["L2CacheSize"].ToString();
@@ -79,64 +74,51 @@ namespace Spectero.daemon.Libraries.APM
         /// Get the physical amount of memory used in bytes.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryUsed()
-        {
-            return GetPhysicalMemoryTotal() - GetPhysicalMemoryFree();
-        }
+        public long GetPhysicalMemoryUsed() =>
+            GetPhysicalMemoryTotal() - GetPhysicalMemoryFree();
 
         /// <summary>
         /// Get the physical amount of memory free in bytes.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryFree()
-        {
-            return long.Parse(GetMemoryWMIInformation()["FreePhysicalMemory"].ToString());
-        }
+        public long GetPhysicalMemoryFree() =>
+            long.Parse(GetMemoryWMIInformation()["FreePhysicalMemory"].ToString());
 
         /// <summary>
         /// Get the total amount of physical memory in bytes.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryTotal()
-        {
-            return long.Parse(GetMemoryWMIInformation()["TotalVisibleMemorySize"].ToString());
-        }
+        public long GetPhysicalMemoryTotal() =>
+            long.Parse(GetMemoryWMIInformation()["TotalVisibleMemorySize"].ToString());
 
         /// <summary>
         /// Get the amount of virtual memory used in bytes.
         /// </summary>
         /// <returns></returns>
-        public double GetVirtualMemoryUsed()
-        {
-            return GetVirtualMemoryTotal() - GetVirtualMemoryFree();
-        }
+        public double GetVirtualMemoryUsed() =>
+            GetVirtualMemoryTotal() - GetVirtualMemoryFree();
 
         /// <summary>
         /// Get the amount of virtual memory free in bytes.
         /// </summary>
         /// <returns></returns>
-        public double GetVirtualMemoryFree()
-        {
-            return double.Parse(GetMemoryWMIInformation()["FreeVirtualMemory"].ToString());
-        }
+        public double GetVirtualMemoryFree() =>
+            double.Parse(GetMemoryWMIInformation()["FreeVirtualMemory"].ToString());
 
         /// <summary>
         /// Get the total amount of virtual memory in bytes.
         /// </summary>
         /// <returns></returns>
-        public double GetVirtualMemoryTotal()
-        {
-            return double.Parse(GetMemoryWMIInformation()["TotalVirtualMemorySize"].ToString());
-        }
+        public double GetVirtualMemoryTotal() =>
+            double.Parse(GetMemoryWMIInformation()["TotalVirtualMemorySize"].ToString());
 
         /// <summary>
         ///  Return if the system is 64 bits.
         /// </summary>
         /// <returns></returns>
-        public bool Is64Bits()
-        {
-            return Environment.Is64BitOperatingSystem;
-        }
+        public bool Is64Bits() =>
+            Environment.Is64BitOperatingSystem;
+
 
         /// <summary>
         /// Get all environment information in the form of a dictionary.

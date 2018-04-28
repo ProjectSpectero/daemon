@@ -10,9 +10,9 @@ namespace Spectero.daemon.Libraries.APM
     public class LinuxEnvironment : ISystemEnvironment
     {
         // Cache Vars - will hold old data until explicitly refreshed.
-        private Dictionary<string, string> cachedProcCpuinfo;
-        private Dictionary<string, long> cachedProcMeminfo;
-        private int threadCount;
+        private Dictionary<string, string> _cachedProcCpuinfo;
+        private Dictionary<string, long> _cachedProcMeminfo;
+        private int _threadCount;
 
         public LinuxEnvironment()
         {
@@ -24,72 +24,38 @@ namespace Spectero.daemon.Libraries.APM
         /// Returns the Processor Manufacturer, Model and the Frequency.
         /// </summary>
         /// <returns></returns>
-        public string GetCpuName()
-        {
-            return ReadProcCpuinfo()["model name"];
-        }
+        public string GetCpuName() => ReadProcCpuinfo()["model name"];
 
         /// <summary>
         /// Returns the number of physical cores excluding threads.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuCoreCount()
-        {
-            return int.Parse(ReadProcCpuinfo()["cpu cores"]);
-        }
+        public int GetCpuCoreCount() => int.Parse(ReadProcCpuinfo()["cpu cores"]);
 
         /// <summary>
         /// Returns the number of threads.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuThreadCount()
-        {
-            return threadCount;
-        }
+        public int GetCpuThreadCount() => _threadCount;
 
         /// <summary>
         /// Returns the cache size of the processor.
         /// </summary>
         /// <returns></returns>
-        public string GetCpuCacheSize()
-        {
-            return ReadProcCpuinfo()["cache size"];
-        }
-
-        /// <summary>
-        /// This will purge the cahced value for the CPU Information.
-        /// </summary>
-        public void PurgeCachedProcCpuinfo()
-        {
-            cachedProcCpuinfo = null;
-        }
-
-        /// <summary>
-        /// This will purge the cached value for the Memory Information.
-        /// </summary>
-        public void PurgeCachedProcMeminfo()
-        {
-            cachedProcMeminfo = null;
-        }
+        public string GetCpuCacheSize() => ReadProcCpuinfo()["cache size"];
 
         /// <summary>
         /// It should be worth noting according to linux, that free memory is marked as "used" due to buffers and caches.
         /// MemAvailable is an alternative that shows memory that can actually be utilized.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryFree()
-        {
-            return ReadProcMeminfo()["MemAvailable"];
-        }
+        public long GetPhysicalMemoryFree() => ReadProcMeminfo()["MemAvailable"];
 
         /// <summary>
         /// Gets the total amount of physical memory in the system.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryTotal()
-        {
-            return ReadProcMeminfo()["MemTotal"];
-        }
+        public long GetPhysicalMemoryTotal() => ReadProcMeminfo()["MemTotal"];
 
         /// <summary>
         /// Get Physical Memory used
@@ -97,9 +63,22 @@ namespace Spectero.daemon.Libraries.APM
         /// This function does not take account for cache and buffers.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryUsed()
+        public long GetPhysicalMemoryUsed() => GetPhysicalMemoryTotal() - GetPhysicalMemoryFree();
+
+        /// <summary>
+        /// This will purge the cahced value for the CPU Information.
+        /// </summary>
+        public void PurgeCachedProcCpuinfo()
         {
-            return GetPhysicalMemoryTotal() - GetPhysicalMemoryFree();
+            _cachedProcCpuinfo = null;
+        }
+
+        /// <summary>
+        /// This will purge the cached value for the Memory Information.
+        /// </summary>
+        public void PurgeCachedProcMeminfo()
+        {
+            _cachedProcMeminfo = null;
         }
 
         /// <summary>
@@ -115,13 +94,13 @@ namespace Spectero.daemon.Libraries.APM
         private Dictionary<string, long> ReadProcMeminfo(bool clearCache = false)
         {
             // Check if we should clear the cache or if the cache even is populated.
-            if (clearCache || cachedProcMeminfo == null)
+            if (clearCache || _cachedProcMeminfo == null)
             {
                 // Read the file line by line into a string array.
                 string[] readProcInformation = File.ReadAllLines("/proc/meminfo");
 
                 // Placeholder dictionary.
-                Dictionary<string, long> procInfo = new Dictionary<string, long>();
+                var procInfo = new Dictionary<string, long>();
 
                 // Iterate through each line.
                 foreach (string procLine in readProcInformation)
@@ -150,11 +129,11 @@ namespace Spectero.daemon.Libraries.APM
                 }
 
                 // Write to the cache and return.
-                cachedProcMeminfo = procInfo;
+                _cachedProcMeminfo = procInfo;
             }
 
             // Return the cached value.
-            return cachedProcMeminfo;
+            return _cachedProcMeminfo;
         }
 
         /// <summary>
@@ -170,16 +149,16 @@ namespace Spectero.daemon.Libraries.APM
         private Dictionary<string, string> ReadProcCpuinfo(bool clearCache = false)
         {
             // Check if we should clear the cache or if the cache even is populated.
-            if (clearCache || cachedProcCpuinfo == null)
+            if (clearCache || _cachedProcCpuinfo == null)
             {
                 // Read the file line by line into a string array.
                 string[] readProcInformation = File.ReadAllLines("/proc/cpuinfo");
 
                 // Placeholder dictionary.
-                Dictionary<string, string> procInfo = new Dictionary<string, string>();
+                var procInfo = new Dictionary<string, string>();
 
                 // Iterate through each line.
-                foreach (string procLine in readProcInformation)
+                foreach (var procLine in readProcInformation)
                 {
                     // Splitting the string based on the colon (Example: => CommitLimit: 12205572 kB)
                     string[] procPart = procLine.Split(":");
@@ -189,7 +168,7 @@ namespace Spectero.daemon.Libraries.APM
                     string value = procPart[1];
 
                     // Keep track of the number of threads.
-                    if (key == "processor") threadCount = int.Parse(value) + 1;
+                    if (key == "processor") _threadCount = int.Parse(value) + 1;
 
                     // If the key already exists, ignore.
                     if (!procInfo.ContainsKey(key))
@@ -209,11 +188,11 @@ namespace Spectero.daemon.Libraries.APM
                 }
 
                 // Write to the cache and return.
-                cachedProcCpuinfo = procInfo;
+                _cachedProcCpuinfo = procInfo;
             }
 
             // Return the cached value.
-            return cachedProcCpuinfo;
+            return _cachedProcCpuinfo;
         }
 
         /// <summary>
@@ -226,7 +205,7 @@ namespace Spectero.daemon.Libraries.APM
             PurgeCachedProcMeminfo();
 
             // Get Physical Memory
-            Dictionary<string, object> physicalMemoryObjects = new Dictionary<string, object>()
+            var physicalMemoryObjects = new Dictionary<string, object>()
             {
                 {"Used", GetPhysicalMemoryUsed()},
                 {"Free", GetPhysicalMemoryFree()},
