@@ -28,6 +28,10 @@ namespace Spectero.daemon.Libraries.APM
             {
                 _operatingSystemEnvironment = new LinuxEnvironment();
             }
+            else if (AppConfig.isMac)
+            {
+                _operatingSystemEnvironment = new MacEnvironment();
+            }
             else
             {
                 // TODO(Andrew): Implement OS X Support - I don't have an OS X machine.
@@ -77,8 +81,10 @@ namespace Spectero.daemon.Libraries.APM
 
         /// <summary>
         /// Get the instance of the operating system environment handler.
+        ///
+        /// This is extendable: Apm.SystemEnvironment().GetCpuDetails();
         /// </summary>
         /// <returns></returns>
-        public ISystemEnvironment GetSystemEnvironment() => _operatingSystemEnvironment;
+        public ISystemEnvironment SystemEnvironment() => _operatingSystemEnvironment;
     }
 }

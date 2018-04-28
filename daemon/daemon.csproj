@@ -5,6 +5,7 @@
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
     <StartupObject>Spectero.daemon.Program</StartupObject>
+    <AssemblyName>public func</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Libraries\Core\HTTP\Template.cs" />
