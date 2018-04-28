@@ -64,9 +64,14 @@ namespace Spectero.daemon.Libraries.APM
         /// <returns></returns>
         public string GetCpuCacheSize()
         {
-            using (ManagementObject managementObject = new ManagementObject("Win32_Processor.DeviceID='CPU0'"))
+            ManagementObject managementObject = new ManagementObject("Win32_Processor.DeviceID='CPU0'");
+            try
             {
                 return managementObject["L2CacheSize"].ToString();
+            }
+            catch (Exception exception)
+            {
+                return "Unknown";
             }
         }
 
@@ -215,9 +220,7 @@ namespace Spectero.daemon.Libraries.APM
         public ManagementObject GetMemoryWMIInformation(bool clearCache = false)
         {
             if (clearCache || _cachedMemoryWmiObject == null)
-            {
                 _cachedMemoryWmiObject = new ManagementObject("SELECT * FROM Win32_OperatingSystem");
-            }
 
             return _cachedMemoryWmiObject;
         }
