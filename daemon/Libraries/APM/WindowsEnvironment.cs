@@ -9,11 +9,13 @@ namespace Spectero.daemon.Libraries.APM
     public class WindowsEnvironment : ISystemEnvironment
     {
         // Cached WMI Object to make sure the same value
-        private ManagementObject _cachedMemoryWmiObject;
+        private ManagementObject _cachedOperatingSystemManagementObject;
+        private ManagementObject _cachedProccessorManagementObject;
 
         public WindowsEnvironment()
         {
-            GetMemoryWMIInformation();
+            GetWmiOperatingSystemManagementObject();
+            GetWmiProcessorManagementObject();
         }
 
         /// <summary>
@@ -21,26 +23,14 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public string GetCpuName() =>
-            Environment.GetEnvironmentVariable("PROCESSOR_IDENTIFIER");
+            GetWmiProcessorManagementObject()["Name"].ToString();
 
         /// <summary>
         /// Get the number of cores from WMI.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuCoreCount()
-        {
-            int coreCount = 0;
-
-            // Iterate through each item in the management object.
-            foreach (var managementItem in new ManagementObjectSearcher("Select * from Win32_Processor").Get())
-            {
-                // Parse the value we need and add it to the count.
-                coreCount += int.Parse(managementItem["NumberOfCores"].ToString());
-            }
-
-            // Return the number of cores.
-            return coreCount;
-        }
+        public int GetCpuCoreCount() => 
+            int.Parse(GetWmiProcessorManagementObject()["NumberOfCores"].ToString());
 
         /// <summary>
         /// Get the number of threads.
@@ -49,7 +39,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public int GetCpuThreadCount() =>
-            Environment.ProcessorCount;
+            int.Parse(GetWmiProcessorManagementObject()["NumberOfLogicalProcessors"].ToString());
 
         /// <summary>
         /// Get L2 Cache Size
@@ -60,14 +50,7 @@ namespace Spectero.daemon.Libraries.APM
         public string GetCpuCacheSize()
         {
             var managementObject = new ManagementObject("Win32_Processor.DeviceID='CPU0'");
-            try
-            {
-                return managementObject["L2CacheSize"].ToString();
-            }
-            catch (Exception exception)
-            {
-                return "Unknown";
-            }
+            return managementObject["L2CacheSize"].ToString() ?? "Unknown";
         }
 
         /// <summary>
@@ -82,14 +65,14 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryFree() =>
-            long.Parse(GetMemoryWMIInformation()["FreePhysicalMemory"].ToString());
+            long.Parse(GetWmiOperatingSystemManagementObject()["FreePhysicalMemory"].ToString());
 
         /// <summary>
         /// Get the total amount of physical memory in bytes.
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryTotal() =>
-            long.Parse(GetMemoryWMIInformation()["TotalVisibleMemorySize"].ToString());
+            long.Parse(GetWmiOperatingSystemManagementObject()["TotalVisibleMemorySize"].ToString());
 
         /// <summary>
         /// Get the amount of virtual memory used in bytes.
@@ -103,14 +86,14 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public double GetVirtualMemoryFree() =>
-            double.Parse(GetMemoryWMIInformation()["FreeVirtualMemory"].ToString());
+            double.Parse(GetWmiOperatingSystemManagementObject()["FreeVirtualMemory"].ToString());
 
         /// <summary>
         /// Get the total amount of virtual memory in bytes.
         /// </summary>
         /// <returns></returns>
         public double GetVirtualMemoryTotal() =>
-            double.Parse(GetMemoryWMIInformation()["TotalVirtualMemorySize"].ToString());
+            double.Parse(GetWmiOperatingSystemManagementObject()["TotalVirtualMemorySize"].ToString());
 
         /// <summary>
         ///  Return if the system is 64 bits.
@@ -194,17 +177,26 @@ namespace Spectero.daemon.Libraries.APM
             };
         }
 
-        public void PurgeCachedWMIInformation()
+        public void PurgeCachedWmiInformation()
         {
-            _cachedMemoryWmiObject = null;
+            _cachedOperatingSystemManagementObject = null;
+            _cachedProccessorManagementObject = null;
         }
 
-        public ManagementObject GetMemoryWMIInformation(bool clearCache = false)
+        public ManagementObject GetWmiOperatingSystemManagementObject(bool clearCache = false)
         {
-            if (clearCache || _cachedMemoryWmiObject == null)
-                _cachedMemoryWmiObject = new ManagementObject("SELECT * FROM Win32_OperatingSystem");
+            if (clearCache || _cachedOperatingSystemManagementObject == null)
+                _cachedOperatingSystemManagementObject = new ManagementObject("SELECT * FROM Win32_OperatingSystem");
 
-            return _cachedMemoryWmiObject;
+            return _cachedOperatingSystemManagementObject;
+        }
+
+        public ManagementObject GetWmiProcessorManagementObject(bool clearCache = false)
+        {
+            if (clearCache || _cachedProccessorManagementObject == null)
+                _cachedProccessorManagementObject = new ManagementObject("SELECT * FROM Win32_Proccessor");
+
+            return _cachedProccessorManagementObject;
         }
     }
 }
