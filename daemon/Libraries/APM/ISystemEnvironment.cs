@@ -16,7 +16,7 @@ namespace Spectero.daemon.Libraries.APM
         string GetCpuName();
         int GetCpuCoreCount();
         int GetCpuThreadCount();
-        string GetCpuCacheSize();
+        Object GetCpuCacheSize();
 
         // Memory
         long GetPhysicalMemoryUsed();

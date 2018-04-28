@@ -42,16 +42,13 @@ namespace Spectero.daemon.Libraries.APM
             int.Parse(GetWmiProcessorManagementObject()["NumberOfLogicalProcessors"].ToString());
 
         /// <summary>
-        /// Get L2 Cache Size
+        /// Get L2 Cache Size in Kilobytes.
         ///
         /// Read from WMI to get the size of the cache.
         /// </summary>
         /// <returns></returns>
-        public string GetCpuCacheSize()
-        {
-            var managementObject = new ManagementObject("Win32_Processor.DeviceID='CPU0'");
-            return managementObject["L2CacheSize"].ToString() ?? "Unknown";
-        }
+        public object GetCpuCacheSize() =>
+            UInt32.Parse(GetWmiProcessorManagementObject()["L2CacheSize"].ToString());
 
         /// <summary>
         /// Get the physical amount of memory used in bytes.

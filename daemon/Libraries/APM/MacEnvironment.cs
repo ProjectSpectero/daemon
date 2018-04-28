@@ -38,7 +38,7 @@ namespace Spectero.daemon.Libraries.APM
         /// Gets the L2 Cache size of the processor.
         /// </summary>
         /// <returns></returns>
-        public string GetCpuCacheSize() => _cachedSysctlOutput["machdep.cpu.cache.size"];
+        public object GetCpuCacheSize() => _cachedSysctlOutput["machdep.cpu.cache.size"];
 
         public long GetPhysicalMemoryUsed()
         {

@@ -42,7 +42,7 @@ namespace Spectero.daemon.Libraries.APM
         /// Returns the cache size of the processor.
         /// </summary>
         /// <returns></returns>
-        public string GetCpuCacheSize() => ReadProcCpuinfo()["cache size"];
+        public object GetCpuCacheSize() => ReadProcCpuinfo()["cache size"];
 
         /// <summary>
         /// It should be worth noting according to linux, that free memory is marked as "used" due to buffers and caches.
