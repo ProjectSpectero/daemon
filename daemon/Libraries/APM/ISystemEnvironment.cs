@@ -19,9 +19,9 @@ namespace Spectero.daemon.Libraries.APM
         string GetCpuCacheSize();
 
         // Memory
-        double GetPhysicalMemoryUsed();
-        double GetPhysicalMemoryFree();
-        double GetPhysicalMemoryTotal();
+        long GetPhysicalMemoryUsed();
+        long GetPhysicalMemoryFree();
+        long GetPhysicalMemoryTotal();
 
         // Arch
         bool Is64Bits();

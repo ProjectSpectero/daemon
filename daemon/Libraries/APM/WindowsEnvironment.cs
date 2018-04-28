@@ -74,7 +74,7 @@ namespace Spectero.daemon.Libraries.APM
         /// Get the physical amount of memory used in bytes.
         /// </summary>
         /// <returns></returns>
-        public double GetPhysicalMemoryUsed()
+        public long GetPhysicalMemoryUsed()
         {
             return GetPhysicalMemoryTotal() - GetPhysicalMemoryFree();
         }
@@ -83,18 +83,18 @@ namespace Spectero.daemon.Libraries.APM
         /// Get the physical amount of memory free in bytes.
         /// </summary>
         /// <returns></returns>
-        public double GetPhysicalMemoryFree()
+        public long GetPhysicalMemoryFree()
         {
-            return double.Parse(GetMemoryWMIInformation()["FreePhysicalMemory"].ToString());
+            return long.Parse(GetMemoryWMIInformation()["FreePhysicalMemory"].ToString());
         }
 
         /// <summary>
         /// Get the total amount of physical memory in bytes.
         /// </summary>
         /// <returns></returns>
-        public double GetPhysicalMemoryTotal()
+        public long GetPhysicalMemoryTotal()
         {
-            return double.Parse(GetMemoryWMIInformation()["TotalVisibleMemorySize"].ToString());
+            return long.Parse(GetMemoryWMIInformation()["TotalVisibleMemorySize"].ToString());
         }
 
         /// <summary>

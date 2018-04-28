@@ -11,7 +11,7 @@ namespace Spectero.daemon.Libraries.APM
     {
         // Cache Vars - will hold old data until explicitly refreshed.
         private Dictionary<string, string> cachedProcCpuinfo;
-        private Dictionary<string, double> cachedProcMeminfo;
+        private Dictionary<string, long> cachedProcMeminfo;
         private int threadCount;
 
         public LinuxEnvironment()
@@ -77,7 +77,7 @@ namespace Spectero.daemon.Libraries.APM
         /// MemAvailable is an alternative that shows memory that can actually be utilized.
         /// </summary>
         /// <returns></returns>
-        public double GetPhysicalMemoryFree()
+        public long GetPhysicalMemoryFree()
         {
             return ReadProcMeminfo()["MemAvailable"];
         }
@@ -86,7 +86,7 @@ namespace Spectero.daemon.Libraries.APM
         /// Gets the total amount of physical memory in the system.
         /// </summary>
         /// <returns></returns>
-        public double GetPhysicalMemoryTotal()
+        public long GetPhysicalMemoryTotal()
         {
             return ReadProcMeminfo()["MemTotal"];
         }
@@ -97,7 +97,7 @@ namespace Spectero.daemon.Libraries.APM
         /// This function does not take account for cache and buffers.
         /// </summary>
         /// <returns></returns>
-        public double GetPhysicalMemoryUsed()
+        public long GetPhysicalMemoryUsed()
         {
             return GetPhysicalMemoryTotal() - GetPhysicalMemoryFree();
         }
@@ -112,7 +112,7 @@ namespace Spectero.daemon.Libraries.APM
         /// By caching the result, we can specifically for sure know that the data we are reading from is the same.
         /// </summary>
         /// <returns></returns>
-        private Dictionary<string, double> ReadProcMeminfo(bool clearCache = false)
+        private Dictionary<string, long> ReadProcMeminfo(bool clearCache = false)
         {
             // Check if we should clear the cache or if the cache even is populated.
             if (clearCache || cachedProcMeminfo == null)
@@ -121,7 +121,7 @@ namespace Spectero.daemon.Libraries.APM
                 string[] readProcInformation = File.ReadAllLines("/proc/meminfo");
 
                 // Placeholder dictionary.
-                Dictionary<string, double> procInfo = new Dictionary<string, double>();
+                Dictionary<string, long> procInfo = new Dictionary<string, long>();
 
                 // Iterate through each line.
                 foreach (string procLine in readProcInformation)
@@ -132,17 +132,17 @@ namespace Spectero.daemon.Libraries.APM
                     // Verbose for the sake of understanding.
                     string key = procPart[0];
                     string value = procPart[1].TrimStart(' ');
-                    double parsedValue;
+                    long parsedValue;
 
                     // Convert to bytes if contains kB
                     if (value.Contains(" kB"))
                     {
                         value = value.Substring(0, -3);
-                        parsedValue = Double.Parse(value) * 1024;
+                        parsedValue = long.Parse(value) * 1024;
                     }
                     else
                     {
-                        parsedValue = double.Parse(value);
+                        parsedValue = long.Parse(value);
                     }
 
                     // Append to the dictionary.

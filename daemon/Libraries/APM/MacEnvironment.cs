@@ -34,17 +34,17 @@ namespace Spectero.daemon.Libraries.APM
             return cachedSysctlOutput["machdep.cpu.cache.size"].ToString();
         }
 
-        public double GetPhysicalMemoryUsed()
+        public long GetPhysicalMemoryUsed()
         {
             throw new NotImplementedException();
         }
 
-        public double GetPhysicalMemoryFree()
+        public long GetPhysicalMemoryFree()
         {
             throw new NotImplementedException();
         }
 
-        public double GetPhysicalMemoryTotal()
+        public long GetPhysicalMemoryTotal()
         {
             throw new NotImplementedException();
         }
