@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 
 namespace Spectero.daemon.Libraries.APM
@@ -10,15 +11,13 @@ namespace Spectero.daemon.Libraries.APM
     public class Apm
     {
         private readonly ISystemEnvironment _operatingSystemEnvironment;
+        private readonly ILogger _logger;
 
-        /// <summary>
-        /// Constructor
-        ///
-        /// Notes(Andrew):
-        /// I'd much rather this be a switch case statment, but it's WET due to implementation.
-        /// </summary>
-        public Apm()
+        public Apm(ILogger<Apm> logger)
         {
+            // Inherit the logger.
+            _logger = logger;
+
             // Check if we have a supported operating system.
             if (AppConfig.isWindows)
             {
@@ -34,12 +33,8 @@ namespace Spectero.daemon.Libraries.APM
             }
             else
             {
-                // TODO(Andrew): Implement OS X Support - I don't have an OS X machine.
-                // Unsupported Operating System.
-                Console.WriteLine("This application is running on an unsupported operating system.");
-                Console.WriteLine("Press enter/return key to exit (Exit Code: 10).");
-                Console.ReadLine();
-                Environment.Exit(10);
+                logger.LogError("APM was instantiated on unsupported opearting system.");
+                throw new NotImplementedException();
             }
         }
 
