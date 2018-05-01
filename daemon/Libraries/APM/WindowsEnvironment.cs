@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Management;
 using System.Threading.Tasks;
+using ServiceStack.Text;
 
 namespace Spectero.daemon.Libraries.APM
 {
     public class WindowsEnvironment : ISystemEnvironment
     {
         // Cached WMI Object to make sure the same value
-        private ManagementObject _cachedOperatingSystemManagementObject;
-        private ManagementObject _cachedProccessorManagementObject;
+        private Dictionary<string, string> _cachedOperatingSystemManagementObject;
+        private Dictionary<string, string> _cachedProccessorManagementObject;
 
         public WindowsEnvironment()
         {
@@ -29,7 +30,7 @@ namespace Spectero.daemon.Libraries.APM
         /// Get the number of cores from WMI.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuCoreCount() => 
+        public int GetCpuCoreCount() =>
             int.Parse(GetWmiProcessorManagementObject()["NumberOfCores"].ToString());
 
         /// <summary>
@@ -180,19 +181,75 @@ namespace Spectero.daemon.Libraries.APM
             _cachedProccessorManagementObject = null;
         }
 
-        public ManagementObject GetWmiOperatingSystemManagementObject(bool clearCache = false)
+        public Dictionary<string, string> GetWmiOperatingSystemManagementObject(bool clearCache = false)
         {
             if (clearCache || _cachedOperatingSystemManagementObject == null)
-                _cachedOperatingSystemManagementObject = new ManagementObject("SELECT * FROM Win32_OperatingSystem");
+            {
+                // Instantiate a new dictionary.
+                var localDictionary = new Dictionary<string, string>();
 
+                // Prepare the query.
+                var query = new SelectQuery(@"SELECT * FROM Win32_OperatingSystem");
+
+                // Search
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
+                {
+                    // Execute and iterate, then append to dictionary.
+                    foreach (ManagementBaseObject currentManagementObject in searcher.Get())
+                    foreach (PropertyData prop in currentManagementObject.Properties)
+                    {
+                        try
+                        {
+                            localDictionary.Add(prop.Name, prop.Value.ToString());
+                        }
+                        catch (Exception exception)
+                        {
+                            // Pass, there's nothing that needs to be done.
+                        }
+                    }
+                }
+
+                // Assign to cache.
+                _cachedOperatingSystemManagementObject = localDictionary;
+            }
+
+            // Return the cached value regardless.
             return _cachedOperatingSystemManagementObject;
         }
 
-        public ManagementObject GetWmiProcessorManagementObject(bool clearCache = false)
+        public Dictionary<string, string> GetWmiProcessorManagementObject(bool clearCache = false)
         {
             if (clearCache || _cachedProccessorManagementObject == null)
-                _cachedProccessorManagementObject = new ManagementObject("SELECT * FROM Win32_Proccessor");
+            {
+                // Instantiate a new dictionary.
+                var localDictionary = new Dictionary<string, string>();
 
+                // Prepare the query.
+                var query = new SelectQuery(@"SELECT * FROM Win32_Processor");
+
+                // Search
+                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
+                {
+                    // Execute and iterate, then append to dictionary.
+                    foreach (ManagementBaseObject currentManagementObject in searcher.Get())
+                    foreach (PropertyData prop in currentManagementObject.Properties)
+                    {
+                        try
+                        {
+                            localDictionary.Add(prop.Name, prop.Value.ToString());
+                        }
+                        catch (Exception exception)
+                        {
+                            // Pass, there's nothing that needs to be done.
+                        }
+                    }
+                }
+
+                // Assign to cache.
+                _cachedProccessorManagementObject = localDictionary;
+            }
+
+            // Return the cached value regardless.
             return _cachedProccessorManagementObject;
         }
     }

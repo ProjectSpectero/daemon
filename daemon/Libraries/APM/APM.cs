@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using System.Collections.Generic;
 using Spectero.daemon.Libraries.Config;
 
 namespace Spectero.daemon.Libraries.APM
@@ -11,13 +6,9 @@ namespace Spectero.daemon.Libraries.APM
     public class Apm
     {
         private readonly ISystemEnvironment _operatingSystemEnvironment;
-        private readonly ILogger _logger;
 
-        public Apm(ILogger<Apm> logger)
+        public Apm()
         {
-            // Inherit the logger.
-            _logger = logger;
-
             // Check if we have a supported operating system.
             if (AppConfig.isWindows)
             {
@@ -30,11 +21,6 @@ namespace Spectero.daemon.Libraries.APM
             else if (AppConfig.isMac)
             {
                 _operatingSystemEnvironment = new MacEnvironment();
-            }
-            else
-            {
-                logger.LogError("APM was instantiated on unsupported opearting system.");
-                throw new NotImplementedException();
             }
         }
 
