@@ -5,7 +5,7 @@
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
     <StartupObject>Spectero.daemon.Program</StartupObject>
-    <AssemblyName>public func</AssemblyName>
+    <AssemblyName>daemon</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Libraries\Core\HTTP\Template.cs" />
@@ -50,11 +50,6 @@
   <ItemGroup>
     <None Include="Templates\OpenVPN.cshtml" />
     <None Include="Templates\OpenVPNUser.cshtml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework">
-      <HintPath>..\..\..\..\..\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Content Update="appsettings.json">

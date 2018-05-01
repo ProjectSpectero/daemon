@@ -22,38 +22,44 @@ namespace Spectero.daemon.Libraries.APM
         /// Returns the Processor Manufacturer, Model and the Frequency.
         /// </summary>
         /// <returns></returns>
-        public string GetCpuName() => ReadProcCpuinfo()["model name"];
+        public string GetCpuName() =>
+            ReadProcCpuinfo()["model name"];
 
         /// <summary>
         /// Returns the number of physical cores excluding threads.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuCoreCount() => int.Parse(ReadProcCpuinfo()["cpu cores"]);
+        public int GetCpuCoreCount() =>
+            int.Parse(ReadProcCpuinfo()["cpu cores"]);
 
         /// <summary>
         /// Returns the number of threads.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuThreadCount() => _threadCount;
+        public int GetCpuThreadCount() =>
+            _threadCount;
 
         /// <summary>
         /// Returns the cache size of the processor.
         /// </summary>
         /// <returns></returns>
-        public object GetCpuCacheSize() => ReadProcCpuinfo()["cache size"];
+        public object GetCpuCacheSize() =>
+            ReadProcCpuinfo()["cache size"];
 
         /// <summary>
         /// It should be worth noting according to linux, that free memory is marked as "used" due to buffers and caches.
         /// MemAvailable is an alternative that shows memory that can actually be utilized.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryFree() => ReadProcMeminfo()["MemAvailable"];
+        public long GetPhysicalMemoryFree() =>
+            ReadProcMeminfo()["MemAvailable"];
 
         /// <summary>
         /// Gets the total amount of physical memory in the system.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryTotal() => ReadProcMeminfo()["MemTotal"];
+        public long GetPhysicalMemoryTotal() =>
+            ReadProcMeminfo()["MemTotal"];
 
         /// <summary>
         /// Get Physical Memory used
@@ -61,7 +67,8 @@ namespace Spectero.daemon.Libraries.APM
         /// This function does not take account for cache and buffers.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryUsed() => GetPhysicalMemoryTotal() - GetPhysicalMemoryFree();
+        public long GetPhysicalMemoryUsed() =>
+            GetPhysicalMemoryTotal() - GetPhysicalMemoryFree();
 
         /// <summary>
         /// This will purge the cahced value for the CPU Information.
@@ -166,7 +173,7 @@ namespace Spectero.daemon.Libraries.APM
                     string value = procPart[1];
 
                     // Keep track of the number of threads.
-                    if (key == "processor") _threadCount = int.Parse(value) + 1;
+                    if (key == "processor") _threadCount++;
 
                     // If the key already exists, ignore.
                     if (!procInfo.ContainsKey(key))
