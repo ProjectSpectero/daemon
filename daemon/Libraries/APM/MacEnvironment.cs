@@ -21,36 +21,36 @@ namespace Spectero.daemon.Libraries.APM
         /// Example: Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz
         /// </summary>
         /// <returns></returns>
-        public string GetCpuName() => 
-            _cachedSysctlOutput["machdep.cpu.brand_string"];
+        public string GetCpuName() =>
+            GetSysctlOutput()["machdep.cpu.brand_string"];
 
         /// <summary>
         /// Returns the physical count of the cores in the procecssor.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuCoreCount() => 
-            int.Parse(_cachedSysctlOutput["hw.physicalcpu"]);
+        public int GetCpuCoreCount() =>
+            int.Parse(GetSysctlOutput()["hw.physicalcpu"]);
 
         /// <summary>
         /// Returns the number of threads in the processor.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuThreadCount() => 
-            int.Parse(_cachedSysctlOutput["hw.logicalcpu"]);
+        public int GetCpuThreadCount() =>
+            int.Parse(GetSysctlOutput()["hw.logicalcpu"]);
 
         /// <summary>
         /// Gets the L2 Cache size of the processor.
         /// </summary>
         /// <returns></returns>
-        public object GetCpuCacheSize() => 
-            _cachedSysctlOutput["machdep.cpu.cache.size"];
+        public object GetCpuCacheSize() =>
+            GetSysctlOutput()["machdep.cpu.cache.size"];
 
         /// <summary>
         /// Get thge physical amount of memory used
         /// Each page accounts for 4096 bytes
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryUsed() => 
+        public long GetPhysicalMemoryUsed() =>
             GetVmStatOutput()["Pages active"] * 4096;
 
         /// <summary>
@@ -58,15 +58,15 @@ namespace Spectero.daemon.Libraries.APM
         /// Each page accounts for 4096 bytes.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryFree() => 
+        public long GetPhysicalMemoryFree() =>
             GetVmStatOutput()["Pages active"] * 4096;
 
         /// <summary>
         /// Get the total amount of RAM the system has in bytes.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryTotal() => 
-            long.Parse(_cachedSysctlOutput["hw.memsize"]);
+        public long GetPhysicalMemoryTotal() =>
+            long.Parse(GetSysctlOutput()["hw.memsize"]);
 
         /// <summary>
         /// Get information about the memory on the system in the form of a dictionary.
