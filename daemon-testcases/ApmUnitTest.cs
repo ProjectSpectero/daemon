@@ -19,19 +19,21 @@ namespace daemon_testcases
         {
             try
             {
-                Apm localApm = new Apm(GetMockLogger());
+                // Instantiate new APM
+                Apm localApm = new Apm();
+
+                // Get the details we need
                 var details = localApm.GetAllDetails();
+
+                // Here's what matters, can we serialize it?
                 JsonConvert.SerializeObject(details, Formatting.Indented);
+
+                // If so, the test case will be considered as passing.
             }
             catch (Exception exception)
             {
-                Assert.Fail(String.Format("Exception occured while attempting to serialize: {0}", exception));
+                Assert.Fail(string.Format("Exception occured while attempting to serialize: {0}", exception));
             }
-        }
-
-        public Logger<Apm> GetMockLogger()
-        {
-            return Mock.Of<Logger<Apm>>();
         }
     }
 }

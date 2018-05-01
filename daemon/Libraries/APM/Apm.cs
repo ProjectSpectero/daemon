@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using Spectero.daemon.Libraries.Config;
 
 namespace Spectero.daemon.Libraries.APM
@@ -11,12 +7,6 @@ namespace Spectero.daemon.Libraries.APM
     {
         private readonly ISystemEnvironment _operatingSystemEnvironment;
 
-        /// <summary>
-        /// Constructor
-        ///
-        /// Notes(Andrew):
-        /// I'd much rather this be a switch case statment, but it's WET due to implementation.
-        /// </summary>
         public Apm()
         {
             // Check if we have a supported operating system.
@@ -31,15 +21,6 @@ namespace Spectero.daemon.Libraries.APM
             else if (AppConfig.isMac)
             {
                 _operatingSystemEnvironment = new MacEnvironment();
-            }
-            else
-            {
-                // TODO(Andrew): Implement OS X Support - I don't have an OS X machine.
-                // Unsupported Operating System.
-                Console.WriteLine("This application is running on an unsupported operating system.");
-                Console.WriteLine("Press enter/return key to exit (Exit Code: 10).");
-                Console.ReadLine();
-                Environment.Exit(10);
             }
         }
 
