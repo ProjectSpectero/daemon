@@ -8,10 +8,12 @@ namespace Spectero.daemon.Libraries.APM
     public class MacEnvironment : ISystemEnvironment
     {
         private Dictionary<string, string> _cachedSysctlOutput;
+        private Dictionary<string, long> _cachedVmStatOutput;
 
         public MacEnvironment()
         {
             GetSysctlOutput();
+            GetVmStatOutput();
         }
 
         /// <summary>
@@ -19,41 +21,52 @@ namespace Spectero.daemon.Libraries.APM
         /// Example: Intel(R) Core(TM) i7-7700K CPU @ 4.20GHz
         /// </summary>
         /// <returns></returns>
-        public string GetCpuName() => _cachedSysctlOutput["machdep.cpu.brand_string"];
+        public string GetCpuName() => 
+            _cachedSysctlOutput["machdep.cpu.brand_string"];
 
         /// <summary>
         /// Returns the physical count of the cores in the procecssor.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuCoreCount() => int.Parse(_cachedSysctlOutput["hw.physicalcpu"]);
+        public int GetCpuCoreCount() => 
+            int.Parse(_cachedSysctlOutput["hw.physicalcpu"]);
 
         /// <summary>
         /// Returns the number of threads in the processor.
         /// </summary>
         /// <returns></returns>
-        public int GetCpuThreadCount() => int.Parse(_cachedSysctlOutput["hw.logicalcpu"]);
+        public int GetCpuThreadCount() => 
+            int.Parse(_cachedSysctlOutput["hw.logicalcpu"]);
 
         /// <summary>
         /// Gets the L2 Cache size of the processor.
         /// </summary>
         /// <returns></returns>
-        public object GetCpuCacheSize() => _cachedSysctlOutput["machdep.cpu.cache.size"];
+        public object GetCpuCacheSize() => 
+            _cachedSysctlOutput["machdep.cpu.cache.size"];
 
-        public long GetPhysicalMemoryUsed()
-        {
-            throw new NotImplementedException();
-        }
+        /// <summary>
+        /// Get thge physical amount of memory used
+        /// Each page accounts for 4096 bytes
+        /// </summary>
+        /// <returns></returns>
+        public long GetPhysicalMemoryUsed() => 
+            GetVmStatOutput()["Pages active"] * 4096;
 
-        public long GetPhysicalMemoryFree()
-        {
-            throw new NotImplementedException();
-        }
+        /// <summary>
+        /// Get the physical amount of memory free
+        /// Each page accounts for 4096 bytes.
+        /// </summary>
+        /// <returns></returns>
+        public long GetPhysicalMemoryFree() => 
+            GetVmStatOutput()["Pages active"] * 4096;
 
         /// <summary>
         /// Get the total amount of RAM the system has in bytes.
         /// </summary>
         /// <returns></returns>
-        public long GetPhysicalMemoryTotal() => long.Parse(_cachedSysctlOutput["hw.memsize"]);
+        public long GetPhysicalMemoryTotal() => 
+            long.Parse(_cachedSysctlOutput["hw.memsize"]);
 
         /// <summary>
         /// Get information about the memory on the system in the form of a dictionary.
@@ -155,6 +168,33 @@ namespace Spectero.daemon.Libraries.APM
             }
 
             return _cachedSysctlOutput;
+        }
+
+        public Dictionary<string, long> GetVmStatOutput(bool clearCache = false)
+        {
+            if (clearCache || _cachedVmStatOutput == null)
+            {
+                var vmstatOutput = new Dictionary<string, long>();
+
+                // Run the command and get what we can out of the system environ,emt.
+                var vmstatCommand = Command.Run("vm_stat");
+
+                // Iterate though each like and parse it to the format that we need.
+                foreach (string row in vmstatCommand.StandardOutput.GetLines().ToList())
+                {
+                    if (row.Contains(":") && !row.Contains("page size of"))
+                    {
+                        string[] segements = row.Split(":");
+                        vmstatOutput.Add(segements[0], long.Parse(segements[1].Trim()));
+                    }
+                }
+
+                // Update the cache
+                _cachedVmStatOutput = vmstatOutput;
+            }
+
+            // Return the cache regardless of operation
+            return _cachedVmStatOutput;
         }
     }
 }

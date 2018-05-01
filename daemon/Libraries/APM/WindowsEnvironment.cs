@@ -63,35 +63,35 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryFree() =>
-            long.Parse(GetWmiOperatingSystemManagementObject()["FreePhysicalMemory"].ToString());
+            long.Parse(GetWmiOperatingSystemManagementObject()["FreePhysicalMemory"].ToString()) * 1024;
 
         /// <summary>
         /// Get the total amount of physical memory in bytes.
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryTotal() =>
-            long.Parse(GetWmiOperatingSystemManagementObject()["TotalVisibleMemorySize"].ToString());
+            long.Parse(GetWmiOperatingSystemManagementObject()["TotalVisibleMemorySize"].ToString()) * 1024;
 
         /// <summary>
         /// Get the amount of virtual memory used in bytes.
         /// </summary>
         /// <returns></returns>
-        public double GetVirtualMemoryUsed() =>
+        public long GetVirtualMemoryUsed() =>
             GetVirtualMemoryTotal() - GetVirtualMemoryFree();
 
         /// <summary>
         /// Get the amount of virtual memory free in bytes.
         /// </summary>
         /// <returns></returns>
-        public double GetVirtualMemoryFree() =>
-            double.Parse(GetWmiOperatingSystemManagementObject()["FreeVirtualMemory"].ToString());
+        public long GetVirtualMemoryFree() =>
+            long.Parse(GetWmiOperatingSystemManagementObject()["FreeVirtualMemory"].ToString()) * 1024;
 
         /// <summary>
         /// Get the total amount of virtual memory in bytes.
         /// </summary>
         /// <returns></returns>
-        public double GetVirtualMemoryTotal() =>
-            double.Parse(GetWmiOperatingSystemManagementObject()["TotalVirtualMemorySize"].ToString());
+        public long GetVirtualMemoryTotal() =>
+            long.Parse(GetWmiOperatingSystemManagementObject()["TotalVirtualMemorySize"].ToString()) * 1024;
 
         /// <summary>
         ///  Return if the system is 64 bits.
