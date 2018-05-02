@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Medallion.Shell;
 
 namespace Spectero.daemon.Libraries.APM
@@ -9,6 +10,7 @@ namespace Spectero.daemon.Libraries.APM
     {
         private Dictionary<string, string> _cachedSysctlOutput;
         private Dictionary<string, long> _cachedVmStatOutput;
+        private int _pageSize;
 
         public MacEnvironment()
         {
@@ -47,19 +49,17 @@ namespace Spectero.daemon.Libraries.APM
 
         /// <summary>
         /// Get thge physical amount of memory used
-        /// Each page accounts for 4096 bytes
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryUsed() =>
-            GetVmStatOutput()["Pages active"] * 4096;
+            GetVmStatOutput()["Pages active"] * _pageSize;
 
         /// <summary>
         /// Get the physical amount of memory free
-        /// Each page accounts for 4096 bytes.
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryFree() =>
-            GetVmStatOutput()["Pages active"] * 4096;
+            GetVmStatOutput()["Pages active"] * _pageSize;
 
         /// <summary>
         /// Get the total amount of RAM the system has in bytes.
@@ -165,7 +165,8 @@ namespace Spectero.daemon.Libraries.APM
                         string[] segements = line.Split(": ");
 
                         // Ensure that we don't go out of bounds.
-                        if (segements.Count() >= 2) sysctlOutput.Add(segements[0].Trim(), segements[1].Trim());
+                        if (segements.Count() >= 2)
+                            sysctlOutput.Add(segements[0].Trim(), segements[1].Trim());
                     }
                 }
 
@@ -188,10 +189,19 @@ namespace Spectero.daemon.Libraries.APM
                 // Iterate though each like and parse it to the format that we need.
                 foreach (string row in vmstatCommand.StandardOutput.GetLines().ToList())
                 {
-                    if (row.Contains(":") && !row.Contains("page size of"))
+                    // Determine the page size
+                    if (row.Contains("page size of "))
+                    {
+                        _pageSize = int.Parse(Regex.Replace(row, @"[^\d]", "")); // Get the numbers only.
+                    }
+                    else if (row.Contains(":")) // Dictionarize the value.
                     {
                         string[] segements = row.Split(":");
-                        vmstatOutput.Add(segements[0], long.Parse(segements[1].Trim()));
+                        if (segements.Count() >= 2)
+                            vmstatOutput.Add(
+                                segements[0].Trim(), // The Key of the dictionary.
+                                long.Parse(Regex.Replace(segements[1], @"[^\d]", "")) // The Value, number sorted.
+                            );
                     }
                 }
 
