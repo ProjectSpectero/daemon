@@ -121,12 +121,13 @@ namespace Spectero.daemon.Libraries.APM
                     // Convert to bytes if contains kB
                     if (value.Contains(" kB"))
                     {
-                        value = value.Substring(0, value.Length - 4);
+                        value = value.Trim();
+                        value = value.Substring(value.Length - 3);
                         parsedValue = long.Parse(value) * 1024;
                     }
                     else
                     {
-                        parsedValue = long.Parse(value);
+                        parsedValue = long.Parse(value.Trim());
                     }
 
                     // Append to the dictionary.
