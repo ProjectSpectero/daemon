@@ -115,23 +115,23 @@ namespace Spectero.daemon.Libraries.APM
 
                     // Verbose for the sake of understanding.
                     string key = procPart[0];
-                    string value = procPart[1].TrimStart(' ');
-                    long parsedValue;
+                    string unregexedValue = procPart[1].Trim();
+                    string regexedValue = Regex.Replace(unregexedValue, @"[^\d]", "") ?? unregexedValue;
 
                     // Convert to bytes if contains kB
-                    if (value.Contains(" kB"))
+                    if (unregexedValue.Contains(" kB"))
                     {
-                        value = value.Trim();
-                        value = value.Substring(value.Length - 3);
-                        parsedValue = long.Parse(value) * 1024;
+                        // Variable where conversion to bytes happens.
+                        long valueToAppend = long.Parse(regexedValue) * 1024; 
+
+                        // Add to dictionary.
+                        procInfo.Add(key, valueToAppend);
                     }
                     else
                     {
-                        parsedValue = long.Parse(value.Trim());
+                        // Add to dictionary.
+                        procInfo.Add(key, long.Parse(unregexedValue));
                     }
-
-                    // Append to the dictionary.
-                    procInfo.Add(key, parsedValue);
                 }
 
                 // Write to the cache and return.
