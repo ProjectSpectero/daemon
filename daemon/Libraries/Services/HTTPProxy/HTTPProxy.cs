@@ -15,7 +15,6 @@ using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
-using Titanium.Web.Proxy.Exceptions;
 using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 
@@ -34,10 +33,11 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         private IMemoryCache _cache;
 
-        private readonly ProxyServer _proxyServer = new ProxyServer();
+        private readonly ProxyServer _proxyServer;
         private HTTPConfig _proxyConfig;
         
         private ServiceState State = ServiceState.Halted;
+        private readonly Uri _blockedRedirectUri;
 
         public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
@@ -53,7 +53,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             _statistician = statistician;
             _cache = cache;
 
+            // Constructor param disables asking it to import a local root cert
+            _proxyServer = new ProxyServer(false);
             _cacheKeys = new List<string>();
+            _blockedRedirectUri = new Uri(appConfig.BlockedRedirectUri);
         }
 
         public HTTPProxy()
@@ -90,10 +93,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 foreach (var listener in _proxyConfig.listeners)
                 {
                     var endpoint = new ExplicitProxyEndPoint(IPAddress.Parse(listener.Item1), listener.Item2,
-                        false)
-                    {
-                        ExcludedHttpsHostNameRegex = new List<string> {".*"} // This is what stops it from intercepting any HTTPs certificates.
-                    };
+                        false);
+
+                    endpoint.BeforeTunnelConnectRequest += OnTunnelConnectRequest;
+                    endpoint.BeforeTunnelConnectResponse += OnTunnelConnectResponse;
 
                     _proxyServer.AddEndPoint(endpoint);
                     _logger.LogDebug("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
@@ -103,8 +106,6 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 _proxyServer.AuthenticateUserFunc += _authenticator.AuthenticateHttpProxy;
                 _proxyServer.BeforeRequest += OnRequest;
                 _proxyServer.BeforeResponse += OnResponse;
-                _proxyServer.TunnelConnectRequest += OnTunnelConnectRequest;
-                _proxyServer.TunnelConnectResponse += OnTunnelConnectResponse;
                 _proxyServer.ExceptionFunc = HandleInternalProxyError;
 
 
@@ -117,49 +118,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         private void HandleInternalProxyError(Exception exception)
         {
-            if (!_appConfig.LogCommonProxyEngineErrors)
-            {
-                
-                var wrappedError = exception?.InnerException;
-                var message = wrappedError?.Message;
-                var originalMessage = exception?.Message;
-
-                switch (wrappedError)
-                {
-                    case IOException _:
-                        if (message.StartsWith("Unable to transfer data on the transport connection")
-                            || message.StartsWith("I/O error occurred")
-                            || message.StartsWith("Unable to write data to the transport connection"))
-                            return;
-                        break;
-
-                    case SocketException _:
-                        if (message.StartsWith("Connection timed out")
-                            || message.StartsWith("No such device or address")
-                            || message.StartsWith("Broken pipe"))
-                            return;
-                        break;
-
-                    case ProxyHttpException _:
-                        if (message.StartsWith("Error occured whilst handling session response"))
-                            return;
-                        break;
-
-                    case UriFormatException _:
-                    case ArgumentNullException _:
-                        return;
-
-                    case Exception _:
-                        if (message.StartsWith("Index is out of buffer size")
-                            || originalMessage.StartsWith("Error whilst authorizing request"))// Lame upstream problem
-                            return;
-                        break;
-
-                }
-            }
-            
-
-            _logger.LogWarning(exception, "Internal error on the proxy engine: ");
+            if (_appConfig.LogCommonProxyEngineErrors)
+                _logger.LogWarning(exception, "Internal error on the proxy engine: ");
+            else
+                _logger.LogDebug(exception, "Internal Error on the Proxy Engine: ");
         }
 
         public void Stop()
@@ -205,8 +167,19 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             {
                 if (_proxyConfig.allowedDomains != null)
                 {
-                    if (! GetFromCache(FormatCacheKey(host, "allowedDomains"), out var test))
-                        failReason = BlockedReasons.ExclusiveAllow;      
+                    if (!GetFromCache(FormatCacheKey(host, "allowedDomains"), out var test))
+                    {
+                        // OK, this is not one of the blocked domains.
+                        // Let's check if it's the blocked-descriptor URI however.
+                        if (host.Equals(_blockedRedirectUri.Host))
+                            return;
+
+                        // Ok, this connection may be blocked.
+                        failReason = BlockedReasons.ExclusiveAllow;
+
+                        _logger.LogDebug($"ESO: Blocked connection attempt to {host} because it is not in the allowed domains list.");
+                    }
+                            
                 }
                 else
                 {
@@ -287,10 +260,16 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         private async Task OnTunnelConnectRequest(object sender, TunnelConnectSessionEventArgs eventArgs)
         {
-            await OnRequest(sender, eventArgs as SessionEventArgs);
+            await HandleProxyRequest(sender, eventArgs, true);
         }
 
-        private async Task OnRequest(object sender, SessionEventArgs eventArgs)
+        private async Task OnRequest(object sender, SessionEventArgs sessionEventArgs)
+        {
+            await HandleProxyRequest(sender, sessionEventArgs, false);
+        }
+
+
+        private async Task HandleProxyRequest(object sender, SessionEventArgsBase eventArgs, bool isTunnel = false)
         {
             _logger.LogDebug("ESO: Processing request to " + eventArgs.WebSession.Request.Url);
 
@@ -311,18 +290,23 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
             SetUpstreamAddress(ref eventArgs);
 
-            if (failReason != null)
-                await eventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri,
+            // Can't redirect SSL requests
+            if (failReason != null && eventArgs is SessionEventArgs)
+            {
+                var castEventArgs = (SessionEventArgs) eventArgs;
+                castEventArgs.Redirect(string.Format(_appConfig.BlockedRedirectUri,
                     failReason,
                     Uri.EscapeDataString(requestUri.ToString()), data));
+            }
+
         }
 
         private async Task OnTunnelConnectResponse(object sender, TunnelConnectSessionEventArgs eventArgs)
         {
-            await OnResponse(sender, eventArgs as SessionEventArgs);
+            await OnResponse(sender, eventArgs);
         }
 
-        private async Task OnResponse(object sender, SessionEventArgs eventArgs)
+        private async Task OnResponse(object sender, SessionEventArgsBase eventArgs)
         {
             await _statistician.Update<HTTPProxy>(CalculateObjectSize(eventArgs.WebSession.Response),
                 DataFlowDirections.In);
@@ -330,7 +314,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
 
 
-        private void SetUpstreamAddress(ref SessionEventArgs eventArgs)
+        private void SetUpstreamAddress(ref SessionEventArgsBase eventArgs)
         {
             var requestedUpstream =
                 Utility.ExtractHeader(eventArgs.WebSession.Request.Headers, "X-SPECTERO-UPSTREAM-IP")
@@ -472,7 +456,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         private void ClearLocalCache()
         {
-            foreach (var key in _cacheKeys)
+            foreach (var key in _cacheKeys.ToArray())
             {
                 // Why? Can't operate on list we're currently enumerating
                 RemoveFromCache(key, false);

@@ -20,6 +20,7 @@ using RazorLight;
 using RestSharp;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Jobs;
+using Spectero.daemon.Libraries.APM;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Crypto;
@@ -126,6 +127,8 @@ namespace Spectero.daemon
             services.AddScoped<IJob, FetchCloudEngagementsJob>();
 
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
+
+            services.AddSingleton<Apm, Apm>();
            
             services.AddMvc();
 

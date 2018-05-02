@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Spectero.daemon.Models.Requests
 {
@@ -16,5 +17,9 @@ namespace Spectero.daemon.Models.Requests
         public string InstallId { get; set; }
         [JsonProperty("access_token")]
         public string AccessToken { get; set; }
+        [JsonProperty("system_data")]
+        public Dictionary<string, object> SystemData { get; set; }
+        [JsonProperty("version")]
+        public string Version { get; set; }
     }
 }

@@ -15,6 +15,7 @@ using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Jobs;
 using Spectero.daemon.Libraries;
+using Spectero.daemon.Libraries.APM;
 using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
@@ -37,6 +38,7 @@ namespace Spectero.daemon.Controllers
         private readonly IIdentityProvider _identityProvider;
         private readonly IOutgoingIPResolver _ipResolver;
         private readonly IRestClient _restClient;
+        private readonly Apm _apm;
         private readonly string _cloudUserName;
         private readonly FetchCloudEngagementsJob _backgroundCloudEngagementsJob;
 
@@ -45,12 +47,13 @@ namespace Spectero.daemon.Controllers
         public CloudController(IOptionsSnapshot<AppConfig> appConfig, ILogger<CloudController> logger,
             IDbConnection db, IIdentityProvider identityProvider,
             IOutgoingIPResolver outgoingIpResolver, IRestClient restClient,
-            IEnumerable<IJob> jobs)
+            IEnumerable<IJob> jobs, Apm apm)
             : base(appConfig, logger, db)
         {
             _identityProvider = identityProvider;
             _ipResolver = outgoingIpResolver;
             _cloudUserName = AppConfig.CloudConnectDefaultAuthKey;
+            _apm = apm;
             _restClient = restClient;
             _backgroundCloudEngagementsJob = jobs.FirstOrDefault(x => x.GetType() == typeof(FetchCloudEngagementsJob)) as FetchCloudEngagementsJob;            
         }
@@ -214,7 +217,11 @@ namespace Spectero.daemon.Controllers
             body.Protocol = "http"; // TODO: figure out own listening protocol, use that.
 
             body.NodeKey = connectRequest.NodeKey;
-            body.AccessToken = _cloudUserName + ":" + generatedPassword;  
+            body.AccessToken = _cloudUserName + ":" + generatedPassword;
+
+            // This is data about *THIS* specific system being contributed to the cloud/CRM.
+            body.SystemData = _apm.GetAllDetails();
+            body.Version = AppConfig.version;
 
             // Ok, we got the user created. Everything is ready, let's send off the request.
             request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(body), ParameterType.RequestBody);
@@ -235,10 +242,12 @@ namespace Spectero.daemon.Controllers
                 // Parse after error checking.
                 parsedResponse = JsonConvert.DeserializeObject<CloudAPIResponse<Node>>(response.Content);
             }
-            catch (JsonReaderException e)
+            catch (JsonException e)
+
             {
                 // The Cloud Backend fed us bogus stuff, let's bail.
                 Logger.LogError(e, "CC: Connect attempt to the Spectero Cloud failed!");
+                Logger.LogError("Cloud API said: " + response.Content);
                 _response.Errors.Add(Errors.FAILED_TO_CONNECT_TO_SPECTERO_CLOUD, e.Message);
                 return StatusCode(503, _response);
             }
@@ -280,7 +289,8 @@ namespace Spectero.daemon.Controllers
                     // Likely a 400 or a 409, just show the response as is.
                     _response.Errors.Add(Errors.RESPONSE_CODE, response.StatusCode);
                     _response.Errors.Add(Errors.NODE_PERSIST_FAILED, parsedResponse.errors);
-                    break;
+
+                    return StatusCode((int) response.StatusCode, _response);
             }
 
 

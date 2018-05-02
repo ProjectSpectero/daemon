@@ -5,7 +5,7 @@ namespace Spectero.daemon.Models.Responses
 {
     public class CloudAPIResponse<T>
     {
-        public List<Dictionary<string, object>> errors;
+        public List<string> errors;
         public T result;
         public string message;
         public string version;
