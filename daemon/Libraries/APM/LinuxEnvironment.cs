@@ -166,31 +166,34 @@ namespace Spectero.daemon.Libraries.APM
                 // Iterate through each line.
                 foreach (var procLine in readProcInformation)
                 {
-                    // Splitting the string based on the colon (Example: => CommitLimit: 12205572 kB)
-                    string[] procPart = procLine.Split(":");
-
-                    // Verbose for the sake of understanding.
-                    string key = procPart[0].TrimEnd(' ');
-                    string value = procPart[1];
-
-                    // Keep track of the number of threads.
-                    if (key == "processor") _threadCount++;
-
-                    // If the key already exists, ignore.
-                    if (!procInfo.ContainsKey(key))
+                    if (procLine.Contains(":"))
                     {
-                        // Check if we need to edit certian objects.
-                        switch (key)
-                        {
-                            case "model name":
-                                // Truncate the string if it contains more than two spaces between a segment.
-                                value = new Regex("[ ]{2,}", RegexOptions.None).Replace(value, "");
-                                break;
-                        }
-                    }
+                        // Splitting the string based on the colon (Example: => CommitLimit: 12205572 kB)
+                        string[] procPart = procLine.Split(":");
 
-                    // Append to the dictionary.
-                    procInfo.Add(key, value);
+                        // Verbose for the sake of understanding.
+                        string key = procPart[0].TrimEnd(' ');
+                        string value = procPart[1];
+
+                        // Keep track of the number of threads.
+                        if (key == "processor") _threadCount++;
+
+                        // If the key already exists, ignore.
+                        if (!procInfo.ContainsKey(key))
+                        {
+                            // Check if we need to edit certian objects.
+                            switch (key)
+                            {
+                                case "model name":
+                                    // Truncate the string if it contains more than two spaces between a segment.
+                                    value = new Regex("[ ]{2,}", RegexOptions.None).Replace(value, "");
+                                    break;
+                            }
+                        }
+
+                        // Append to the dictionary.
+                        procInfo.Add(key, value);
+                    }
                 }
 
                 // Write to the cache and return.
