@@ -172,7 +172,7 @@ namespace Spectero.daemon.Libraries.APM
                         string[] procPart = procLine.Split(":");
 
                         // Verbose for the sake of understanding.
-                        string key = procPart[0].TrimEnd(' ');
+                        string key = procPart[0].Trim();
                         string value = procPart[1];
 
                         // Keep track of the number of threads.
