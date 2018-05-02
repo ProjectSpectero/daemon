@@ -189,10 +189,10 @@ namespace Spectero.daemon.Libraries.APM
                                     value = new Regex("[ ]{2,}", RegexOptions.None).Replace(value, "");
                                     break;
                             }
-                        }
 
-                        // Append to the dictionary.
-                        procInfo.Add(key, value);
+                            // Append to the dictionary.
+                            procInfo.Add(key, value);
+                        }
                     }
                 }
 
