@@ -161,8 +161,11 @@ namespace Spectero.daemon.Libraries.APM
                 {
                     if (line.Contains(":"))
                     {
-                        string[] segements = line.Split(":");
-                        sysctlOutput.Add(segements[0].Trim(), segements[1].Trim());
+                        // Split the string between the key and value.
+                        string[] segements = line.Split(": ");
+
+                        // Ensure that we don't go out of bounds.
+                        if (segements.Count() >= 2) sysctlOutput.Add(segements[0].Trim(), segements[1].Trim());
                     }
                 }
 
