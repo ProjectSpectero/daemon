@@ -157,10 +157,13 @@ namespace Spectero.daemon.Libraries.APM
                 var sysctlCommand = Command.Run("sysctl", "-a");
 
                 // Iterate though each like and parse it to the format that we need.
-                foreach (string row in sysctlCommand.StandardOutput.GetLines().ToList())
+                foreach (string line in sysctlCommand.StandardOutput.GetLines().ToList())
                 {
-                    string[] segements = row.Split(": ");
-                    sysctlOutput.Add(segements[0], segements[1]);
+                    if (line.Contains(":"))
+                    {
+                        string[] segements = line.Split(":");
+                        sysctlOutput.Add(segements[0].Trim(), segements[1].Trim());
+                    }
                 }
 
                 // Update the cache
