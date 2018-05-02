@@ -5,13 +5,8 @@
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
     <StartupObject>Spectero.daemon.Program</StartupObject>
+    <AssemblyName>daemon</AssemblyName>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Libraries\NewFolder\**" />
-    <Content Remove="Libraries\NewFolder\**" />
-    <EmbeddedResource Remove="Libraries\NewFolder\**" />
-    <None Remove="Libraries\NewFolder\**" />
-  </ItemGroup>
   <ItemGroup>
     <Compile Remove="Libraries\Core\HTTP\Template.cs" />
     <Compile Remove="Models\Error.cs" />
@@ -38,6 +33,8 @@
     <PackageReference Include="IPNetwork2" Version="2.1.2" />
     <PackageReference Include="MedallionShell" Version="1.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.7" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="2.0.0-preview2-26406-04" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="4.5.2" />
     <PackageReference Include="Portable.BouncyCastle" Version="1.8.2" />
     <PackageReference Include="RazorLight" Version="2.0.0-alpha3" />
@@ -83,9 +80,6 @@
   <ItemGroup>
     <None Update="Database\.gitignore">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Database\db.sqlite">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Update="Logs\spectero-daemon.log">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

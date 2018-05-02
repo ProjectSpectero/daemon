@@ -59,8 +59,9 @@ namespace Spectero.daemon.Libraries.Services
 
             if (service == null)
             {
-                var errorMessage = "NAP: Resolved service was null when processing name-> " + name + ", action-> " +
-                                   action;
+                var errorMessage =
+                    string.Format("NAP: Resolved service was null when processing name-> {0}, action-> {1}",
+                        name, action);
                 error = errorMessage;
                 _logger.LogError(errorMessage);
                 return Messages.ACTION_FAILED;
@@ -86,7 +87,9 @@ namespace Spectero.daemon.Libraries.Services
             }
             catch (Exception e)
             {
-                var errorBuilder = new StringBuilder(String.Format("Processing {0} failed on {1}.{2}", action, name, Environment.NewLine));
+                var errorBuilder = new StringBuilder(
+                    string.Format("Processing {0} failed on {1}.{2}", action, name, Environment.NewLine)
+                );
                 bool alreadyLogged = false;
 
                 if (type == typeof(HTTPProxy.HTTPProxy))
@@ -108,6 +111,7 @@ namespace Spectero.daemon.Libraries.Services
                             var localData = (DictionaryEntry) customData;
                             customErrorMessage.Append(localData.Key + " " + localData.Value + " ");
                         }
+
                         errorBuilder.AppendLine(customErrorMessage.ToString());
                     }
 
@@ -126,21 +130,21 @@ namespace Spectero.daemon.Libraries.Services
                     _logger.LogError(e, message);
                     error = e.Message;
                 }
-                    
             }
 
             return message;
         }
 
 
-        public IService GetService (Type type)
+        public IService GetService(Type type)
         {
             InitiateServices();
             if (_services.ContainsKey(type))
                 return _services[type];
             else
             {
-                _logger.LogError("SCORG: Requested service of type " + type + " was not found. Perhaps initialization failed?");
+                _logger.LogError("SCORG: Requested service of type " + type +
+                                 " was not found. Perhaps initialization failed?");
                 return null;
             }
         }
@@ -149,13 +153,13 @@ namespace Spectero.daemon.Libraries.Services
         {
             if (initiated)
                 return;
-            
+
             var type = typeof(IService);
             var implementers = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
                 .Where(p => type.IsAssignableFrom(p))
                 .Where(p => p != type) // Skip `IService` itself, it cannot be activated
-                .ToArray(); 
+                .ToArray();
 
 
             _logger.LogDebug("IS: Found " + implementers.Length + " services to activate.");
@@ -170,6 +174,7 @@ namespace Spectero.daemon.Libraries.Services
                 _logger.LogDebug("IS: Activation succeeded for " + serviceType);
                 _services.TryAdd(serviceType, service);
             }
+
             _logger.LogDebug("IS: Successfully initialized " + _services.Count + " service(s).");
             initiated = true;
         }
