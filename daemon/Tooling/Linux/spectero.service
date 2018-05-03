@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/opt/spectero/latest/daemon
-EnvironmentFile=-/opt/spectero/latest/daemon/Tooling/Linux/lin-env
+EnvironmentFile=/opt/spectero/latest/daemon/Tooling/Linux/lin-env
 ExecStart=/usr/bin/dotnet daemon.dll
 TimeoutSec=infinity
 Restart=on-failure
