@@ -124,7 +124,7 @@ namespace Spectero.daemon
 
             services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
 
-            services.AddScoped<IJob, FetchCloudEngagementsJob>();
+            services.AddSingleton<IJob, FetchCloudEngagementsJob>();
 
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
 

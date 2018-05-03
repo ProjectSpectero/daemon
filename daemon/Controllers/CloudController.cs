@@ -63,9 +63,10 @@ namespace Spectero.daemon.Controllers
         {
             var output = new Dictionary<string, object>
             {
-                {"config", AppConfig.ToObjectDictionary()},
-                {"identity", _identityProvider.GetGuid().ToString()},
-                { "status", await CompileCloudStatus() }
+                { "appSettings", AppConfig.ToObjectDictionary() },
+                { "systemConfig", Db.Select<Configuration>() },
+                { "identity", _identityProvider.GetGuid().ToString() },
+                { "status", await CompileCloudStatus() },
             };
 
             _response.Result = output;
@@ -126,7 +127,7 @@ namespace Spectero.daemon.Controllers
             if (await CloudUtils.IsConnected(Db)
                 && ! connectRequest.force)
             {
-                // TODO: Bruh, we're connected
+                // Bruh, we're connected
                 _response.Errors.Add(Errors.CLOUD_ALREADY_CONNECTED, true);
                 _response.Errors.Add(Errors.FORCE_PARAMETER_REQUIRED, true);
                 return BadRequest(_response);

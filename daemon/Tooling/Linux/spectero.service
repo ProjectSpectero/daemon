@@ -3,8 +3,8 @@ Description=Spectero Daemon
 After=network.target
 
 [Service]
-WorkingDirectory=/opt/spectero/daemon/latest
-EnvironmentFile=-/opt/spectero/daemon/latest/Tooling/Linux/lin-env
+WorkingDirectory=/opt/spectero/latest/daemon
+EnvironmentFile=-/opt/spectero/latest/daemon/Tooling/Linux/lin-env
 ExecStart=/usr/bin/dotnet daemon.dll
 TimeoutSec=infinity
 Restart=on-failure
