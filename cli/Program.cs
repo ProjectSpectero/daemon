@@ -1,7 +1,6 @@
 ﻿using System;
-using Microsoft.Extensions.DependencyInjection;
-using NClap.Repl;
-using RestSharp;
+using NClap;
+using Spectero.daemon.CLI.Commands.Arguments;
 
 namespace Spectero.daemon.CLI
 {
@@ -11,10 +10,18 @@ namespace Spectero.daemon.CLI
         {
             Console.WriteLine("Spectero Console v{0}", AppConfig.version);
 
+            CliArguments cliArguments;
+
+            if (!CommandLineParser.TryParse(args, out cliArguments))
+            {
+                Console.WriteLine();
+                Console.WriteLine("Could not parse the command-line, please check your input and retry.");
+                return;
+            }
+
             try
             {
-                var eventLoop = new Loop(typeof(Commands.Commands));
-                eventLoop.Execute();
+                var result = cliArguments.PrimaryCommand.Execute();
             }
             catch (Exception e)
             {

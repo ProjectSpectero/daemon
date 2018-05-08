@@ -20,6 +20,9 @@ namespace Spectero.daemon.CLI.Commands
         heartbeat,
 
         [Command(typeof(SetGlobalProperty), Description = "Sets various system properties, consult the docs for details.")]
-        env
+        env,
+
+        [Command(typeof(Shell), Description = "Invokes the Spectero Shell")]
+        shell
     }
 }
