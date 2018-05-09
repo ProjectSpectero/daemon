@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,8 @@ namespace Spectero.daemon.Migrations
         private readonly IIdentityProvider _identityProvider;
         private readonly ILogger<Initialize> _logger;
 
+        private readonly string _firstRunConfigName;
+
 
         public Initialize(IOptionsMonitor<AppConfig> config, ILogger<Initialize> logger,
             IDbConnection db, IIdentityProvider identityProvider,
@@ -37,6 +40,8 @@ namespace Spectero.daemon.Migrations
             _db = db;
             _identityProvider = identityProvider;
             _cryptoService = cryptoService;
+
+            _firstRunConfigName = ".firstrun";
         }
 
         public void Up()
@@ -185,7 +190,12 @@ namespace Spectero.daemon.Migrations
                     Source = User.SourceTypes.Local,
                     CreatedDate = DateTime.Now
                 });
-                _logger.LogInformation("Firstrun: Created initial admin user: spectero, password: " + password);
+
+                using (var tw = new StreamWriter(_firstRunConfigName, false))
+                {
+                    tw.WriteLine("username: spectero");
+                    tw.WriteLine($"password: {password}");
+                }
             }
 
 
@@ -196,7 +206,7 @@ namespace Spectero.daemon.Migrations
             }
 
 
-            
+            _logger.LogInformation("Firstrun: Initialization complete.");
         }
 
         public void Down()
