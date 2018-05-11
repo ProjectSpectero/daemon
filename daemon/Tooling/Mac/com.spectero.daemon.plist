@@ -6,7 +6,9 @@
 	<string>com.spectero.daemon</string>
   <key>Program</key>
   <string>{install_location}/{install_version}/daemon/Tooling/Mac/spectero-startup.sh</string>
-	<key>RunAtLoad</key>
+  <key>WorkingDirectory</key>
+  <string>{install_location}/{install_version}/daemon</string>
+  <key>RunAtLoad</key>
 	<true/>
 	<key>KeepAlive</key>
 	<true/>
