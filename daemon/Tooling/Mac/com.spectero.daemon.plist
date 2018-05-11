@@ -4,6 +4,8 @@
 <dict>
 	<key>Label</key>
 	<string>com.spectero.daemon</string>
+  <key>Program</key>
+  <string>{install_location}/{install_version}/daemon/Tooling/Mac/spectero-startup.sh</string>
 	<key>RunAtLoad</key>
 	<true/>
 	<key>KeepAlive</key>
@@ -20,7 +22,5 @@
 	<string>spectero</string>
 	<key>InitGroups</key>
 	<true/>
-	<key>Program</key>
-	<string>{install_location}/{install_version}/daemon/Tooling/Mac/spectero-startup.sh</string>
 </dict>
 </plist>
