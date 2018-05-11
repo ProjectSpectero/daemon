@@ -1,27 +1,26 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-  <dict>
-    <key>Label</key>
-    <string>com.spectero.daemon</string>
-    <key>Program</key>
-    <string>{install_locaction}/{install_version}/daemon/Tooling/Mac/spectero-startup.sh</string>
-    <key>RunAtLoad</key>
-    <true />
-    <key>KeepAlive</key>
-    <true />
-    <key>LaunchOnlyOnce</key>
-    <true />
-    <key>StandardOutPath</key>
-    <string>/tmp/startup.stdout</string>
-    <key>StandardErrorPath</key>
-    <string>/tmp/startup.stderr</string>
-    <key>UserName</key>
-    <string>spectero</string>
-    <key>GroupName</key>
-    <string>spectero</string>
-    <key>InitGroups</key>
-    <true />
-  </dict>
+<dict>
+	<key>Label</key>
+	<string>com.spectero.daemon</string>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>LaunchOnlyOnce</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/tmp/startup.stdout</string>
+	<key>StandardErrorPath</key>
+	<string>/tmp/startup.stderr</string>
+	<key>UserName</key>
+	<string>spectero</string>
+	<key>GroupName</key>
+	<string>spectero</string>
+	<key>InitGroups</key>
+	<true/>
+	<key>Program</key>
+	<string>{install_location}/{install_version}/daemon/Tooling/Mac/spectero-startup.sh</string>
+</dict>
 </plist>
