@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+﻿#!/bin/bash
 
 $SPECTERO_INSTALL_LOCATION="{install_location}"
 $SPECTERO_VERSION="{install_version}"
