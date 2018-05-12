@@ -4,20 +4,16 @@
 <dict>
 	<key>Label</key>
 	<string>com.spectero.daemon</string>
-  <key>Program</key>
-  <string>{install_location}/{install_version}/daemon/Tooling/Mac/spectero-startup.sh</string>
   <key>WorkingDirectory</key>
   <string>{install_location}/{install_version}/daemon</string>
+  <key>Program</key>
+  <string>/usr/local/bin/dotnet</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>daemon.dll</string>
+  </array>
   <key>RunAtLoad</key>
 	<true/>
-	<key>KeepAlive</key>
-	<true/>
-	<key>LaunchOnlyOnce</key>
-	<true/>
-	<key>StandardOutPath</key>
-	<string>/tmp/startup.stdout</string>
-	<key>StandardErrorPath</key>
-	<string>/tmp/startup.stderr</string>
 	<key>UserName</key>
 	<string>spectero</string>
 	<key>GroupName</key>

@@ -12,9 +12,6 @@
     <Compile Remove="Models\Error.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="Tooling\Mac\spectero-startup.sh" />
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="Libraries\Services\ShadowSOCKS\" />
     <Folder Include="Logs\">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -49,11 +46,6 @@
   </ItemGroup>
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Tooling\Mac\spectero-startup.sh">
-      <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="Templates\OpenVPN.cshtml" />
