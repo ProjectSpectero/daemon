@@ -14,11 +14,7 @@
   <key>Label</key>
   <string>com.spectero.daemon</string>
   <key>Program</key>
-  <string>/usr/local/bin/dotnet</string>
-  <key>ProgramArguments</key>
-  <array>
-    <string>daemon.dll</string>
-  </array>
+  <string>/usr/local/bin/dotnet daemon.dll</string>
   <key>RunAtLoad</key>
   <true/>
   <key>StandardErrorPath</key>
