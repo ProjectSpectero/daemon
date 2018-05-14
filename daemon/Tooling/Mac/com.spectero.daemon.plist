@@ -2,10 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>Label</key>
-	<string>com.spectero.daemon</string>
-  <key>WorkingDirectory</key>
-  <string>{install_location}/{install_version}/daemon</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>_</key>
+    <string>/usr/bin/env</string>
+  </dict>
+  <key>GroupName</key>
+  <string>daemon</string>
+  <key>InitGroups</key>
+  <true/>
+  <key>Label</key>
+  <string>com.spectero.daemon</string>
   <key>Program</key>
   <string>/usr/local/bin/dotnet</string>
   <key>ProgramArguments</key>
@@ -13,12 +20,10 @@
     <string>daemon.dll</string>
   </array>
   <key>RunAtLoad</key>
-	<true/>
-	<key>UserName</key>
-	<string>spectero</string>
-	<key>GroupName</key>
-	<string>spectero</string>
-	<key>InitGroups</key>
-	<true/>
+  <true/>
+  <key>UserName</key>
+  <string>daedmon</string>
+  <key>WorkingDirectory</key>
+  <string>{install_location}/{install_version}/daemon</string>
 </dict>
 </plist>
