@@ -14,7 +14,7 @@
   <key>Label</key>
   <string>com.spectero.daemon</string>
   <key>Program</key>
-  <string>/usr/local/bin/dotnet daemon.dll</string>
+  <string>{install_location}/{install_version}/daemon/Tooling/mac/start.sh</string>
   <key>RunAtLoad</key>
   <true/>
   <key>StandardErrorPath</key>
