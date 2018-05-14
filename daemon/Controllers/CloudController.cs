@@ -105,9 +105,16 @@ namespace Spectero.daemon.Controllers
             return responseDict;
         }
 
-        [HttpGet(Name = "GetCloudConnectStatus")]
+        [HttpGet("remote", Name = "GetCloudConnectStatusRemotely")]
+        public async Task<IActionResult> RemoteStatus()
+        {
+            _response.Result = await CompileCloudStatus();
+            return Ok(_response);
+        }
+
+        [HttpGet(Name = "GetCloudConnectStatusLocally")]
         [AllowAnonymous]
-        public async Task<IActionResult> ShowStatus()
+        public async Task<IActionResult> LocalStatus()
         {
             // What is DRY? ;V - TODO: fix this once we have global exception handling in the HTTP pipeline working
             if (!Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
@@ -147,7 +154,7 @@ namespace Spectero.daemon.Controllers
 
             ManageBackgroundJob();
 
-            return await ShowStatus();
+            return await LocalStatus();
         }
 
         [HttpPost("disconnect", Name = "DisconnectFromSpecteroCloud")]
@@ -170,7 +177,7 @@ namespace Spectero.daemon.Controllers
 
             ManageBackgroundJob("disconnect");
 
-            return await ShowStatus();
+            return await LocalStatus();
         }
 
         // This allows anonymous, but only from the local loopback.
