@@ -22,7 +22,7 @@
   <key>RunAtLoad</key>
   <true/>
   <key>UserName</key>
-  <string>daedmon</string>
+  <string>daemon</string>
   <key>WorkingDirectory</key>
   <string>{install_location}/{install_version}/daemon</string>
 </dict>
