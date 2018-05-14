@@ -23,7 +23,7 @@
   <true/>
   <key>StandardErrorPath</key>
   <string>/tmp/com.spectero.daemon.err</string>
-  <key>StardardOutPath</key>
+  <key>StandardOutPath</key>
   <string>/tmp/com.spectero.daemon.out</string>
   <key>UserName</key>
   <string>daemon</string>
