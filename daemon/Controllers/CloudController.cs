@@ -154,7 +154,7 @@ namespace Spectero.daemon.Controllers
 
             ManageBackgroundJob();
 
-            return await ShowStatus();
+            return await LocalStatus();
         }
 
         [HttpPost("disconnect", Name = "DisconnectFromSpecteroCloud")]
@@ -177,7 +177,7 @@ namespace Spectero.daemon.Controllers
 
             ManageBackgroundJob("disconnect");
 
-            return await ShowStatus();
+            return await LocalStatus();
         }
 
         // This allows anonymous, but only from the local loopback.
