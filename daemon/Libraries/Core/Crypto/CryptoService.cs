@@ -104,7 +104,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             var ca = LoadCertificate(caBytes, caPassword);
 
             var subjectName = "CN=" + userAuthKey + ".users." + _identityProvider.GetGuid() + ".instance.spectero.io";
-
+            
             var userCert = IssueCertificate(subjectName, ca, null, usages, password);
 
             return ExportCertificateChain(userCert, ca, password);
@@ -112,10 +112,8 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
         public byte[] ExportCertificateChain(X509Certificate2 cert, X509Certificate2 ca, string storePassword = null)
         {
-            var collection = new X509Certificate2Collection();
-            collection.Add(new X509Certificate2(ca.RawData));
-            collection.Add(cert);
-            return collection.Export(X509ContentType.Pfx, storePassword);
+            var collection = new X509Certificate2Collection {ca, cert};
+            return collection.Export(X509ContentType.Pkcs12, storePassword);
         }
 
 
