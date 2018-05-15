@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using Spectero.daemon.Libraries.Config;
 
 namespace Spectero.daemon.Libraries.APM
@@ -7,9 +10,14 @@ namespace Spectero.daemon.Libraries.APM
     {
         private readonly ISystemEnvironment _operatingSystemEnvironment;
 
+        /// <summary>
+        /// APM Constructor
+        /// 
+        /// The constructor determines which operating system environment is needed.
+        /// Environments follow a interface, and will have the same core functions.
+        /// </summary>
         public Apm()
         {
-            // Check if we have a supported operating system.
             if (AppConfig.isWindows)
             {
                 _operatingSystemEnvironment = new WindowsEnvironment();
@@ -25,39 +33,119 @@ namespace Spectero.daemon.Libraries.APM
         }
 
         /// <summary>
-        /// Get all details from the delegated operating system environment.
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, object> GetAllDetails()
-        {
-            return _operatingSystemEnvironment.GetAllDetails();
-        }
-
-        /// <summary>
-        /// Get information about the processor from the delegated operating system environment.
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, object> GetCpuDetails()
-        {
-            return _operatingSystemEnvironment.GetCpuDetails();
-        }
-
-        /// <summary>
-        /// Get memory details from the delegated operating system environment.
+        /// Get information about the memory on the system in the form of a dictionary.
         /// </summary>
         /// <returns></returns>
         public Dictionary<string, object> GetMemoryDetails()
         {
-            return _operatingSystemEnvironment.GetMemoryDetails();
+            // Purge any cached proc information.
+            _operatingSystemEnvironment.PurgeCachedInformation();
+
+            // Get Physical Memory
+            var physicalMemoryObjects = new Dictionary<string, object>()
+            {
+                {"Used", _operatingSystemEnvironment.GetPhysicalMemoryUsed()},
+                {"Free", _operatingSystemEnvironment.GetPhysicalMemoryFree()},
+                {"Total", _operatingSystemEnvironment.GetPhysicalMemoryTotal()}
+            };
+
+            // Returned the compiled object.
+            return new Dictionary<string, object>()
+            {
+                {"Physical", physicalMemoryObjects},
+            };
         }
 
         /// <summary>
-        /// Shorthand function to get the environment details of the delegated operating system environment.
+        /// Get infomration about the CPU in the form of a dictionary.
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<string, object> GetCpuDetails()
+        {
+            // Purge any cached proc information.
+            _operatingSystemEnvironment.PurgeCachedInformation();
+
+            // Return the compiled object.
+            return new Dictionary<string, object>()
+            {
+                {"Model", _operatingSystemEnvironment.GetCpuName()},
+                {"Cores", _operatingSystemEnvironment.GetCpuCoreCount()},
+                {"Threads", _operatingSystemEnvironment.GetCpuThreadCount()},
+                {"Cache Size", _operatingSystemEnvironment.GetCpuCacheSize()},
+                // TODO: Enable after MVP + Discussion
+                // {"Utilization", GetUtilizationDetails() }
+            };
+        }
+
+        /// <summary>
+        /// Get infoirmation about the environment in the form of a dictionary.
         /// </summary>
         /// <returns></returns>
         public Dictionary<string, object> GetEnvironmentDetails()
         {
-            return _operatingSystemEnvironment.GetEnvironmentDetails();
+            return new Dictionary<string, object>()
+            {
+                {"Hostname", Environment.MachineName},
+                {"OS Version", Environment.OSVersion},
+                {"64-Bits", Is64Bits()}
+            };
+        }
+
+        /// <summary>
+        /// Get all environment information in the form of a dictionary.
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<string, object> GetAllDetails()
+        {
+            return new Dictionary<string, object>()
+            {
+                {"CPU", GetCpuDetails()},
+                {"Memory", GetMemoryDetails()},
+                {"Environment", GetEnvironmentDetails()}
+            };
+        }
+
+        /// <summary>
+        /// Create a combined dictionary of processor utilizations for the spectero daemon and the system.
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<string, object> GetUtilizationDetails()
+        {
+            return new Dictionary<string, object>()
+            {
+                {"Spectero Daemon", GetSpecteroProcessUtilization()},
+                {"Total", GetTotalProcessUtilization()}
+            };
+        }
+
+        /// <summary>
+        /// Get the percentage of the processor that spectero daemon itself uses.
+        /// </summary>
+        /// <returns></returns>
+        public double GetSpecteroProcessUtilization()
+        {
+            var currentProcess = Process.GetCurrentProcess();
+            return (currentProcess.TotalProcessorTime.TotalMilliseconds * 100) / (DateTime.Now - currentProcess.StartTime).TotalMilliseconds;
+        }
+
+        /// <summary>
+        /// Get the total processor utilization percentage.
+        ///
+        /// Note: Linq is awesome!
+        /// </summary>
+        /// <returns></returns>
+        public double GetTotalProcessUtilization()
+        {
+            return Process.GetProcesses().Sum(currentProcess => (currentProcess.TotalProcessorTime.TotalMilliseconds * 100) / (DateTime.Now - currentProcess.StartTime).TotalMilliseconds);
+        }
+
+        /// <summary>
+        /// Determine if the system is running in 64 bit mode.
+        /// </summary>
+        /// <returns></returns>
+        public bool Is64Bits()
+        {
+            return Environment.Is64BitOperatingSystem;
         }
 
         /// <summary>
