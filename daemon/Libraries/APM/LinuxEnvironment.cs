@@ -52,7 +52,12 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryFree() =>
-            ReadProcMeminfo()["MemAvailable"];
+            (ReadProcCpuinfo().ContainsKey("MemAvailable")) ?
+                // Kernel 3.14+ 
+                ReadProcMeminfo()["MemAvailable"] :
+
+                // Kernel 3.14 and lower
+                ReadProcMeminfo()["MemFree"] + ReadProcMeminfo()["Cached"]; 
 
         /// <summary>
         /// Gets the total amount of physical memory in the system.
