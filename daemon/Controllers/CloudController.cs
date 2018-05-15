@@ -99,7 +99,8 @@ namespace Spectero.daemon.Controllers
                 { ConfigKeys.CloudConnectIdentifier, identifier?.Value },
                 { ConfigKeys.CloudConnectNodeKey, nodeKey?.Value },
                 { "app.version", AppConfig.version },
-                { "app.restart.required", _restartNeeded }
+                { "app.restart.required", _restartNeeded },
+                { "system.data", _apm.GetAllDetails() }
             };
 
             return responseDict;
