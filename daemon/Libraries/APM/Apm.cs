@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using Spectero.daemon.Libraries.Config;
 
 namespace Spectero.daemon.Libraries.APM
@@ -64,7 +66,8 @@ namespace Spectero.daemon.Libraries.APM
                 {"Model", _operatingSystemEnvironment.GetCpuName()},
                 {"Cores", _operatingSystemEnvironment.GetCpuCoreCount()},
                 {"Threads", _operatingSystemEnvironment.GetCpuThreadCount()},
-                {"Cache Size", _operatingSystemEnvironment.GetCpuCacheSize()}
+                {"Cache Size", _operatingSystemEnvironment.GetCpuCacheSize()},
+                {"Utilization", GetUtilizationDetails() }
             };
         }
 
@@ -94,6 +97,40 @@ namespace Spectero.daemon.Libraries.APM
                 {"Memory", GetMemoryDetails()},
                 {"Environment", GetEnvironmentDetails()}
             };
+        }
+
+        /// <summary>
+        /// Create a combined dictionary of processor utilizations for the spectero daemon and the system.
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<string, object> GetUtilizationDetails()
+        {
+            return new Dictionary<string, object>()
+            {
+                {"Spectero Daemon", GetSpecteroProcessUtilization()},
+                {"Total", GetTotalProcessUtilization()}
+            };
+        }
+
+        /// <summary>
+        /// Get the percentage of the processor that spectero daemon itself uses.
+        /// </summary>
+        /// <returns></returns>
+        public double GetSpecteroProcessUtilization()
+        {
+            var currentProcess = Process.GetCurrentProcess();
+            return (currentProcess.TotalProcessorTime.TotalMilliseconds * 100) / (DateTime.Now - currentProcess.StartTime).TotalMilliseconds;
+        }
+
+        /// <summary>
+        /// Get the total processor utilization percentage.
+        ///
+        /// Note: Linq is awesome!
+        /// </summary>
+        /// <returns></returns>
+        public double GetTotalProcessUtilization()
+        {
+            return Process.GetProcesses().Sum(currentProcess => (currentProcess.TotalProcessorTime.TotalMilliseconds * 100) / (DateTime.Now - currentProcess.StartTime).TotalMilliseconds);
         }
 
         /// <summary>
