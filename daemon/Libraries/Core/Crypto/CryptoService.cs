@@ -112,7 +112,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
         public byte[] ExportCertificateChain(X509Certificate2 cert, X509Certificate2 ca, string storePassword = null)
         {
-            var collection = new X509Certificate2Collection {ca, cert};
+            var collection = new X509Certificate2Collection {new X509Certificate2(ca.RawData), cert};
             return collection.Export(X509ContentType.Pkcs12, storePassword);
         }
 
