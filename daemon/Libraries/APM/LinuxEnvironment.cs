@@ -23,7 +23,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public string GetCpuName() =>
-            ReadProcCpuinfo()["model name"].Trim();
+            ReadProcCpuinfo()["model name"];
 
         /// <summary>
         /// Returns the number of physical cores excluding threads.
@@ -119,7 +119,7 @@ namespace Spectero.daemon.Libraries.APM
                     string[] procPart = procLine.Split(":");
 
                     // Verbose for the sake of understanding.
-                    string key = procPart[0];
+                    string key = procPart[0].Trim();
                     string unregexedValue = procPart[1].Trim();
                     string regexedValue = Regex.Replace(unregexedValue, @"[^\d]", "") ?? unregexedValue;
 
@@ -178,7 +178,7 @@ namespace Spectero.daemon.Libraries.APM
 
                         // Verbose for the sake of understanding.
                         string key = procPart[0].Trim();
-                        string value = procPart[1];
+                        string value = procPart[1].Trim();
 
                         // Keep track of the number of threads.
                         if (key == "processor") _threadCount++;
