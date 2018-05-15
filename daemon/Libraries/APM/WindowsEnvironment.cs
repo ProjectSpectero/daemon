@@ -24,14 +24,14 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public string GetCpuName() =>
-            GetWmiProcessorManagementObject()["Name"].ToString();
+            GetWmiProcessorManagementObject()["Name"];
 
         /// <summary>
         /// Get the number of cores from WMI.
         /// </summary>
         /// <returns></returns>
         public int GetCpuCoreCount() =>
-            int.Parse(GetWmiProcessorManagementObject()["NumberOfCores"].ToString());
+            int.Parse(GetWmiProcessorManagementObject()["NumberOfCores"]);
 
         /// <summary>
         /// Get the number of threads.
@@ -40,7 +40,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public int GetCpuThreadCount() =>
-            int.Parse(GetWmiProcessorManagementObject()["NumberOfLogicalProcessors"].ToString());
+            int.Parse(GetWmiProcessorManagementObject()["NumberOfLogicalProcessors"]);
 
         /// <summary>
         /// Get L2 Cache Size in Kilobytes.
@@ -49,7 +49,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public object GetCpuCacheSize() =>
-            UInt32.Parse(GetWmiProcessorManagementObject()["L2CacheSize"].ToString());
+            UInt32.Parse(GetWmiProcessorManagementObject()["L2CacheSize"]);
 
         /// <summary>
         /// Get the physical amount of memory used in bytes.
@@ -63,14 +63,14 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryFree() =>
-            long.Parse(GetWmiOperatingSystemManagementObject()["FreePhysicalMemory"].ToString()) * 1024;
+            long.Parse(GetWmiOperatingSystemManagementObject()["FreePhysicalMemory"]) * 1024;
 
         /// <summary>
         /// Get the total amount of physical memory in bytes.
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryTotal() =>
-            long.Parse(GetWmiOperatingSystemManagementObject()["TotalVisibleMemorySize"].ToString()) * 1024;
+            long.Parse(GetWmiOperatingSystemManagementObject()["TotalVisibleMemorySize"]) * 1024;
 
         /// <summary>
         /// Get the amount of virtual memory used in bytes.
@@ -84,14 +84,14 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public long GetVirtualMemoryFree() =>
-            long.Parse(GetWmiOperatingSystemManagementObject()["FreeVirtualMemory"].ToString()) * 1024;
+            long.Parse(GetWmiOperatingSystemManagementObject()["FreeVirtualMemory"]) * 1024;
 
         /// <summary>
         /// Get the total amount of virtual memory in bytes.
         /// </summary>
         /// <returns></returns>
         public long GetVirtualMemoryTotal() =>
-            long.Parse(GetWmiOperatingSystemManagementObject()["TotalVirtualMemorySize"].ToString()) * 1024;
+            long.Parse(GetWmiOperatingSystemManagementObject()["TotalVirtualMemorySize"]) * 1024;
 
         /// <summary>
         ///  Return if the system is 64 bits.
@@ -200,7 +200,7 @@ namespace Spectero.daemon.Libraries.APM
                     {
                         try
                         {
-                            localDictionary.Add(prop.Name, prop.Value.ToString());
+                            localDictionary.Add(prop.Name.Trim(), prop.Value.ToString().Trim());
                         }
                         catch (Exception exception)
                         {
@@ -236,7 +236,7 @@ namespace Spectero.daemon.Libraries.APM
                     {
                         try
                         {
-                            localDictionary.Add(prop.Name, prop.Value.ToString());
+                            localDictionary.Add(prop.Name.Trim(), prop.Value.ToString().Trim());
                         }
                         catch (Exception exception)
                         {

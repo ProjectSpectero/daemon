@@ -52,7 +52,12 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryFree() =>
-            ReadProcMeminfo()["MemAvailable"];
+            (ReadProcCpuinfo().ContainsKey("MemAvailable")) ?
+                // Kernel 3.14+ 
+                ReadProcMeminfo()["MemAvailable"] :
+
+                // Kernel 3.14 and lower
+                ReadProcMeminfo()["MemFree"] + ReadProcMeminfo()["Cached"]; 
 
         /// <summary>
         /// Gets the total amount of physical memory in the system.
@@ -114,7 +119,7 @@ namespace Spectero.daemon.Libraries.APM
                     string[] procPart = procLine.Split(":");
 
                     // Verbose for the sake of understanding.
-                    string key = procPart[0];
+                    string key = procPart[0].Trim();
                     string unregexedValue = procPart[1].Trim();
                     string regexedValue = Regex.Replace(unregexedValue, @"[^\d]", "") ?? unregexedValue;
 
@@ -173,7 +178,7 @@ namespace Spectero.daemon.Libraries.APM
 
                         // Verbose for the sake of understanding.
                         string key = procPart[0].Trim();
-                        string value = procPart[1];
+                        string value = procPart[1].Trim();
 
                         // Keep track of the number of threads.
                         if (key == "processor") _threadCount++;
