@@ -7,6 +7,7 @@ Tester/*
 *.user
 *.userosscache
 *.sln.docstates
+*.firstrun
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

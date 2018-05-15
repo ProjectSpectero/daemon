@@ -394,7 +394,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             var convertedCertificate =
                 new X509Certificate2(stream.ToArray(),
                                      password,
-                                     X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                                     X509KeyStorageFlags.Exportable);
             return convertedCertificate;
         }
     }
