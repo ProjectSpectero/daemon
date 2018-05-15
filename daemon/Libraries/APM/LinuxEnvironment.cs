@@ -44,7 +44,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public object GetCpuCacheSize() =>
-            ReadProcCpuinfo()["cache size"];
+            ReadProcCpuinfo()["cache size"].Trim();
 
         /// <summary>
         /// It should be worth noting according to linux, that free memory is marked as "used" due to buffers and caches.
