@@ -10,9 +10,14 @@ namespace Spectero.daemon.Libraries.APM
     {
         private readonly ISystemEnvironment _operatingSystemEnvironment;
 
+        /// <summary>
+        /// APM Constructor
+        /// 
+        /// The constructor determines which operating system environment is needed.
+        /// Environments follow a interface, and will have the same core functions.
+        /// </summary>
         public Apm()
         {
-            // Check if we have a supported operating system.
             if (AppConfig.isWindows)
             {
                 _operatingSystemEnvironment = new WindowsEnvironment();
@@ -67,7 +72,8 @@ namespace Spectero.daemon.Libraries.APM
                 {"Cores", _operatingSystemEnvironment.GetCpuCoreCount()},
                 {"Threads", _operatingSystemEnvironment.GetCpuThreadCount()},
                 {"Cache Size", _operatingSystemEnvironment.GetCpuCacheSize()},
-                {"Utilization", GetUtilizationDetails() }
+                // TODO: Enable after MVP + Discussion
+                // {"Utilization", GetUtilizationDetails() }
             };
         }
 
