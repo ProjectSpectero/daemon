@@ -94,88 +94,9 @@ namespace Spectero.daemon.Libraries.APM
             long.Parse(GetWmiOperatingSystemManagementObject()["TotalVirtualMemorySize"]) * 1024;
 
         /// <summary>
-        ///  Return if the system is 64 bits.
+        /// Delete all cached objects.
         /// </summary>
-        /// <returns></returns>
-        public bool Is64Bits() =>
-            Environment.Is64BitOperatingSystem;
-
-
-        /// <summary>
-        /// Get all environment information in the form of a dictionary.
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, object> GetAllDetails()
-        {
-            return new Dictionary<string, object>()
-            {
-                {"CPU", GetCpuDetails()},
-                {"Memory", GetMemoryDetails()},
-                {"Environment", GetEnvironmentDetails()}
-            };
-        }
-
-        /// <summary>
-        /// Get information about the CPU in the form of a dictionary.
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, object> GetCpuDetails()
-        {
-            // Return the compiled object.
-            return new Dictionary<string, object>()
-            {
-                {"Model", GetCpuName()},
-                {"Cores", GetCpuCoreCount()},
-                {"Threads", GetCpuThreadCount()},
-                {"Cache Size", GetCpuCacheSize()}
-            };
-        }
-
-        /// <summary>
-        /// Get information about the memory on the system in the form of a dictionary.
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, object> GetMemoryDetails()
-        {
-            // Get Physical Memory
-            Dictionary<string, object> physicalMemoryObjects = new Dictionary<string, object>()
-            {
-                {"Used", GetPhysicalMemoryUsed()},
-                {"Free", GetPhysicalMemoryFree()},
-                {"Total", GetPhysicalMemoryTotal()}
-            };
-
-            // Get Virtual Memory
-            Dictionary<string, object> virtualMemoryObjects = new Dictionary<string, object>()
-            {
-                {"Used", GetVirtualMemoryUsed()},
-                {"Free", GetVirtualMemoryFree()},
-                {"Total", GetVirtualMemoryTotal()}
-            };
-
-            // Returned the compiled object.
-            return new Dictionary<string, object>()
-            {
-                {"Physical", physicalMemoryObjects},
-                {"Virtual", virtualMemoryObjects}
-            };
-        }
-
-        /// <summary>
-        /// Get infoirmation about the environment in the form of a dictionary.
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, object> GetEnvironmentDetails()
-        {
-            return new Dictionary<string, object>()
-            {
-                {"Hostname", Environment.MachineName},
-                {"OS Version", Environment.OSVersion},
-                {"64-Bits", Is64Bits()}
-            };
-        }
-
-        public void PurgeCachedWmiInformation()
+        public void PurgeCachedInformation()
         {
             _cachedOperatingSystemManagementObject = null;
             _cachedProccessorManagementObject = null;

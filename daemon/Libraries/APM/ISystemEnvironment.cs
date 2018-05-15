@@ -14,20 +14,13 @@ namespace Spectero.daemon.Libraries.APM
         string GetCpuName();
         int GetCpuCoreCount();
         int GetCpuThreadCount();
-        Object GetCpuCacheSize();
+        object GetCpuCacheSize();
 
         // Memory
         long GetPhysicalMemoryUsed();
         long GetPhysicalMemoryFree();
         long GetPhysicalMemoryTotal();
 
-        // Arch
-        bool Is64Bits();
-
-        // Dictionary Getters
-        Dictionary<string, object> GetAllDetails();
-        Dictionary<string, object> GetCpuDetails();
-        Dictionary<string, object> GetMemoryDetails();
-        Dictionary<string, object> GetEnvironmentDetails();
+        void PurgeCachedInformation();
     }
 }

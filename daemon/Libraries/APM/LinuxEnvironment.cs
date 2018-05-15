@@ -76,18 +76,11 @@ namespace Spectero.daemon.Libraries.APM
             GetPhysicalMemoryTotal() - GetPhysicalMemoryFree();
 
         /// <summary>
-        /// This will purge the cahced value for the CPU Information.
+        /// Delete all cached objects.
         /// </summary>
-        public void PurgeCachedProcCpuinfo()
+        public void PurgeCachedInformation()
         {
             _cachedProcCpuinfo = null;
-        }
-
-        /// <summary>
-        /// This will purge the cached value for the Memory Information.
-        /// </summary>
-        public void PurgeCachedProcMeminfo()
-        {
             _cachedProcMeminfo = null;
         }
 
@@ -207,86 +200,6 @@ namespace Spectero.daemon.Libraries.APM
 
             // Return the cached value.
             return _cachedProcCpuinfo;
-        }
-
-        /// <summary>
-        /// Get information about the memory on the system in the form of a dictionary.
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, object> GetMemoryDetails()
-        {
-            // Purge any cached proc information.
-            PurgeCachedProcMeminfo();
-
-            // Get Physical Memory
-            var physicalMemoryObjects = new Dictionary<string, object>()
-            {
-                {"Used", GetPhysicalMemoryUsed()},
-                {"Free", GetPhysicalMemoryFree()},
-                {"Total", GetPhysicalMemoryTotal()}
-            };
-
-            // Returned the compiled object.
-            return new Dictionary<string, object>()
-            {
-                {"Physical", physicalMemoryObjects},
-            };
-        }
-
-        /// <summary>
-        /// Get infomration about the CPU in the form of a dictionary.
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, object> GetCpuDetails()
-        {
-            // Purge any cached proc information.
-            PurgeCachedProcCpuinfo();
-
-            // Return the compiled object.
-            return new Dictionary<string, object>()
-            {
-                {"Model", GetCpuName()},
-                {"Cores", GetCpuCoreCount()},
-                {"Threads", GetCpuThreadCount()},
-                {"Cache Size", GetCpuCacheSize()}
-            };
-        }
-
-        /// <summary>
-        /// Get infoirmation about the environment in the form of a dictionary.
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, object> GetEnvironmentDetails()
-        {
-            return new Dictionary<string, object>()
-            {
-                {"Hostname", Environment.MachineName},
-                {"OS Version", Environment.OSVersion},
-                {"64-Bits", Is64Bits()}
-            };
-        }
-
-        /// <summary>
-        /// Get all environment information in the form of a dictionary.
-        /// </summary>
-        /// <returns></returns>
-        public Dictionary<string, object> GetAllDetails()
-        {
-            return new Dictionary<string, object>()
-            {
-                {"CPU", GetCpuDetails()},
-                {"Memory", GetMemoryDetails()},
-                {"Environment", GetEnvironmentDetails()}
-            };
-        }
-
-        /// <summary>
-        /// Determine if the system is running in 64 bit mode.
-        /// </summary>
-        /// <returns></returns>
-        public bool Is64Bits()
-        {
-            return Environment.Is64BitOperatingSystem;
         }
     }
 }
