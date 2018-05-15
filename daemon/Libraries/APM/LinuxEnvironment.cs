@@ -23,7 +23,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public string GetCpuName() =>
-            ReadProcCpuinfo()["model name"];
+            ReadProcCpuinfo()["model name"].Trim();
 
         /// <summary>
         /// Returns the number of physical cores excluding threads.

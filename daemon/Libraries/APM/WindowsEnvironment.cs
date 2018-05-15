@@ -24,7 +24,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public string GetCpuName() =>
-            GetWmiProcessorManagementObject()["Name"].ToString();
+            GetWmiProcessorManagementObject()["Name"].Trim();
 
         /// <summary>
         /// Get the number of cores from WMI.

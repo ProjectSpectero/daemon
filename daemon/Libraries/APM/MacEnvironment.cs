@@ -24,7 +24,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public string GetCpuName() =>
-            GetSysctlOutput()["machdep.cpu.brand_string"];
+            GetSysctlOutput()["machdep.cpu.brand_string"].Trim();
 
         /// <summary>
         /// Returns the physical count of the cores in the procecssor.
