@@ -6,6 +6,7 @@
     <RootNamespace>Spectero.daemon.CLI</RootNamespace>
     <StartupObject>Spectero.daemon.CLI.Program</StartupObject>
     <AssemblyName>Spectero.daemon.CLI</AssemblyName>
+    <Platforms>AnyCPU;x64</Platforms>
 
   </PropertyGroup>
 

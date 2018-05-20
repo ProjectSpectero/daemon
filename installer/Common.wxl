@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization Culture="en-us" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+
+  <String Id="Company">Spectero, Inc</String>
+
+  <String Id="ProductNameFolder">Spectero</String>
+  
+  <String Id="ProductName_x86">Spectero Installer (32bit)</String>
+  <String Id="ProductName_x64">Spectero Installer (64bit)</String>
+
+  <String Id="Description">This is a description</String>
+  <String Id="Comments"> Contains the Daemon and Command Line Interface.</String>
+  <String Id="Keywords">dotnet,core,application,installer</String>
+
+  <String Id="DowngradeErrorMessage">A newer version of Console App is already installed.</String>
+  
+  <String Id="Language">1033</String>
+  
+</WixLocalization>
