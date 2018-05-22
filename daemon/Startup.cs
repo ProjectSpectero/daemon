@@ -42,6 +42,10 @@ namespace Spectero.daemon
 
         public Startup(IHostingEnvironment env)
         {
+            // Change the directory to the installation path.
+            Directory.SetCurrentDirectory(GetAssemblyLocation());
+
+            // Build the configuration.
             Configuration = BuildConfiguration(env.EnvironmentName);
         }
 
@@ -59,7 +63,6 @@ namespace Spectero.daemon
             return builder.Build();
         }
 
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
@@ -71,13 +74,7 @@ namespace Spectero.daemon
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             services.AddSingleton(c =>
-                InitializeDbConnection(
-                    Path.Combine(
-                        GetAssemblyLocation(),
-                        appConfig["DatabaseFile"]
-                    ),
-                    SqliteDialect.Provider
-                )
+                InitializeDbConnection(appConfig["DatabaseFile"], SqliteDialect.Provider)
             );
 
             services.AddSingleton<IStatistician, Statistician>();
@@ -143,12 +140,7 @@ namespace Spectero.daemon
             var builtProvider = services.BuildServiceProvider();
             services.AddHangfire(config =>
             {
-                // Remove the "Data Source=" safely from the string and get the path.
-                var truncatedPath = appConfig["JobsConnectionString"].ToString().Split('=')[1];
-                var reassignedJobConnectionPath = "Data Source=" + Path.Combine(GetAssemblyLocation(), truncatedPath);
-
-                // Use the reassignment variable as if it was a normal string.
-                config.UseSQLiteStorage(reassignedJobConnectionPath, new SQLiteStorageOptions());
+                config.UseSQLiteStorage(appConfig["JobsConnectionString"], new SQLiteStorageOptions());
                 config.UseNLogLogProvider();
                 // Please ENSURE that this is the VERY last call (to add services) in this method body. 
                 // Provider once built is not retroactively updated from the collection.
