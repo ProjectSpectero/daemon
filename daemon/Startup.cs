@@ -39,17 +39,15 @@ namespace Spectero.daemon
 {
     public class Startup
     {
-        private static string _currentDirectory;
+        private static readonly string CurrentDirectory = Program.GetAssemblyLocation();
         private IConfiguration Configuration { get; }
 
         public Startup(IHostingEnvironment env)
         {
-            // Assign the CWD.
-            _currentDirectory = Program.GetAssemblyLocation();
-            Directory.SetCurrentDirectory(_currentDirectory);
+            Directory.SetCurrentDirectory(CurrentDirectory);
 
             // Change nlog current directory
-            LogManager.Configuration.Variables["basedir"] = _currentDirectory;
+            LogManager.Configuration.Variables["basedir"] = CurrentDirectory;
 
             // Build the configuration.
             Configuration = BuildConfiguration(env.EnvironmentName);
@@ -60,7 +58,7 @@ namespace Spectero.daemon
         public static IConfiguration BuildConfiguration(String envName)
         {
             var builder = new ConfigurationBuilder()
-                .SetBasePath(_currentDirectory)
+                .SetBasePath(Program.GetAssemblyLocation())
                 .AddJsonFile("appsettings.json", false, true)
                 .AddJsonFile($"appsettings.{envName}.json", true)
                 .AddJsonFile("hosting.json", optional: true)
@@ -101,7 +99,7 @@ namespace Spectero.daemon
 
             services.AddSingleton<IRazorLightEngine>(c =>
                 new EngineFactory()
-                    .ForFileSystem(Path.Combine(_currentDirectory, appConfig["TemplateDirectory"]))
+                    .ForFileSystem(Path.Combine(CurrentDirectory, appConfig["TemplateDirectory"]))
             );
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -162,7 +160,7 @@ namespace Spectero.daemon
             IServiceProvider serviceProvider)
         {
             var appConfig = configMonitor.Value;
-            var webRootPath = Path.Combine(_currentDirectory, appConfig.WebRoot);
+            var webRootPath = Path.Combine(CurrentDirectory, appConfig.WebRoot);
 
             if (env.IsDevelopment())
             {
@@ -223,7 +221,7 @@ namespace Spectero.daemon
         private static IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)
         {
             // Reassign the database location to support the relative path of the assembly.
-            connectionString = Path.Combine(_currentDirectory, connectionString);
+            connectionString = Path.Combine(CurrentDirectory, connectionString);
 
             // Validate that the DB connection can actually be used.
             // If not, attempt to fix it (for SQLite and corrupt files.)
