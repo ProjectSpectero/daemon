@@ -38,7 +38,6 @@ namespace Spectero.daemon
 {
     public class Startup
     {
-        private static readonly string CurrentDirectory = System.IO.Directory.GetCurrentDirectory();
         private IConfiguration Configuration { get; }
 
         public Startup(IHostingEnvironment env)
