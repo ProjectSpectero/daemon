@@ -165,7 +165,7 @@ namespace Spectero.daemon
             IServiceProvider serviceProvider)
         {
             var appConfig = configMonitor.Value;
-            var webRootPath = Path.Combine(CurrentDirectory, appConfig.WebRoot);
+            var webRootPath = Path.Combine(GetAssemblyLocation(), appConfig.WebRoot);
 
             if (env.IsDevelopment())
             {
