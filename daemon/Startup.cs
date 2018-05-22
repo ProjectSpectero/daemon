@@ -15,6 +15,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NLog;
 using NLog.Extensions.Logging;
 using NLog.Web;
 using RazorLight;
@@ -38,12 +39,17 @@ namespace Spectero.daemon
 {
     public class Startup
     {
+        private static string _currentDirectory;
         private IConfiguration Configuration { get; }
 
         public Startup(IHostingEnvironment env)
         {
-            // Change the directory to the installation path.
-            Directory.SetCurrentDirectory(GetAssemblyLocation());
+            // Assign the CWD.
+            _currentDirectory = Program.GetAssemblyLocation();
+            Directory.SetCurrentDirectory(_currentDirectory);
+
+            // Change nlog current directory
+            LogManager.Configuration.Variables["basedir"] = _currentDirectory;
 
             // Build the configuration.
             Configuration = BuildConfiguration(env.EnvironmentName);
@@ -54,7 +60,7 @@ namespace Spectero.daemon
         public static IConfiguration BuildConfiguration(String envName)
         {
             var builder = new ConfigurationBuilder()
-                .SetBasePath(GetAssemblyLocation())
+                .SetBasePath(_currentDirectory)
                 .AddJsonFile("appsettings.json", false, true)
                 .AddJsonFile($"appsettings.{envName}.json", true)
                 .AddJsonFile("hosting.json", optional: true)
@@ -95,7 +101,7 @@ namespace Spectero.daemon
 
             services.AddSingleton<IRazorLightEngine>(c =>
                 new EngineFactory()
-                    .ForFileSystem(Path.Combine(GetAssemblyLocation(), appConfig["TemplateDirectory"]))
+                    .ForFileSystem(Path.Combine(_currentDirectory, appConfig["TemplateDirectory"]))
             );
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -156,7 +162,7 @@ namespace Spectero.daemon
             IServiceProvider serviceProvider)
         {
             var appConfig = configMonitor.Value;
-            var webRootPath = Path.Combine(GetAssemblyLocation(), appConfig.WebRoot);
+            var webRootPath = Path.Combine(_currentDirectory, appConfig.WebRoot);
 
             if (env.IsDevelopment())
             {
@@ -193,9 +199,6 @@ namespace Spectero.daemon
                 }
             });
 
-            // Change the directory to the installation path.
-            Directory.SetCurrentDirectory(GetAssemblyLocation());
-
             // Initialize Nlog
             loggerFactory.AddNLog();
             loggerFactory.ConfigureNLog(appConfig.LoggingConfig);
@@ -215,17 +218,12 @@ namespace Spectero.daemon
             }
         }
 
-        private static string GetAssemblyLocation()
-        {
-            return Path.GetDirectoryName(
-                Uri.UnescapeDataString(new UriBuilder(Assembly.GetExecutingAssembly().CodeBase).Path)
-            );
-        }
+        
 
         private static IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)
         {
             // Reassign the database location to support the relative path of the assembly.
-            connectionString = Path.Combine(GetAssemblyLocation(), connectionString);
+            connectionString = Path.Combine(_currentDirectory, connectionString);
 
             // Validate that the DB connection can actually be used.
             // If not, attempt to fix it (for SQLite and corrupt files.)
