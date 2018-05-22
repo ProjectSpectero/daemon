@@ -55,7 +55,7 @@ namespace Spectero.daemon
         public static IConfiguration BuildConfiguration(String envName)
         {
             var builder = new ConfigurationBuilder()
-                .SetBasePath(Program.GetAssemblyLocation())
+                .SetBasePath(CurrentDirectory)
                 .AddJsonFile("appsettings.json", false, true)
                 .AddJsonFile($"appsettings.{envName}.json", true)
                 .AddJsonFile("hosting.json", optional: true)
