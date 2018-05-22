@@ -193,6 +193,10 @@ namespace Spectero.daemon
                 }
             });
 
+            // Change the directory to the installation path.
+            Directory.SetCurrentDirectory(GetAssemblyLocation());
+
+            // Initialize Nlog
             loggerFactory.AddNLog();
             loggerFactory.ConfigureNLog(appConfig.LoggingConfig);
             app.AddNLogWeb();
