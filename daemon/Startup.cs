@@ -196,8 +196,6 @@ namespace Spectero.daemon
 
             // Initialize Nlog
             loggerFactory.AddNLog();
-            LogManager.Configuration.Variables["basedir"] = CurrentDirectory;
-            LogManager.ReconfigExistingLoggers();
             loggerFactory.ConfigureNLog(appConfig.LoggingConfig);
             app.AddNLogWeb();
 
