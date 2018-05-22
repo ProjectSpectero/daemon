@@ -46,9 +46,6 @@ namespace Spectero.daemon
         {
             Directory.SetCurrentDirectory(CurrentDirectory);
 
-            // Change nlog current directory
-            LogManager.Configuration.Variables["basedir"] = CurrentDirectory;
-
             // Build the configuration.
             Configuration = BuildConfiguration(env.EnvironmentName);
         }
@@ -198,6 +195,7 @@ namespace Spectero.daemon
             });
 
             // Initialize Nlog
+            LogManager.Configuration.Variables["basedir"] = CurrentDirectory;
             loggerFactory.AddNLog();
             loggerFactory.ConfigureNLog(appConfig.LoggingConfig);
             app.AddNLogWeb();
