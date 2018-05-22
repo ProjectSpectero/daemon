@@ -72,7 +72,13 @@ namespace Spectero.daemon
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             services.AddSingleton(c =>
-                InitializeDbConnection(appConfig["DatabaseFile"], SqliteDialect.Provider)
+                InitializeDbConnection(
+                    Path.Combine(
+                        GetAssemblyLocation(),
+                        appConfig["DatabaseFile"]
+                    ),
+                    SqliteDialect.Provider
+                )
             );
 
             services.AddSingleton<IStatistician, Statistician>();
@@ -93,7 +99,7 @@ namespace Spectero.daemon
 
             services.AddSingleton<IRazorLightEngine>(c =>
                 new EngineFactory()
-                    .ForFileSystem(System.IO.Path.Combine(CurrentDirectory, appConfig["TemplateDirectory"]))
+                    .ForFileSystem(Path.Combine(GetAssemblyLocation(), appConfig["TemplateDirectory"]))
             );
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -142,6 +148,7 @@ namespace Spectero.daemon
                 var truncatedPath = appConfig["JobsConnectionString"].ToString().Split('=')[1];
                 var reassignedJobConnectionPath = "Data Source=" + Path.Combine(GetAssemblyLocation(), truncatedPath);
 
+                // Use the reassignment variable as if it was a normal string.
                 config.UseSQLiteStorage(reassignedJobConnectionPath, new SQLiteStorageOptions());
                 config.UseNLogLogProvider();
                 // Please ENSURE that this is the VERY last call (to add services) in this method body. 
