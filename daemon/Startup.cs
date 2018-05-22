@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.IO;
+using System.Reflection;
 using Hangfire;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NLog;
 using NLog.Extensions.Logging;
 using NLog.Web;
 using RazorLight;
@@ -37,11 +39,14 @@ namespace Spectero.daemon
 {
     public class Startup
     {
-        private static readonly string CurrentDirectory = System.IO.Directory.GetCurrentDirectory();
+        private static readonly string CurrentDirectory = Program.GetAssemblyLocation();
         private IConfiguration Configuration { get; }
 
         public Startup(IHostingEnvironment env)
         {
+            Directory.SetCurrentDirectory(CurrentDirectory);
+
+            // Build the configuration.
             Configuration = BuildConfiguration(env.EnvironmentName);
         }
 
@@ -58,7 +63,6 @@ namespace Spectero.daemon
 
             return builder.Build();
         }
- 
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -92,7 +96,7 @@ namespace Spectero.daemon
 
             services.AddSingleton<IRazorLightEngine>(c =>
                 new EngineFactory()
-                    .ForFileSystem(System.IO.Path.Combine(CurrentDirectory, appConfig["TemplateDirectory"]))
+                    .ForFileSystem(Path.Combine(CurrentDirectory, appConfig["TemplateDirectory"]))
             );
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -104,7 +108,8 @@ namespace Spectero.daemon
                         ValidateIssuer = false,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = services.BuildServiceProvider().GetService<ICryptoService>().GetJWTSigningKey()
+                        IssuerSigningKey =
+                            services.BuildServiceProvider().GetService<ICryptoService>().GetJWTSigningKey()
                     };
                 });
 
@@ -129,7 +134,7 @@ namespace Spectero.daemon
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
 
             services.AddSingleton<Apm, Apm>();
-           
+
             services.AddMvc();
 
 
@@ -141,8 +146,8 @@ namespace Spectero.daemon
                 // Please ENSURE that this is the VERY last call (to add services) in this method body. 
                 // Provider once built is not retroactively updated from the collection.
                 // If further dependencies are registered AFTER it is built, we'll get nothing.
-                config.UseActivator(new JobActivator(builtProvider)); 
-            });        
+                config.UseActivator(new JobActivator(builtProvider));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -170,7 +175,11 @@ namespace Spectero.daemon
             app.UseAddRequestIdHeader();
 
             // This HAS TO BE before the AddMVC call. Route registration fails otherwise.
-            var option = new BackgroundJobServerOptions { WorkerCount = 1 }; // Limited by SQLite, can't deal with concurrency welp.
+            var option =
+                new BackgroundJobServerOptions
+                {
+                    WorkerCount = 1
+                }; // Limited by SQLite, can't deal with concurrency welp.
             app.UseHangfireServer(option);
             app.UseHangfireDashboard($"/jobs");
 
@@ -180,11 +189,12 @@ namespace Spectero.daemon
                 {
                     routes.MapSpaFallbackRoute(
                         name: "spa-fallback",
-                        defaults: new { controller = "Spa", action = "Index" }
+                        defaults: new {controller = "Spa", action = "Index"}
                     );
                 }
             });
-            
+
+            // Initialize Nlog
             loggerFactory.AddNLog();
             loggerFactory.ConfigureNLog(appConfig.LoggingConfig);
             app.AddNLogWeb();
@@ -194,16 +204,22 @@ namespace Spectero.daemon
 
             foreach (var implementer in serviceProvider.GetServices<IJob>())
             {
-                if (! implementer.IsEnabled())
+                if (!implementer.IsEnabled())
                     continue;
 
                 // Magic, autowiring is magic.
-                RecurringJob.AddOrUpdate(implementer.GetType().ToString(), () => implementer.Perform(), implementer.GetSchedule);
+                RecurringJob.AddOrUpdate(implementer.GetType().ToString(), () => implementer.Perform(),
+                    implementer.GetSchedule);
             }
         }
 
+        
+
         private static IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)
         {
+            // Reassign the database location to support the relative path of the assembly.
+            connectionString = Path.Combine(CurrentDirectory, connectionString);
+
             // Validate that the DB connection can actually be used.
             // If not, attempt to fix it (for SQLite and corrupt files.)
             // Other providers not implemented (and are not possibly fixable for us anyway due to 3rd party daemons being involved)
@@ -220,7 +236,7 @@ namespace Spectero.daemon
             };
 
             var factory = new OrmLiteConnectionFactory(connectionString, provider);
-            
+
             IDbConnection databaseContext = null;
 
             try
@@ -244,14 +260,14 @@ namespace Spectero.daemon
                 // Dirty hack to ensure that the file's resource is actually released by the time ORMLite tries to open it
                 using (var resource = File.Create(connectionString))
                 {
-                    Console.WriteLine("Error Recovery: Executing automatic DB schema creation after saving the corrupt DB into db.sqlite.corrupt");
+                    Console.WriteLine(
+                        "Error Recovery: Executing automatic DB schema creation after saving the corrupt DB into db.sqlite.corrupt");
                 }
 
                 databaseContext = factory.Open();
             }
 
             return databaseContext;
-
         }
     }
 }
