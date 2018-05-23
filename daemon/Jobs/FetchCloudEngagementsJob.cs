@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RestSharp;
+using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
@@ -102,11 +103,23 @@ namespace Spectero.daemon.Jobs
                }
              */
 
-            _logger.LogDebug("Got response from the cloud backend!: " + response.Content);
+            _logger.LogDebug("FCEJ: Got response from the cloud backend!: " + response.Content);
+
+            if (response.Content.IsNullOrEmpty())
+            {
+                _logger.LogError("FCEJ: Got empty or null response from the backend cloud API, this is not meant to happen!");
+                return;
+            }
 
             // World's unsafest cast contender? Taking bets now.
             var parsedResponse = JsonConvert.DeserializeObject<CloudAPIResponse<List<Engagement>>>(response.Content);
             var engagements = parsedResponse.result;
+
+            if (engagements == null)
+            {
+                _logger.LogWarning("FCEJ: Cloud returned an empty list of engagements or it was null.");
+                return;
+            }
 
             // First, let's remove those users who are no longer in the output.
             // To do so, let's fetch ALL Cloud users (except the cloud administrative user, we're not messing with it)

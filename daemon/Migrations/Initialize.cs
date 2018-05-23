@@ -203,10 +203,9 @@ namespace Spectero.daemon.Migrations
             {
                 _logger.LogDebug("Firstrun: Creating Statistics table");
                 _db.CreateTable<Statistic>();
+
+                _logger.LogInformation("Firstrun: Initialization complete.");
             }
-
-
-            _logger.LogInformation("Firstrun: Initialization complete.");
         }
 
         public void Down()
