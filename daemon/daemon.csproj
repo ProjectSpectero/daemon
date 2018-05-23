@@ -6,6 +6,7 @@
     <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
     <StartupObject>Spectero.daemon.Program</StartupObject>
     <AssemblyName>daemon</AssemblyName>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Libraries\Core\HTTP\Template.cs" />

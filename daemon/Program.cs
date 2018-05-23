@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
@@ -18,10 +19,17 @@ namespace Spectero.daemon
 
             return WebHost
                 .CreateDefaultBuilder(args)
-                .UseContentRoot(Directory.GetCurrentDirectory())
+                .UseContentRoot(GetAssemblyLocation())
                 .UseConfiguration(Startup.BuildConfiguration(environment))
                 .UseStartup<Startup>()
                 .Build();
+        }
+
+        public static string GetAssemblyLocation()
+        {
+            return Path.GetDirectoryName(
+                Uri.UnescapeDataString(new UriBuilder(Assembly.GetExecutingAssembly().CodeBase).Path)
+            );
         }
     }
 }
