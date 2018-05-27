@@ -213,8 +213,12 @@ namespace Spectero.daemon
             }
         }
 
-        
-
+        /// <summary>
+        /// Initialize a database connection using a provided connection string and provider.
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="provider"></param>
+        /// <returns></returns>
         private static IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)
         {
             // Reassign the database location to support the relative path of the assembly.
