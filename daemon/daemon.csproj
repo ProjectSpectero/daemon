@@ -4,6 +4,7 @@
     <RootNamespace>Spectero.daemon</RootNamespace>
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
+    <MvcRazorExcludeRefAssembliesFromPublish>false</MvcRazorExcludeRefAssembliesFromPublish>
     <StartupObject>Spectero.daemon.Program</StartupObject>
     <AssemblyName>daemon</AssemblyName>
     <Platforms>AnyCPU;x64</Platforms>

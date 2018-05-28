@@ -41,7 +41,7 @@ namespace Spectero.daemon.Jobs
             _logger = logger;
             _cache = cache;
             _config = configMonitor.CurrentValue;
-            logger.LogDebug("FCEJ init: successful, dependencies processed.");
+            logger.LogDebug("FCEJ: init successful, dependencies processed.");
         }
 
         public string GetSchedule()
@@ -117,7 +117,7 @@ namespace Spectero.daemon.Jobs
 
             if (engagements == null)
             {
-                _logger.LogWarning("FCEJ: Cloud returned an empty list of engagements or it was null.");
+                _logger.LogWarning("FCEJ: List returned by the cloud for engagements was null. This is not meant to happen.");
                 return;
             }
 

@@ -72,17 +72,43 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 }
                 _configsOnDisk.Add(onDiskName);
 
-                //At this stage, we have the configs ready and on disk
+                //At this stage, we have the configs ready and on disk. Let us simply bootstrap the processes.
+                StartDaemon(onDiskName);
             }
 
             // TODO: Invoke OpenVPN once per config on disk and track the process handle somewhere.
             // TODO: We also need to hook into netlink+netfilter (or its OS specific counterparts) to enable MASQUERADE/SNAT for our NATed IPs.
 
 
+        }
 
+        private string determineBinaryPath()
+        {
+            string binaryName;
+
+            if (AppConfig.isUnix)
+            {
+                // We assume the binary to simply be called "openvpn" and in the system's global $PATH for seamless execution.
+                binaryName = "openvpn";
+            }
+            else if (AppConfig.isWindows)
+                binaryName = "openvpn"; // TODO: Fix this, we'll likely need the full path in Windows due to how we intend to ship the openvpn binary itself.
+            else
+                throw new PlatformNotSupportedException("OpenVPN: This daemon does not know how to initialize OpenVPN on this platform.");
+
+            return binaryName;
+        }
+
+        private void StartDaemon(string configPath)
+        {
+
+            var path = determineBinaryPath();
+
+            // TODO: Now, we call this with MedallionShell and store the Command descriptor.
 
 
         }
+
         public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
         {
            
