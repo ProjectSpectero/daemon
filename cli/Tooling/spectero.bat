@@ -14,4 +14,4 @@ exit /b
 
 
 :cli
-dotnet %~dp0/../Spectero.daemon.CLI.dll
+dotnet %~dp0/../Spectero.daemon.CLI.dll %2
