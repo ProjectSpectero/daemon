@@ -10,19 +10,22 @@ namespace Spectero.daemon.CLI.Commands
         [Command(typeof(DisconnectFromSpecteroCloud), Description = "Disconnect from the Spectero Cloud (client only)")]
         disconnect,
 
+        [Command(typeof(SetGlobalProperty), Description = "Sets various system properties, consult the docs for details.")]
+        env,
+
+        [Command(typeof(GetSystemHeartbeat), Description = "Check if the Daemon is online and connectible")]
+        heartbeat,
+
         [Command(typeof(ManuallyConnectToSpecteroCloud), Description = "Manually Connect Daemon to Spectero Cloud")]
         manual,
 
         [Command(typeof(ViewCloudConnectivityStatus), Description = "See the current state of connectivity to the Spectero Cloud")]
         status,
 
-        [Command(typeof(GetSystemHeartbeat), Description = "Check if the Daemon is online and connectible")]
-        heartbeat,
-
-        [Command(typeof(SetGlobalProperty), Description = "Sets various system properties, consult the docs for details.")]
-        env,
-
         [Command(typeof(Shell), Description = "Invokes the Spectero Shell")]
-        shell
+        shell,
+
+        [Command(typeof(Version), Description = "Shows the Spectero Installer and Linked Daemon Versions")]
+        version
     }
 }

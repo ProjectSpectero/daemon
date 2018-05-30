@@ -8,8 +8,6 @@ namespace Spectero.daemon.CLI
     {
         private static void Main(string[] args)
         {
-            Console.WriteLine("Spectero Console v{0}", AppConfig.version);
-
             CliArguments cliArguments;
 
             if (!CommandLineParser.TryParse(args, out cliArguments))
