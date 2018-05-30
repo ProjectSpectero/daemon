@@ -4,6 +4,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net;
+using Medallion.Shell;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
@@ -27,6 +28,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         private readonly ServiceState State = ServiceState.Halted;
         private readonly List<string> _configsOnDisk;
+        private readonly List<Command> _runningCommands;
 
 
 
@@ -50,6 +52,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
             // This is tracked so we can clean it up when stopping (assuming managed stop).
             _configsOnDisk = new List<string>();
+            _runningCommands = new List<Command>();
         }
 
         private void Initialize(IEnumerable<IServiceConfig> serviceConfigs)
@@ -71,6 +74,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                     writer.Write(config);
                 }
                 _configsOnDisk.Add(onDiskName);
+                _logger.LogDebug($"OpenVPN init: wrote config to {onDiskName}, attempting to start 3rd party daemon.");
 
                 //At this stage, we have the configs ready and on disk. Let us simply bootstrap the processes.
                 StartDaemon(onDiskName);
@@ -82,7 +86,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
         }
 
-        private string determineBinaryPath()
+        private static string DetermineBinaryPath()
         {
             string binaryName;
 
@@ -102,10 +106,12 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private void StartDaemon(string configPath)
         {
 
-            var path = determineBinaryPath();
-
-            // TODO: Now, we call this with MedallionShell and store the Command descriptor.
-
+            var path = DetermineBinaryPath();
+        
+            // Now, we call this with MedallionShell and store the Command descriptor.
+            // Before startup, we need to set the effective working directory for this invocation to 3rdParty/OpenVPN
+            var command = Command.Run(path, configPath);
+            _runningCommands.Add(command);
 
         }
 
@@ -135,6 +141,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             }
             _configsOnDisk.Clear();
         }
+
+
 
         public ServiceState GetState()
         {
