@@ -1,13 +1,15 @@
 @echo off
 
-IF exist "%~dp0/../../dotnet/dotnet.exe" (
-    set _DNRT=%~dp0/../../dotnet/dotnet.exe
-)
 IF exist "C:/Program Files/dotnet/dotnet.exe" (
     set _DNRT=C:/Program Files/dotnet/dotnet.exe
 )
 IF exist "C:/Program Files (x86)/dotnet/dotnet.exe" (
     set _DNRT="C:/Program Files (x86)/dotnet/dotnet.exe
+)
+
+for %%I in ("%~dp0..\..\..\") do set "grandparent=%%~fI"
+IF exist "%grandparent%dotnet\dotnet.exe" (
+    set "_DNRT=%grandparent%dotnet\dotnet.exe
 )
 
 IF "%_DNRT%"=="" goto error_dotnet
