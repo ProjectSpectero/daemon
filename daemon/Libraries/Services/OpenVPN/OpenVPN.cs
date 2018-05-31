@@ -15,6 +15,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
     public class OpenVPN : IService
     {
+        // Dependency Injected Objects.
         private readonly AppConfig _appConfig;
         private readonly IAuthenticator _authenticator;
         private readonly IDbConnection _db;
@@ -25,22 +26,37 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly IMemoryCache _cache;
         private IEnumerable<OpenVPNConfig> _vpnConfig;
 
-
+        // Class variables that will be modified.
         private readonly ServiceState State = ServiceState.Halted;
         private readonly List<string> _configsOnDisk;
         private readonly List<Command> _runningCommands;
 
-
-
+        /// <summary>
+        /// Standard Constructor
+        /// Initializes the class without any form of dependency injection
+        /// </summary>
         public OpenVPN()
         {
         }
 
+        /// <summary>
+        /// Dependency Injected Constructor
+        /// Initializes the class with all of it's passed arguments.
+        /// </summary>
+        /// <param name="appConfig"></param>
+        /// <param name="logger"></param>
+        /// <param name="db"></param>
+        /// <param name="authenticator"></param>
+        /// <param name="localNetworks"></param>
+        /// <param name="localAddresses"></param>
+        /// <param name="statistician"></param>
+        /// <param name="cache"></param>
         public OpenVPN(AppConfig appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
             IEnumerable<IPNetwork> localNetworks, IEnumerable<IPAddress> localAddresses,
             IStatistician statistician, IMemoryCache cache)
         {
+            // Inherit the objects.
             _appConfig = appConfig;
             _logger = logger;
             _db = db;
@@ -55,113 +71,177 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _runningCommands = new List<Command>();
         }
 
+        /// <summary>
+        /// Initialize the class and configurations
+        /// </summary>
+        /// <param name="serviceConfigs"></param>
         private void Initialize(IEnumerable<IServiceConfig> serviceConfigs)
         {
             if (serviceConfigs != null)
                 _vpnConfig = serviceConfigs as List<OpenVPNConfig>;
 
+            // Check if configurations are passed.
             if (_vpnConfig == null || !_vpnConfig.Any())
                 throw new InvalidOperationException("OpenVPN init: config list was null.");
 
             // Now, let's render the configurations into proper OpenVPN config files.
             var renderedConfigs = _vpnConfig.Select(x => x.GetStringConfig().Result);
 
+            // Iterate through each pending configuration.
             foreach (var config in renderedConfigs)
             {
-                var onDiskName = Path.GetTempPath() + Guid.NewGuid() + ".ovpn";
+                // Get the properly formatted path of where the configuration will be stored..
+                var onDiskName = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".ovpn");
+
+                // Write the configuration to the disk.
                 using (var writer = new StreamWriter(onDiskName))
-                {
                     writer.Write(config);
-                }
+
+                // Keep track of the configuration path.
                 _configsOnDisk.Add(onDiskName);
+
+                // Log to the console.
                 _logger.LogDebug($"OpenVPN init: wrote config to {onDiskName}, attempting to start 3rd party daemon.");
 
-                //At this stage, we have the configs ready and on disk. Let us simply bootstrap the processes.
+                // At this stage, we have the configs ready and on disk. Let us simply bootstrap the processes.
                 StartDaemon(onDiskName);
             }
 
             // TODO: Invoke OpenVPN once per config on disk and track the process handle somewhere.
             // TODO: We also need to hook into netlink+netfilter (or its OS specific counterparts) to enable MASQUERADE/SNAT for our NATed IPs.
-
-
         }
 
+        /// <summary>
+        /// Determine the absolute path of OpenVPN.
+        /// </summary>
+        /// <returns></returns>
         private static string DetermineBinaryPath()
         {
-            string binaryName;
+            // Placeholder varaiuble to store the path.
+            string binaryPath = null;
 
+            // Check Linux/OS X Operating system for OpenVPN Installation.
             if (AppConfig.isUnix)
             {
-                // We assume the binary to simply be called "openvpn" and in the system's global $PATH for seamless execution.
-                binaryName = "openvpn";
-            }
-            else if (AppConfig.isWindows)
-                binaryName = "openvpn"; // TODO: Fix this, we'll likely need the full path in Windows due to how we intend to ship the openvpn binary itself.
-            else
-                throw new PlatformNotSupportedException("OpenVPN: This daemon does not know how to initialize OpenVPN on this platform.");
+                // Attempt to properly find the path of OpenVPN
+                try
+                {
+                    var whichFinder = Command.Run("which", "openvpn");
 
-            return binaryName;
+                    // Parse the output and get the absolute path.
+                    binaryPath = whichFinder.StandardOutput.GetLines().ToList()[0];
+                }
+                catch (Exception exception)
+                {
+                    // Failed to find OpenVPN in the system.
+                    // TODO: Talk to paul and throw exception.
+                }
+            }
+            // Windows - Check Program Files Installations.
+            else if (AppConfig.isWindows)
+            {
+                string[] potentialOpenVpnPaths =
+                {
+                    "C:\\Program Files (x86)\\OpenVPN\\bin\\OpenVPN.exe",
+                    "C:\\Program Files\\OpenVPN\\bin\\OpenVPN.exe",
+                };
+
+                foreach (var currentOpenVpnPath in potentialOpenVpnPaths)
+                    if (File.Exists(currentOpenVpnPath))
+                        binaryPath = currentOpenVpnPath;
+            }
+            else
+            {
+                throw new PlatformNotSupportedException(
+                    "OpenVPN: This daemon does not know how to initialize OpenVPN on this platform."
+                );
+            }
+
+            // Return the found path.
+            return binaryPath;
         }
 
+        /// <summary>
+        /// Start the daemon
+        ///
+        /// Now, we call this with MedallionShell and store the command descriptor.
+        /// Before Startup, we need to set the effective working directory to "3rdParty/OpenVPN"
+        /// </summary>
+        /// <param name="configPath"></param>
         private void StartDaemon(string configPath)
         {
+            // Run the commmand
+            var command = Command.Run(DetermineBinaryPath(), configPath);
 
-            var path = DetermineBinaryPath();
-        
-            // Now, we call this with MedallionShell and store the Command descriptor.
-            // Before startup, we need to set the effective working directory for this invocation to 3rdParty/OpenVPN
-            var command = Command.Run(path, configPath);
+            // Keep track of the runnign command
             _runningCommands.Add(command);
-
         }
 
+        /// <summary>
+        /// Start the OpenVPN Service from the provided List{IServiceConfig}.
+        /// </summary>
+        /// <param name="serviceConfig"></param>
         public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
         {
-           
             Initialize(serviceConfig);
-
         }
 
+        /// <summary>
+        /// Restart the OpenVPN Service.
+        /// </summary>
+        /// <param name="serviceConfig"></param>
         public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
         {
             _vpnConfig = serviceConfig as List<OpenVPNConfig>;
         }
 
-        public void Reload(IEnumerable<IServiceConfig> serviceConfig = null)
-        {
-            throw new NotSupportedException();
-        }
+        /// <summary>
+        /// TODO: IMPLEMENT THIS FUNCTION.
+        /// </summary>
+        /// <param name="serviceConfig"></param>
+        public void Reload(IEnumerable<IServiceConfig> serviceConfig = null) =>
+            new NotSupportedException();
 
+        /// <summary>
+        /// Stop the OpenVPN Service.
+        /// Temporary configurations will also be deleted, and the tracking object will be emptied.
+        /// </summary>
         public void Stop()
         {
-            // Let's get rid of the temporary config file(s) and clear the tracking object.
+            // Iterate through each configuration on the disk.
             foreach (var fileOnDisk in _configsOnDisk)
-            {
                 File.Delete(fileOnDisk);
-            }
+
+            // Clear the list of configurations on the disk.
             _configsOnDisk.Clear();
         }
 
+        /// <summary>
+        /// Get the state of the service.
+        /// </summary>
+        /// <returns></returns>
+        public ServiceState GetState() => State;
 
+        /// <summary>
+        /// Get the list of configurations.
+        /// The _vpnConfig is a private class variable, and this should be considered as a getter.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<IServiceConfig> GetConfig() => _vpnConfig;
 
-        public ServiceState GetState()
-        {
-            return State;
-        }
+        /// <summary>
+        /// TODO: IMPLEMENT THIS FUNCTION.
+        /// Get the state of the logger.
+        /// </summary>
+        /// <param name="caller"></param>
+        public void LogState(string caller) => new NotSupportedException();
 
-        public void LogState(string caller)
-        {
-            throw new NotSupportedException();
-        }
-
-        public IEnumerable<IServiceConfig> GetConfig()
-        {
-            return _vpnConfig;
-        }
-
-        public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
-        {
+        /// <summary>
+        /// Apply a list of configurations to this instance of the OpenVPN Class.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="restartNeeded"></param>
+        public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false) =>
             _vpnConfig = config as List<OpenVPNConfig>;
-        }
     }
 }
