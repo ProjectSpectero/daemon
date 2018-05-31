@@ -23,6 +23,7 @@ using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
+using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Spectero.daemon.Models;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
@@ -320,26 +321,40 @@ namespace Spectero.daemon.Controllers
                     break;
                 case bool _ when type == typeof(OpenVPN):
                     // OpenVPN is a multi-instance service
-                    var allListeners = new List<Tuple<string, int, TransportProtocols, string>>();
+                    var allListeners = new List<OpenVPNListener>();
+                    OpenVPNConfig sanitizedOpenVPNConfig = null;
+
                     foreach (var vpnConfig in configs)
                     {
                         var castConfig = vpnConfig as OpenVPNConfig;
                         if (castConfig?.listener != null)
                         {
                             // ReSharper disable once InconsistentNaming
-                            var translatedIP = await _ipResolver.Translate(castConfig.listener.Item1);
-                            allListeners.Add(new Tuple<string, int, TransportProtocols, string>(translatedIP.ToString(), castConfig.listener.Item2,
-                                castConfig.listener.Item3, castConfig.listener.Item4));
+                            var translatedIP = await _ipResolver.Translate(castConfig.listener.IPAddress);
+
+                            // This is done to force a translation of local addresses
+                            castConfig.listener.IPAddress = translatedIP.ToString();
+
+                            allListeners.Add(castConfig.listener);
+
+                            // Setting it only once would be ideal, but eh -- overhead is low enough to make this work.
+                            sanitizedOpenVPNConfig = castConfig;
                         }
                     }
 
-                    serviceReference.AccessConfig = await _razorLightEngine.CompileRenderAsync("OpenVPNUser", new
+                    if (!allListeners.IsNullOrEmpty())
                     {
-                        listeners = allListeners,
-                        User = user,
-                        identity = _identityProvider.GetGuid()
-                    });
-                    serviceReference.AccessCredentials = user?.CertKey;
+                        serviceReference.AccessConfig = await _razorLightEngine.CompileRenderAsync("OpenVPNUser", new OpenVPNUserConfig
+                        {
+                            Listeners = allListeners,
+                            User = user,
+                            Identity = _identityProvider.GetGuid().ToString(),
+                            BaseConfig = sanitizedOpenVPNConfig
+                        });
+
+                        serviceReference.AccessCredentials = user?.CertKey;
+                    }
+
                     break;
             }
 
