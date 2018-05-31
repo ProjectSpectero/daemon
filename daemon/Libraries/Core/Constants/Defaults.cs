@@ -37,16 +37,31 @@ namespace Spectero.daemon.Libraries.Core.Constants
                     redirectGateway = new List<RedirectGatewayOptions> {RedirectGatewayOptions.Def1},
                     dhcpOptions = new List<Tuple<DhcpOptions, string>>(),
                     MaxClients = 1024
+
                 };
 
                 return new Lazy<OpenVPNConfig>(config);
             }
         }
 
-        public static List<Tuple<string, int, TransportProtocols, string>> OpenVPNListeners => new List<Tuple<string, int, TransportProtocols, string>>
+        public static List<OpenVPNListener> OpenVPNListeners => new List<OpenVPNListener>
         {
-            {Tuple.Create("0.0.0.0", 1194, TransportProtocols.TCP, "172.16.224.0/24")},
-            {Tuple.Create("0.0.0.0", 1194, TransportProtocols.UDP, "172.16.225.0/24")}
+            new OpenVPNListener
+            {
+                IPAddress = "0.0.0.0",
+                Protocol = TransportProtocols.TCP,
+                Port = 1194,
+                ManagementPort = 35100, // TODO: Define a formal "Port Management" service to allocate (and additionally forward through NAT) these.
+                Network = "172.16.224.0/24"
+            },
+            new OpenVPNListener
+            {
+                IPAddress = "0.0.0.0",
+                Protocol = TransportProtocols.UDP,
+                Port = 1194,
+                ManagementPort = 35101, // TODO: Define a formal "Port Management" service to allocate (and additionally forward through NAT) these.
+                Network = "172.16.225.0/24"
+            }
         };
     }
 }

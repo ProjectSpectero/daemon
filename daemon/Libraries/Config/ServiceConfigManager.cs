@@ -15,6 +15,7 @@ using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
+using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Libraries.Config
@@ -121,7 +122,7 @@ namespace Spectero.daemon.Libraries.Config
 
                         var listenerConfigInJson = _db.Single<Configuration>(x => x.Key == ConfigKeys.OpenVPNListeners);
                         var listeners =
-                            JsonConvert.DeserializeObject<List<Tuple<string, int, TransportProtocols, string>>>(
+                            JsonConvert.DeserializeObject<List<OpenVPNListener>>(
                                 listenerConfigInJson.Value);
 
                         if (baseOpenVPNConfig == null || listeners == null || listeners.Count == 0)

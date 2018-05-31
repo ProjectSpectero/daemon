@@ -32,7 +32,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
          * string = Local subnet (IPNetwork)
          */
 
-        public Tuple<string, int, TransportProtocols, string> listener;
+        public OpenVPNListener listener;
 
         public bool ClientToClient;
 
@@ -41,6 +41,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public List<IPNetwork> pushedNetworks;
 
         public List<RedirectGatewayOptions> redirectGateway;
+        public int ManagementPort;
 
         
 

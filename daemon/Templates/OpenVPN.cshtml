@@ -7,7 +7,7 @@
 @{
     DisableEncoding = true;
 
-    var localNetwork = IPNetwork.Parse(Model.listener.Item4);
+    var localNetwork = IPNetwork.Parse(Model.listener.Network);
     var localNetMask = localNetwork.Netmask;
 
     var pkcs12Header = Model.PKCS12Certificate.Substring(0, 64);
@@ -15,7 +15,7 @@
 
     var listenerString = "";
 
-    switch (Model.listener.Item3)
+    switch (Model.listener.Protocol)
     {
         case TransportProtocols.TCP:
             listenerString = "tcp-server";
@@ -33,8 +33,8 @@
 # Which local IP address should OpenVPN
 # listen on? (optional)
 
-local @Model.listener.Item1
-port @Model.listener.Item2
+local @Model.listener.IPAddress
+port @Model.listener.Port
 
 # Options - [proto-uninitialized] [udp] [tcp-server] [tcp-client] [tcp] [udp6] [tcp6-server] [tcp6-client] [tcp6]
 proto @listenerString
@@ -326,4 +326,5 @@ verb 3
 # category will be output to the log.
 mute 5
 
-management 127.0.0.1 52412
+
+management 127.0.0.1 @Model.listener.ManagementPort
