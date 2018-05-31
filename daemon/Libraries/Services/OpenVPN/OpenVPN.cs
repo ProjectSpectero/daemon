@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Statistics;
+using Spectero.daemon.Libraries.Errors;
 
 namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
@@ -133,22 +134,27 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 }
                 catch (Exception exception)
                 {
-                    // Failed to find OpenVPN in the system.
-                    // TODO: Talk to paul and throw exception.
+                    // OpenVPN wasn't found.
+                    throw new EInternalError();
                 }
             }
             // Windows - Check Program Files Installations.
             else if (AppConfig.isWindows)
             {
+                // Potential installation paths of OpenVPN.
                 string[] potentialOpenVpnPaths =
                 {
                     "C:\\Program Files (x86)\\OpenVPN\\bin\\OpenVPN.exe",
                     "C:\\Program Files\\OpenVPN\\bin\\OpenVPN.exe",
                 };
 
+                // Iterate through each potential path and find what exists.
                 foreach (var currentOpenVpnPath in potentialOpenVpnPaths)
                     if (File.Exists(currentOpenVpnPath))
                         binaryPath = currentOpenVpnPath;
+
+                // Check if we haven't found anything, if not throw an error.
+                if (binaryPath == null) throw new EInternalError();
             }
             else
             {
@@ -173,7 +179,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             // Run the commmand
             var command = Command.Run(DetermineBinaryPath(), configPath);
 
-            // Keep track of the runnign command
+            // Keep track of the running command
             _runningCommands.Add(command);
         }
 
