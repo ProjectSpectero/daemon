@@ -70,7 +70,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             // Check if the engine exists.
             if (_engine == null)
                 // The engine does not exist, throw an exception.
-                throw RazorLightMissingException();
+                throw RazorLightEngineMissingException();
 
             // Return the rendered template.
             return await _engine.CompileRenderAsync("OpenVPN", this);
@@ -80,7 +80,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Exception: throw this when the engine is missing.
         /// </summary>
         /// <returns></returns>
-        public Exception RazorLightMissingException()
+        public Exception RazorLightEngineMissingException()
         {
             return new Exception("# RazorLight Engine is missing - cannot convert.");
         }
