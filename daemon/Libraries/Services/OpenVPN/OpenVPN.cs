@@ -9,6 +9,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 
@@ -25,6 +26,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
         private readonly IMemoryCache _cache;
+        private readonly IProcessRunner _processRunner;
         private IEnumerable<OpenVPNConfig> _vpnConfig;
 
         // Class variables that will be modified.
@@ -52,10 +54,12 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// <param name="localAddresses"></param>
         /// <param name="statistician"></param>
         /// <param name="cache"></param>
+        /// <param name="processRunner"></param>
         public OpenVPN(AppConfig appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
             IEnumerable<IPNetwork> localNetworks, IEnumerable<IPAddress> localAddresses,
-            IStatistician statistician, IMemoryCache cache)
+            IStatistician statistician, IMemoryCache cache,
+            IProcessRunner processRunner)
         {
             // Inherit the objects.
             _appConfig = appConfig;
@@ -66,6 +70,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _statistician = statistician;
             _cache = cache;
             _localAddresses = localAddresses;
+            _processRunner = processRunner;
 
             // This is tracked so we can clean it up when stopping (assuming managed stop).
             _configsOnDisk = new List<string>();

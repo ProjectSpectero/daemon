@@ -1,4 +1,5 @@
-﻿using Medallion.Shell;
+﻿using ServiceStack;
+using Command = Medallion.Shell.Command;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner
 {
@@ -6,5 +7,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
     {
         private Command Command { get; set; }
         private ProcessOptions Options { get; set; }
+        private IService Caller { get; set; }
     }
 }

@@ -12,6 +12,7 @@ using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
@@ -29,6 +30,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly IEnumerable<IPAddress> _localAddresses;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
+
         private readonly List<string> _cacheKeys;
 
         private IMemoryCache _cache;
@@ -42,7 +44,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
             IEnumerable<IPNetwork> localNetworks, IEnumerable<IPAddress> localAddresses,
-            IStatistician statistician, IMemoryCache cache)
+            IStatistician statistician, IMemoryCache cache,
+            IProcessRunner processRunner)
         {
             _appConfig = appConfig;
             _logger = logger;

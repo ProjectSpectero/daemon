@@ -29,6 +29,7 @@ using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.HTTP.Middlewares;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Migrations;
@@ -134,6 +135,8 @@ namespace Spectero.daemon
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
 
             services.AddSingleton<Apm, Apm>();
+
+            services.AddSingleton<IProcessRunner, ProcessRunner>();
 
             services.AddMvc();
 
