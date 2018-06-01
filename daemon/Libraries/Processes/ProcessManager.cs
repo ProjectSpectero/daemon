@@ -145,7 +145,7 @@ namespace Spectero.daemon.Libraries.Processes
                 _initializer));
 
             // Check if we should agressively close all the processes.
-            if (force)
+            if (!force)
                 // Safely.
                 CloseAllTrackedProcesses();
             else
