@@ -9,7 +9,6 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509;
 using ServiceStack.OrmLite;
-using Spectero.daemon.Libraries;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
