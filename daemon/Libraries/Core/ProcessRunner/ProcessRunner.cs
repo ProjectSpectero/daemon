@@ -19,7 +19,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             _config = configMonitor.CurrentValue;
             _logger = logger;
 
-            // This tracks the long running processes, what options triggered the process, and the caller (whose state we have to synced with)
+            // This tracks the long running processes, what options triggered the process, and the caller (whose state we have to be synced with)
             _runningCommands = new List<CommandHolder>();
         }
 
@@ -28,7 +28,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // TODO: @Andrew - implement this
             // If process is Daemonized, add it to _runningCommands.
 
-            // Process restart should ONLY be attempted if the caller itself is stull running (Run IService#GetState), and try to do these in a async way.
+            // Process restart should ONLY be attempted if the caller itself is still running (Run IService#GetState), and try to do these in a async way.
        
             throw new System.NotImplementedException();
         }
