@@ -12,6 +12,7 @@ using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
+using Spectero.daemon.Libraries.Processes;
 
 namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
@@ -28,6 +29,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly IMemoryCache _cache;
         private readonly IProcessRunner _processRunner;
         private IEnumerable<OpenVPNConfig> _vpnConfig;
+        private readonly ProcessManager _processManager;
 
         // Class variables that will be modified.
         private readonly ServiceState State = ServiceState.Halted;
@@ -75,6 +77,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             // This is tracked so we can clean it up when stopping (assuming managed stop).
             _configsOnDisk = new List<string>();
             _runningCommands = new List<Command>();
+
+            // Initialize a new process manager.
+            _processManager = new ProcessManager("OpenVPN", logger);
         }
 
         /// <summary>

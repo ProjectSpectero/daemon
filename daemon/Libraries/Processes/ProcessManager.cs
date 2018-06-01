@@ -12,7 +12,7 @@ namespace Spectero.daemon.Libraries.Processes
     public class ProcessManager
     {
         private string _initializer;
-        private ILogger<object> _logger;
+        private readonly ILogger<object> _logger;
         private List<Command> _listOfCommands = new List<Command>();
 
         /// <summary>
