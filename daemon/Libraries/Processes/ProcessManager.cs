@@ -72,7 +72,7 @@ namespace Spectero.daemon.Libraries.Processes
             // Check to see if the process is already being tracked.
             if (_listOfCommands.Contains(referencedCommand))
             {
-                // TThe process is being tracked, remove it.
+                // The process is being tracked, remove it.
                 _listOfCommands.Remove(referencedCommand);
                 return true;
             }
@@ -93,15 +93,35 @@ namespace Spectero.daemon.Libraries.Processes
         /// Forget all of the tracked processes.
         /// The processes that were previously tracked will still retain their state, just forgotten.
         /// </summary>
-        public void ClearTrackedProcesses() => _listOfCommands = new List<Command>();
+        public void ClearTrackedProcesses()
+        {
+            // Empty the list
+            _listOfCommands = new List<Command>();
+
+            _logger.LogInformation(string.Format("{0}'s Process Manager has forgotten it's contents.",
+                _initializer));
+        }
 
         /// <summary>
-        /// Terminate all tracked processes.
+        /// close all tracked processes gracefully.
+        /// </summary>
+        public void CloseAllTrackedProcesses()
+        {
+            foreach (var command in GetTrackedProcesses())
+                command.Process.Close();
+            _logger.LogInformation(string.Format("{0}'s Process Manager has gracefully closed all processes.",
+                _initializer));
+        }
+
+        /// <summary>
+        /// Terminate all tracked processes forcefully.
         /// </summary>
         public void TerminateAllTrackedProcesses()
         {
             foreach (var command in GetTrackedProcesses())
                 command.Process.Kill();
+            _logger.LogInformation(string.Format("{0}'s Process Manager has forcefully closed all processes.",
+                _initializer));
         }
 
         /// <summary>
@@ -112,14 +132,27 @@ namespace Spectero.daemon.Libraries.Processes
         {
             foreach (var command in GetTrackedProcesses())
                 command.Process.Start();
+            _logger.LogInformation(string.Format("{0}'s Process Manager has successfully started all processes.",
+                _initializer));
         }
 
         /// <summary>
         /// Restart all tracked processes.
         /// </summary>
-        public void RestartAllTrackedProcesses()
+        public void RestartAllTrackedProcesses(bool force = false)
         {
-            TerminateAllTrackedProcesses();
+            _logger.LogInformation(string.Format("{0}'s Process Manager was instructed to restart all processes.",
+                _initializer));
+
+            // Check if we should agressively close all the processes.
+            if (force)
+                // Safely.
+                CloseAllTrackedProcesses();
+            else
+                // Aggressive.
+                TerminateAllTrackedProcesses();
+
+            // Start them all again.
             StartAllTrackedProcesses();
         }
 
