@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,7 +14,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
     {
         private readonly AppConfig _config;
         private readonly ILogger<ProcessRunner> _logger;
-        private List<CommandHolder> _runningCommands;
+        private List<CommandHolder> _runningCommands = new List<CommandHolder>();
 
         /// <summary>
         /// Class constructor.
@@ -24,9 +25,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         {
             _config = configMonitor.CurrentValue;
             _logger = logger;
-
-            // This tracks the long running processes, what options triggered the process, and the caller (whose state we have to be synced with)
-            _runningCommands = new List<CommandHolder>();
         }
 
         /// <summary>
@@ -47,8 +45,46 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // Keep track of the object.
             Track(commandHolder);
 
+            // Check if we should monitor.
+            if (commandHolder.Options.Monitor)
+            {
+                // Monitor thread.
+                new Thread(() =>
+                    Worker(commandHolder)
+                ).Start();
+            }
+
             // Return
             return commandHolder;
+        }
+
+        public void Worker(CommandHolder refCommandHolder)
+        {
+            // Wait for it to be tracked.
+            while (!_runningCommands.Contains(refCommandHolder)) Thread.Sleep(100);
+
+            // While we should track the process.
+            while (_runningCommands.Contains(refCommandHolder))
+            {
+                // Check if we need to restart the command
+                if (refCommandHolder.Command.Process.HasExited && refCommandHolder.Options.Daemonized)
+                {
+                    // Restart the process.
+                    refCommandHolder.Command.Process.Start();
+                }
+                else if (refCommandHolder.Command.Process.HasExited && !refCommandHolder.Options.Daemonized)
+                {
+                    // Exit the loop.
+                    // TODO(communicate with paul): Should we stop tracking the object, is the tread the best way to go about this? I'm unsure.
+                    break;
+                }
+
+                // Wait for the monitoring interval.
+                Thread.Sleep(refCommandHolder.Options.MonitoringInterval * 1000);
+            }
+
+            if (refCommandHolder.Options.DisposeOnExit)
+                _runningCommands.Remove(refCommandHolder);
         }
 
         /// <summary>
