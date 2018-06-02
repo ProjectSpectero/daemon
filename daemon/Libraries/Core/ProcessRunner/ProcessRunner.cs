@@ -47,7 +47,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // Keep track of the object.
             Track(commandHolder);
 
-
             // Return
             return commandHolder;
         }
@@ -115,9 +114,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <summary>
         /// close all tracked processes gracefully.
         /// </summary>
-        public void CloseAllTrackedProcesses()
+        public void CloseAllTrackedCommands()
         {
-            foreach (var commandHolder in GetRunningCommands())
+            foreach (var commandHolder in _runningCommands)
                 commandHolder.Command.Process.Close();
         }
 
@@ -131,7 +130,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         }
 
         /// <summary>
-        /// Start all the processes in the class list.
+        /// Start all the commands in the class list.
         /// This function is meant to only be called internally.
         /// </summary>
         private void StartAllTrackedCommands()
@@ -141,14 +140,14 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         }
 
         /// <summary>
-        /// Restart all tracked processes.
+        /// Restart all tracked commands.
         /// </summary>
         public void RestartAllTrackedProcesses(bool force = false)
         {
             // Check if we should agressively close all the processes.
             if (!force)
                 // Safely.
-                CloseAllTrackedProcesses();
+                CloseAllTrackedCommands();
             else
                 // Aggressive.
                 TerminateAllTrackedCommands();
