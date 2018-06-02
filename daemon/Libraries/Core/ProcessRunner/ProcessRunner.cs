@@ -50,7 +50,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             {
                 // Monitor thread.
                 new Thread(() =>
-                    Worker(commandHolder)
+                    Monitor(commandHolder)
                 ).Start();
             }
 
@@ -58,7 +58,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             return commandHolder;
         }
 
-        public void Worker(CommandHolder refCommandHolder)
+        public void Monitor(CommandHolder refCommandHolder)
         {
             // Wait for it to be tracked.
             while (!_runningCommands.Contains(refCommandHolder)) Thread.Sleep(100);
@@ -67,16 +67,20 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             while (_runningCommands.Contains(refCommandHolder))
             {
                 // Check if we need to restart the command
-                if (refCommandHolder.Command.Process.HasExited && refCommandHolder.Options.Daemonized)
+                if (refCommandHolder.Command.Process.HasExited)
                 {
-                    // Restart the process.
-                    refCommandHolder.Command.Process.Start();
-                }
-                else if (refCommandHolder.Command.Process.HasExited && !refCommandHolder.Options.Daemonized)
-                {
-                    // Exit the loop.
-                    // TODO(communicate with paul): Should we stop tracking the object, is the tread the best way to go about this? I'm unsure.
-                    break;
+                    // check if we should restar the process if it does.
+                    if (refCommandHolder.Options.Daemonized)
+                    {
+                        // Restart the process.
+                        refCommandHolder.Command.Process.Start();
+                    }
+                    else
+                    {
+                        // Exit the loop.
+                        // TODO(communicate with paul): Should we stop tracking the object, is the tread the best way to go about this? I'm unsure.
+                        break;
+                    }
                 }
 
                 // Wait for the monitoring interval.
