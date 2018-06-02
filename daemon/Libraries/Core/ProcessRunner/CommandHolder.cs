@@ -1,12 +1,12 @@
-﻿using ServiceStack;
+﻿using Spectero.daemon.Libraries.Services;
 using Command = Medallion.Shell.Command;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner
 {
     public class CommandHolder
     {
-        private Command Command { get; set; }
-        private ProcessOptions Options { get; set; }
-        private IService Caller { get; set; }
+        public Command Command { get; set; }
+        public ProcessOptions Options { get; set; }
+        public IService Caller { get; set; }
     }
 }
