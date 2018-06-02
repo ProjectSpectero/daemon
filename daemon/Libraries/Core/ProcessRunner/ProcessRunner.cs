@@ -42,6 +42,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 Caller = caller
             };
 
+            // Start the command and append it.
+            commandHolder.Command = Command.Run(commandHolder.Options.Executable, commandHolder.Options.Arguments);
+
             // Keep track of the object.
             Track(commandHolder);
 
