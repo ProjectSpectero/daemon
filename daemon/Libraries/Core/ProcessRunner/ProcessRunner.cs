@@ -124,7 +124,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <summary>
         /// Terminate all tracked processes forcefully.
         /// </summary>
-        public void TerminateAllTrackedProcesses()
+        public void TerminateAllTrackedCommands()
         {
             foreach (var commandHolder in _runningCommands)
                 commandHolder.Command.Process.Kill();
@@ -134,7 +134,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// Start all the processes in the class list.
         /// This function is meant to only be called internally.
         /// </summary>
-        private void StartAllTrackedProcesses()
+        private void StartAllTrackedCommands()
         {
             foreach (var commandHolder in _runningCommands)
                 commandHolder.Command.Process.Start();
@@ -148,13 +148,13 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // Check if we should agressively close all the processes.
             if (!force)
                 // Safely.
-                CloseAllTrackedCommands();
+                CloseAllTrackedProcesses();
             else
                 // Aggressive.
-                TerminateAllTrackedProcesses();
+                TerminateAllTrackedCommands();
 
             // Start them all again.
-            StartAllTrackedProcesses();
+            StartAllTrackedCommands();
         }
     }
 }
