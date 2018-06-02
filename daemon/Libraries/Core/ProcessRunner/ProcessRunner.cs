@@ -142,7 +142,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <summary>
         /// Restart all tracked commands.
         /// </summary>
-        public void RestartAllTrackedProcesses(bool force = false)
+        public void RestartAllTrackedCommands(bool force = false)
         {
             // Check if we should agressively close all the processes.
             if (!force)
