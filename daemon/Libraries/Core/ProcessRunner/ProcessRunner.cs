@@ -45,8 +45,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // Start the command and append it.
             commandHolder.Command = Command.Run(commandHolder.Options.Executable, commandHolder.Options.Arguments);
 
-            // Keep track of the object.
-            Track(commandHolder);
+            // Monitor the output.
+            CommandLogger.LatchQuickly(_logger, commandHolder);
 
             // Check if we should monitor.
             if (commandHolder.Options.Monitor)
@@ -56,6 +56,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     Monitor(commandHolder)
                 ).Start();
             }
+
+            // Keep track of the object.
+            Track(commandHolder);
 
             // Return
             return commandHolder;
