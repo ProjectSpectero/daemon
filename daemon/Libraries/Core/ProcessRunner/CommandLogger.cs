@@ -15,7 +15,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="commandHolder"></param>
-        public static void LatchQuickly(ILogger<object> logger, CommandHolder commandHolder)
+        public static void LatchQuickly(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
         {
             // Start the standard stream reader.
             new Thread(() => { Standard(logger, commandHolder); }).Start();
@@ -29,7 +29,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="commandHolder"></param>
-        public static async void Standard(ILogger<object> logger, CommandHolder commandHolder)
+        public static async void Standard(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
         {
             string line;
             while ((line = await commandHolder.Command.StandardOutput.ReadLineAsync().ConfigureAwait(false)) != null)
@@ -41,7 +41,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="commandHolder"></param>
-        public static async void Error(ILogger<object> logger, CommandHolder commandHolder)
+        public static async void Error(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
         {
             string line;
             while ((line = await commandHolder.Command.StandardError.ReadLineAsync().ConfigureAwait(false)) != null)
