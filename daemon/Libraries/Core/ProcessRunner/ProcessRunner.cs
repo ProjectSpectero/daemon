@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
@@ -23,6 +24,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <param name="logger"></param>
         public ProcessRunner(IOptionsMonitor<AppConfig> configMonitor, ILogger<ProcessRunner> logger)
         {
+            // Inherit the attributes.
             _config = configMonitor.CurrentValue;
             _logger = logger;
         }
@@ -35,15 +37,21 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <returns></returns>
         public CommandHolder Run(ProcessOptions processOptions, IService caller)
         {
+            // Other process related information.
+            var processInfo = new ProcessStartInfo()
+            {
+                WorkingDirectory = processOptions.WorkingDirectory
+            };
+
             // Convert the options into a new command holder.
             var commandHolder = new CommandHolder
             {
                 Options = processOptions,
-                Caller = caller
+                Caller = caller,
+                Command = new Shell(
+                    e => e.ThrowOnError()
+                ).Run(processOptions.Executable, processOptions.Arguments, processInfo)
             };
-
-            // Start the command and append it.
-            commandHolder.Command = Command.Run(commandHolder.Options.Executable, commandHolder.Options.Arguments);
 
             // Monitor the output.
             CommandLogger.LatchQuickly(_logger, commandHolder);
@@ -64,22 +72,22 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             return commandHolder;
         }
 
-        public void Monitor(CommandHolder refCommandHolder)
+        public void Monitor(CommandHolder commandHolder)
         {
             // Wait for it to be tracked.
-            while (!_runningCommands.Contains(refCommandHolder)) Thread.Sleep(100);
+            while (!_runningCommands.Contains(commandHolder)) Thread.Sleep(100);
 
             // While we should track the process.
-            while (_runningCommands.Contains(refCommandHolder))
+            while (_runningCommands.Contains(commandHolder))
             {
                 // Check if we need to restart the command
-                if (refCommandHolder.Command.Process.HasExited)
+                if (commandHolder.Command.Process.HasExited)
                 {
                     // check if we should restar the process if it does.
-                    if (refCommandHolder.Options.Daemonized)
+                    if (commandHolder.Options.Daemonized)
                     {
                         // Restart the process.
-                        refCommandHolder.Command.Process.Start();
+                        commandHolder.Command.Process.Start();
                     }
                     else
                     {
@@ -90,41 +98,41 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 }
 
                 // Wait for the monitoring interval.
-                Thread.Sleep(refCommandHolder.Options.MonitoringInterval * 1000);
+                Thread.Sleep(commandHolder.Options.MonitoringInterval * 1000);
             }
 
-            if (refCommandHolder.Options.DisposeOnExit)
-                _runningCommands.Remove(refCommandHolder);
+            if (commandHolder.Options.DisposeOnExit)
+                _runningCommands.Remove(commandHolder);
         }
 
         /// <summary>
         /// Start tracking a command.
         /// </summary>
-        /// <param name="referencedCommand"></param>
-        public void Track(CommandHolder referencedCommand) => _runningCommands.Add(referencedCommand);
+        /// <param name="commandHolder"></param>
+        public void Track(CommandHolder commandHolder) => _runningCommands.Add(commandHolder);
 
         /// <summary>
         /// Start tracking a list of processes
         /// </summary>
         /// <param name="referencedCommandList"></param>
-        public void Track(List<CommandHolder> referencedCommandList)
+        public void Track(List<CommandHolder> commandHolderList)
         {
-            foreach (var command in referencedCommandList)
+            foreach (var command in commandHolderList)
                 _runningCommands.Add(command);
         }
 
         /// <summary>
         /// Stop tracking a process.
         /// </summary>
-        /// <param name="referencedCommandHolder"></param>
+        /// <param name="commandHolder"></param>
         /// <returns></returns>
-        public bool Untrack(CommandHolder referencedCommandHolder)
+        public bool Untrack(CommandHolder commandHolder)
         {
             // Check to see if the process is already being tracked.
-            if (_runningCommands.Contains(referencedCommandHolder))
+            if (_runningCommands.Contains(commandHolder))
             {
                 // The process is being tracked, remove it.
-                _runningCommands.Remove(referencedCommandHolder);
+                _runningCommands.Remove(commandHolder);
                 return true;
             }
             else

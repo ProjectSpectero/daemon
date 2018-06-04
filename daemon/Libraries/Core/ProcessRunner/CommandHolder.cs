@@ -1,4 +1,5 @@
-﻿using Spectero.daemon.Libraries.Services;
+﻿using Medallion.Shell;
+using Spectero.daemon.Libraries.Services;
 using Command = Medallion.Shell.Command;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner
