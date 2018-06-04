@@ -196,7 +196,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             {
                 Daemonized =  true,
                 Monitor =  true,
-                WorkingDirectory = "to be changed"
+                WorkingDirectory = Path.Combine(Program.GetAssemblyLocation(), "3rdParty\\OpenVPN")
             };
 
             // Add to the ProcessRunner
