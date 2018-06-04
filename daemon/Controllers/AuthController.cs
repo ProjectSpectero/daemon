@@ -65,8 +65,8 @@ namespace Spectero.daemon.Controllers
 
                     var claims = new[]
                     {
-                    new Claim(ClaimTypes.UserData, userJson),
-                };
+                        new Claim(ClaimTypes.UserData, userJson),
+                    };
 
                     var key = _cryptoService.GetJWTSigningKey();
                     var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Hardcoded alg for now, perhaps allow changing later
