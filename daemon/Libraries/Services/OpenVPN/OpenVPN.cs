@@ -13,7 +13,6 @@ using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
-using Spectero.daemon.Libraries.Processes;
 
 namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
@@ -207,19 +206,15 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Start the OpenVPN Service from the provided List{IServiceConfig}.
         /// </summary>
         /// <param name="serviceConfig"></param>
-        public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
-        {
-           Initialize(serviceConfig);
-        }
+        public void Start(IEnumerable<IServiceConfig> serviceConfig = null) =>
+            Initialize(serviceConfig);
 
         /// <summary>
         /// Restart the OpenVPN Service.
         /// </summary>
         /// <param name="serviceConfig"></param>
-        public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
-        {
+        public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null) =>
             _vpnConfig = serviceConfig as List<OpenVPNConfig>;
-        }
 
         /// <summary>
         /// TODO: IMPLEMENT THIS FUNCTION.
@@ -234,6 +229,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// </summary>
         public void Stop()
         {
+            // Stop all running configurations
+            _processRunner.CloseAllTrackedCommands();
+
             // Iterate through each configuration on the disk.
             foreach (var fileOnDisk in _configsOnDisk)
                 File.Delete(fileOnDisk);
@@ -253,14 +251,16 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// The _vpnConfig is a private class variable, and this should be considered as a getter.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<IServiceConfig> GetConfig() => _vpnConfig;
+        public IEnumerable<IServiceConfig> GetConfig() => 
+            _vpnConfig;
 
         /// <summary>
         /// TODO: IMPLEMENT THIS FUNCTION.
         /// Get the state of the logger.
         /// </summary>
         /// <param name="caller"></param>
-        public void LogState(string caller) => new NotSupportedException();
+        public void LogState(string caller) => 
+            new NotSupportedException();
 
         /// <summary>
         /// Apply a list of configurations to this instance of the OpenVPN Class.
