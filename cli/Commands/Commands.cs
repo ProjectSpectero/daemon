@@ -4,6 +4,9 @@ namespace Spectero.daemon.CLI.Commands
 {
     public enum Commands
     {
+        [Command(typeof(ScopedAuthentication), Description = "Service specific authentication helper, meant for invocation by 3rd party binaries.")]
+        auth,
+
         [Command(typeof(ConnectToSpecteroCloud), Description = "Automagic connection to the Spectero Cloud")]
         connect,
 

@@ -7,6 +7,7 @@ using System.Net;
 using Medallion.Shell;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
@@ -29,12 +30,10 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly IMemoryCache _cache;
         private readonly IProcessRunner _processRunner;
         private IEnumerable<OpenVPNConfig> _vpnConfig;
-        private readonly ProcessManager _processManager;
 
         // Class variables that will be modified.
         private readonly ServiceState State = ServiceState.Halted;
         private readonly List<string> _configsOnDisk;
-        private readonly List<Command> _runningCommands;
 
         /// <summary>
         /// Standard Constructor
@@ -76,10 +75,6 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
             // This is tracked so we can clean it up when stopping (assuming managed stop).
             _configsOnDisk = new List<string>();
-            _runningCommands = new List<Command>();
-
-            // Initialize a new process manager.
-            _processManager = new ProcessManager("OpenVPN", logger);
         }
 
         /// <summary>
@@ -126,7 +121,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Determine the absolute path of OpenVPN.
         /// </summary>
         /// <returns></returns>
-        private static string DetermineBinaryPath()
+        private string DetermineBinaryPath()
         {
             // Placeholder varaiuble to store the path.
             string binaryPath = null;
@@ -137,15 +132,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 // Attempt to properly find the path of OpenVPN
                 try
                 {
-                    var whichFinder = Command.Run("which", "openvpn");
+                    var whichFinder = Medallion.Shell.Command.Run("which", "openvpn");
 
                     // Parse the output and get the absolute path.
                     binaryPath = whichFinder.StandardOutput.GetLines().ToList()[0];
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
                     // OpenVPN wasn't found.
-                    throw new EInternalError();
                 }
             }
             // Windows - Check Program Files Installations.
@@ -161,10 +155,10 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 // Iterate through each potential path and find what exists.
                 foreach (var currentOpenVpnPath in potentialOpenVpnPaths)
                     if (File.Exists(currentOpenVpnPath))
+                    {
                         binaryPath = currentOpenVpnPath;
-
-                // Check if we haven't found anything, if not throw an error.
-                if (binaryPath == null) throw new EInternalError();
+                        break; // No need to needlessly continue the loop if we found what we were looking for.
+                    }                        
             }
             else
             {
@@ -173,8 +167,19 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 );
             }
 
+            CheckBinaryPath(binaryPath);
+
             // Return the found path.
             return binaryPath;
+        }
+
+        private void CheckBinaryPath (string binaryPath)
+        {
+            if (binaryPath.IsNullOrEmpty())
+            {
+                _logger.LogError("OpenVPN init: we couldn't find the OpenVPN binary. Please make sure it is installed (for Unix: use your package manager), for Windows: download and install the binary distribution.");
+                throw new EInternalError(); // TODO: Dress this up properly to make disclosing just what the hell went wrong easier.
+            }
         }
 
         /// <summary>
@@ -187,10 +192,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private void StartDaemon(string configPath)
         {
             // Run the commmand
-            var command = Command.Run(DetermineBinaryPath(), configPath);
-
-            // Keep track of the running command
-            _runningCommands.Add(command);
+            var command = Medallion.Shell.Command.Run(DetermineBinaryPath(), configPath);
         }
 
         /// <summary>
@@ -199,7 +201,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// <param name="serviceConfig"></param>
         public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
         {
-            Initialize(serviceConfig);
+           Initialize(serviceConfig);
         }
 
         /// <summary>

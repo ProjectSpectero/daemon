@@ -16,5 +16,7 @@
         public const string USER_AUTHKEY_FLATTENED = "USER_AUTHKEY_FLATTENED";
 
         public const string SPECTERO_USERNAME_PASSWORD = "SPECTERO_USERNAME_PASSWORD";
+
+        public const string AUTHENTICATION_SUCCEEDED = "AUTHENTICATION_SUCCEEDED";
     }
 }

@@ -37,6 +37,81 @@ namespace Spectero.daemon.Controllers
             _cryptoService = cryptoService;
         }
 
+        private async Task<IActionResult> ScopeAwareAuthentication(string username, string password, Models.User.Action scope)
+        {
+            var user = await _authenticator.Authenticate(username, password, scope);
+            if (user == null)
+                _response.Errors.Add(Errors.AUTHENTICATION_FAILED, "");
+
+            if (HasErrors()) return StatusCode(403, _response);
+
+            _response.Message = Messages.AUTHENTICATION_SUCCEEDED;
+
+            switch (scope)
+            {
+                case Models.User.Action.ManageApi:
+                case Models.User.Action.ManageDaemon:
+
+                    // Intentionally hidden to keep the JWT length manageable
+                    user.Cert = null;
+                    user.CertKey = null;
+
+                    var userJson = JsonConvert.SerializeObject(user,
+                        new JsonSerializerSettings
+                        {
+                            ContractResolver = new CamelCasePropertyNamesContractResolver()
+                        }
+                    );
+
+                    var claims = new[]
+                    {
+                    new Claim(ClaimTypes.UserData, userJson),
+                };
+
+                    var key = _cryptoService.GetJWTSigningKey();
+                    var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Hardcoded alg for now, perhaps allow changing later
+
+                    var accessExpires =
+                        DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0
+                            ? AppConfig.JWTTokenExpiryInMinutes
+                            : 60); // 60 minutes by default
+
+                    var token = new JwtSecurityToken
+                    (
+                        // Can't issue aud/iss since we have no idea what the accessing URL will be.
+                        // This is not a typical webapp with static `Host`
+                        claims: claims,
+                        expires: accessExpires,
+                        signingCredentials: credentials
+                    );
+
+                    var accessToken = new Token
+                    {
+                        token = new JwtSecurityTokenHandler().WriteToken(token),
+                        expires = ((DateTimeOffset)accessExpires).ToUnixTimeSeconds()
+                    };
+
+                    var refreshExpires =
+                        accessExpires.AddMinutes(AppConfig.JWTRefreshTokenDelta > 0 ? AppConfig.JWTRefreshTokenDelta : 30);
+
+                    var refreshToken = new Token
+                    {
+                        token = null,
+                        expires = ((DateTimeOffset)refreshExpires).ToUnixTimeSeconds()
+                    };
+
+                    _response.Message = Messages.JWT_TOKEN_ISSUED;
+                    _response.Result = new AuthResponse
+                    {
+                        Access = accessToken,
+                        Refresh = refreshToken
+                    };
+                    break;
+            }
+
+            return Ok(_response);
+        }
+
         [HttpPost("", Name = "RequestJWTToken")]
         [AllowAnonymous]
         public async Task<IActionResult> AuthenticateUser([FromBody] TokenRequest request)
@@ -54,71 +129,33 @@ namespace Spectero.daemon.Controllers
 
             var username = request.AuthKey;
             var password = request.Password;
-            var user = await _authenticator.Authenticate(username, password, Models.User.Action.ManageApi);
 
-            if (user != null)
+            Models.User.Action scope;
+
+            switch (request.ServiceScope)
             {
-                // Intentionally hidden to keep the JWT length manageable
-                user.Cert = null;
-                user.CertKey = null;
+                case "HTTPProxy":
+                    scope = Models.User.Action.ConnectToHTTPProxy;
+                    break;
 
-                var userJson = JsonConvert.SerializeObject(user,
-                    new JsonSerializerSettings
-                    {
-                        ContractResolver = new CamelCasePropertyNamesContractResolver()
-                    }
-                );
+                case "OpenVPN":
+                    scope = Models.User.Action.ConnectToOpenVPN;
+                    break;
 
-                var claims = new[]
-                {
-                    new Claim(ClaimTypes.UserData, userJson),
-                    // Todo: Add roles
-                };
+                case "SSHTunnel":
+                    scope = Models.User.Action.ConnectToSSHTunnel;
+                    break;
 
-                var key = _cryptoService.GetJWTSigningKey();
-                var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Hardcoded alg for now, perhaps allow changing later
+                case "ShadowSOCKS":
+                    scope = Models.User.Action.ConnectToShadowSOCKS;
+                    break;
 
-                var accessExpires =
-                    DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0
-                        ? AppConfig.JWTTokenExpiryInMinutes
-                        : 60); // 60 minutes by default
-
-                var token = new JwtSecurityToken
-                (
-                    // Can't issue aud/iss since we have no idea what the accessing URL will be.
-                    // This is not a typical webapp with static `Host`
-                    claims: claims,
-                    expires: accessExpires,
-                    signingCredentials: credentials
-                );
-
-                var accessToken = new Token
-                {
-                    token = new JwtSecurityTokenHandler().WriteToken(token),
-                    expires = ((DateTimeOffset) accessExpires).ToUnixTimeSeconds()
-                };
-
-                var refreshExpires =
-                    accessExpires.AddMinutes(AppConfig.JWTRefreshTokenDelta > 0 ? AppConfig.JWTRefreshTokenDelta : 30);
-
-                var refreshToken = new Token
-                {
-                    token = null,
-                    expires = ((DateTimeOffset) refreshExpires).ToUnixTimeSeconds()
-                };
-
-                _response.Message = Messages.JWT_TOKEN_ISSUED;
-                _response.Result = new AuthResponse
-                {
-                    Access = accessToken,
-                    Refresh = refreshToken
-                };
-
-                return Ok(_response);
+                default:
+                    scope = Models.User.Action.ManageApi;
+                    break;
             }
-                
-            _response.Errors.Add(Errors.AUTHENTICATION_FAILED, ""); // Won't disclose why it failed, for that is a security risk
-            return StatusCode(403, _response);
+
+            return await ScopeAwareAuthentication(request.AuthKey, request.Password, scope);
         }
     }
 }
