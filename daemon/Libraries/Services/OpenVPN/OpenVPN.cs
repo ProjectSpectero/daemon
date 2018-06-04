@@ -191,8 +191,16 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// <param name="configPath"></param>
         private void StartDaemon(string configPath)
         {
-            // Run the commmand
-            var command = Medallion.Shell.Command.Run(DetermineBinaryPath(), configPath);
+            // Create 
+            var commandOptions = new ProcessOptions()
+            {
+                Daemonized =  true,
+                Monitor =  true,
+                WorkingDirectory = "to be changed"
+            };
+
+            // Add to the ProcessRunner
+            _processRunner.Run(commandOptions, this);
         }
 
         /// <summary>
