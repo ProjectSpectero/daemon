@@ -79,6 +79,15 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <None Update="3rdParty\OpenVPN\auth.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="3rdParty\OpenVPN\dh2048.params">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="3rdParty\OpenVPN\dh4096.params">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Database\.gitignore">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

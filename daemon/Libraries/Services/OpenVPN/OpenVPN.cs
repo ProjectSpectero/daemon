@@ -31,7 +31,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private IEnumerable<OpenVPNConfig> _vpnConfig;
 
         // Class variables that will be modified.
-        private readonly ServiceState State = ServiceState.Halted;
+        private readonly ServiceState State = ServiceState.Running;
         private readonly List<string> _configsOnDisk;
 
         /// <summary>

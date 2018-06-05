@@ -3,6 +3,12 @@ using Medallion.Shell;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner
 {
+    public class StreamProcessor
+    {
+        public Action<Command> StandardOutputProcessor;
+        public Action<Command> ErrorOutputProcessor;
+    }
+
     public class ProcessOptions
     {
         // The primary executable to call
@@ -28,7 +34,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
         // This is the function that we'll attach to the STDOUT/STDERR streams.
         // We'll also bundle a default implementation in the ProcessRunner if this is null which just `Log.Debug`s the generated data.
-        public Action<Command> StreamProcessor;
+        public StreamProcessor streamProcessor = new StreamProcessor();
 
         public string WorkingDirectory;
     }

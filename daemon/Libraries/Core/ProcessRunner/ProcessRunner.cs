@@ -38,7 +38,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <returns></returns>
         public CommandHolder Run(ProcessOptions processOptions, IService caller)
         {
-            if (caller.GetState() != ServiceState.Running || caller.GetState() != ServiceState.Restarting)
+            if (caller.GetState() != ServiceState.Running && caller.GetState() != ServiceState.Restarting)
             {
                 _logger.LogInformation("The service state prohibited a proccess from running.");
                 return null;
@@ -61,7 +61,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     ).Run(processOptions.Executable, processOptions.Arguments, processInfo)
                 };
 
-                // Monitor the output.
+                // Attach command objects
                 CommandLogger.LatchQuickly(_logger, commandHolder);
 
                 // Check if we should monitor.
