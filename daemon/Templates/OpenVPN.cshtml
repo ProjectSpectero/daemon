@@ -326,5 +326,8 @@ verb 3
 # category will be output to the log.
 mute 5
 
-
 management 127.0.0.1 @Model.listener.ManagementPort
+
+username-as-common-name
+script-security 2
+auth-user-pass-verify auth.sh via-file # TODO: Make this work with Windows / such too.
