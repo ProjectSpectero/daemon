@@ -38,6 +38,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <returns></returns>
         public CommandHolder Run(ProcessOptions processOptions, IService caller)
         {
+            if (caller.GetState() != ServiceState.Running || caller.GetState() != ServiceState.Restarting)
+                throw new Exception("The service state prohibits a proccess from running.");
+
             // Other process related information.
             var processInfo = new ProcessStartInfo()
             {
