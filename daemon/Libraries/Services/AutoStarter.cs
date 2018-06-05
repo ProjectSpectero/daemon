@@ -43,7 +43,7 @@ namespace Spectero.daemon.Libraries.Services
                 }
 
                 else
-                    _logger.LogInformation(string.Format("Autostart: Processed autostartup for {0}.", service));
+                    _logger.LogInformation(string.Format("Autostart: Processed autostartup for {0}.", error));
             }
         }
     }
