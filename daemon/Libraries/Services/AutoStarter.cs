@@ -32,17 +32,19 @@ namespace Spectero.daemon.Libraries.Services
 
                 if (result == Messages.ACTION_FAILED)
                 {
-                    _logger.LogError("Autostart: processing failed for " + service + "." + error);
+                    _logger.LogError(string.Format(
+                        "Autostart: Processing failed for {0}\n" +
+                        "(Reason: {0})", service, error
+                    ));
 
                     // Quit if the config dictates that we must, this allows failure tracking by NSM/SystemD/whatever else
                     if (_appConfig.HaltStartupIfServiceInitFails)
                         Environment.Exit(-1);
                 }
-                    
-                else
-                    _logger.LogInformation("Autostart: Processed autostartup for " + service);
-            }
 
+                else
+                    _logger.LogInformation(string.Format("Autostart: Processed autostartup for {0}.", service));
+            }
         }
     }
 }
