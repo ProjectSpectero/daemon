@@ -157,7 +157,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                     {
                         binaryPath = currentOpenVpnPath;
                         break; // No need to needlessly continue the loop if we found what we were looking for.
-                    }                        
+                    }
             }
             else
             {
@@ -172,12 +172,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             return binaryPath;
         }
 
-        private void CheckBinaryPath (string binaryPath)
+        private void CheckBinaryPath(string binaryPath)
         {
             if (binaryPath.IsNullOrEmpty())
             {
-                _logger.LogError("OpenVPN init: we couldn't find the OpenVPN binary. Please make sure it is installed (for Unix: use your package manager), for Windows: download and install the binary distribution.");
-                throw new EInternalError(); // TODO: Dress this up properly to make disclosing just what the hell went wrong easier.
+                _logger.LogError(
+                    "OpenVPN init: we couldn't find the OpenVPN binary. Please make sure it is installed (for Unix: use your package manager), for Windows: download and install the binary distribution.");
+                throw
+                    new EInternalError(); // TODO: Dress this up properly to make disclosing just what the hell went wrong easier.
             }
         }
 
@@ -188,19 +190,21 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Before Startup, we need to set the effective working directory to "3rdParty/OpenVPN"
         /// </summary>
         /// <param name="configPath"></param>
-        private void StartDaemon(string configPath)
-        {
-            // Create 
-            var commandOptions = new ProcessOptions()
-            {
-                Daemonized =  true,
-                Monitor =  true,
-                WorkingDirectory = Path.Combine(Program.GetAssemblyLocation(), "3rdParty\\OpenVPN")
-            };
-
-            // Add to the ProcessRunner
-            _processRunner.Run(commandOptions, this);
-        }
+        private void StartDaemon(string configPath) =>
+            _processRunner.Run(
+                // Instructions
+                new ProcessOptions()
+                {
+                    Executable = DetermineBinaryPath(),
+                    Arguments = new string[1] {configPath},
+                    Daemonized = true,
+                    Monitor = true,
+                    DisposeOnExit = false,
+                    WorkingDirectory = Path.Combine(Program.GetAssemblyLocation(), "3rdParty\\OpenVPN")
+                },
+                // The calling object.
+                this 
+            );
 
         /// <summary>
         /// Start the OpenVPN Service from the provided List{IServiceConfig}.
@@ -251,7 +255,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// The _vpnConfig is a private class variable, and this should be considered as a getter.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<IServiceConfig> GetConfig() => 
+        public IEnumerable<IServiceConfig> GetConfig() =>
             _vpnConfig;
 
         /// <summary>
@@ -259,7 +263,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Get the state of the logger.
         /// </summary>
         /// <param name="caller"></param>
-        public void LogState(string caller) => 
+        public void LogState(string caller) =>
             new NotSupportedException();
 
         /// <summary>
