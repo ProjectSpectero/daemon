@@ -39,36 +39,41 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         public CommandHolder Run(ProcessOptions processOptions, IService caller)
         {
             if (caller.GetState() != ServiceState.Running || caller.GetState() != ServiceState.Restarting)
-                throw new Exception("The service state prohibits a proccess from running.");
-
-            // Other process related information.
-            var processInfo = new ProcessStartInfo()
             {
-                WorkingDirectory = processOptions.WorkingDirectory
-            };
-
-            // Convert the options into a new command holder.
-            var commandHolder = new CommandHolder
+                _logger.LogInformation("The service state prohibited a proccess from running.");
+                return null;
+            }
+            else
             {
-                Options = processOptions,
-                Caller = caller,
-                Command = new Shell(
-                    e => e.ThrowOnError()
-                ).Run(processOptions.Executable, processOptions.Arguments, processInfo)
-            };
+                // Other process related information.
+                var processInfo = new ProcessStartInfo()
+                {
+                    WorkingDirectory = processOptions.WorkingDirectory
+                };
 
-            // Monitor the output.
-            CommandLogger.LatchQuickly(_logger, commandHolder);
+                // Convert the options into a new command holder.
+                var commandHolder = new CommandHolder
+                {
+                    Options = processOptions,
+                    Caller = caller,
+                    Command = new Shell(
+                        e => e.ThrowOnError()
+                    ).Run(processOptions.Executable, processOptions.Arguments, processInfo)
+                };
 
-            // Check if we should monitor.
-            if (commandHolder.Options.Monitor)
-                new Thread(() => Monitor(commandHolder, caller)).Start();
+                // Monitor the output.
+                CommandLogger.LatchQuickly(_logger, commandHolder);
 
-            // Keep track of the object.
-            Track(commandHolder);
+                // Check if we should monitor.
+                if (commandHolder.Options.Monitor)
+                    new Thread(() => Monitor(commandHolder, caller)).Start();
 
-            // Return
-            return commandHolder;
+                // Keep track of the object.
+                Track(commandHolder);
+
+                // Return
+                return commandHolder;
+            }
         }
 
         public void Monitor(CommandHolder commandHolder, IService service)
