@@ -34,7 +34,7 @@ namespace Spectero.daemon.Libraries.Services
                 {
                     _logger.LogError(string.Format(
                         "Autostart: Processing failed for {0}\n" +
-                        "(Reason: {0})", service, error
+                        "(Reason: {1})", service, error
                     ));
 
                     // Quit if the config dictates that we must, this allows failure tracking by NSM/SystemD/whatever else
@@ -43,7 +43,7 @@ namespace Spectero.daemon.Libraries.Services
                 }
 
                 else
-                    _logger.LogInformation(string.Format("Autostart: Processed autostartup for {0}.", error));
+                    _logger.LogInformation(string.Format("Autostart: Processed autostartup for {0}.", service));
             }
         }
     }
