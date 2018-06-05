@@ -94,9 +94,16 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                             // Check if we should restar the process if it does.
                             if (commandHolder.Options.Daemonized)
                             {
-                                // Restart the process.
-                                commandHolder.Command.Process.Start();
-                                _logger.LogWarning("The process has died, and was instructed to restart.");
+                                if (service.GetState() == ServiceState.Running)
+                                {
+                                    // Restart the process.
+                                    commandHolder.Command.Process.Start();
+                                    _logger.LogWarning("The process has died, and was instructed to restart.");
+                                }
+                                else
+                                {
+                                    _logger.LogError("Failed to restart the process as the state of the service was not running.");
+                                }
                             }
                         }
                     }
