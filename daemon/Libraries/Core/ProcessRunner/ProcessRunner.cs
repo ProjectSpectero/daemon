@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -58,12 +59,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
             // Check if we should monitor.
             if (commandHolder.Options.Monitor)
-            {
-                // Monitor thread.
-                new Thread(() =>
-                    Monitor(commandHolder)
-                ).Start();
-            }
+                new Thread(() => Monitor(commandHolder, caller)).Start();
 
             // Keep track of the object.
             Track(commandHolder);
@@ -72,7 +68,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             return commandHolder;
         }
 
-        public void Monitor(CommandHolder commandHolder)
+        public void Monitor(CommandHolder commandHolder, IService service)
         {
             // Wait for it to be tracked.
             while (!_runningCommands.Contains(commandHolder)) Thread.Sleep(100);
@@ -80,29 +76,42 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // While we should track the process.
             while (_runningCommands.Contains(commandHolder))
             {
-                // Check if we need to restart the command
-                if (commandHolder.Command.Process.HasExited)
+                if (service.GetState() == ServiceState.Running)
                 {
-                    // check if we should restar the process if it does.
-                    if (commandHolder.Options.Daemonized)
+                    // Check if we need to restart the command
+                    if (commandHolder.Command.Process.HasExited)
                     {
-                        // Restart the process.
-                        commandHolder.Command.Process.Start();
+                        if (commandHolder.Options.DisposeOnExit)
+                        {
+                            _runningCommands.Remove(commandHolder);
+                            _logger.LogInformation("A process has been disposed of gracefully.");
+                        }
+                        else
+                        {
+                            // Check if we should restar the process if it does.
+                            if (commandHolder.Options.Daemonized)
+                            {
+                                // Restart the process.
+                                commandHolder.Command.Process.Start();
+                                _logger.LogWarning("The process has died, and was instructed to restart.");
+                            }
+                        }
                     }
-                    else
-                    {
-                        // Exit the loop.
-                        // TODO(communicate with paul): Should we stop tracking the object, is the tread the best way to go about this? I'm unsure.
-                        break;
-                    }
+                }
+                else
+                {
+                    // Check to see if the process is still running, if so close it.
+                    if (!commandHolder.Command.Process.HasExited)
+                        _logger.LogWarning("The service state has changed, the process has been instructed to close.");
+                    commandHolder.Command.Process.Close();
+
+                    // Remove from the list
+                    _runningCommands.Remove(commandHolder);
                 }
 
                 // Wait for the monitoring interval.
                 Thread.Sleep(commandHolder.Options.MonitoringInterval * 1000);
             }
-
-            if (commandHolder.Options.DisposeOnExit)
-                _runningCommands.Remove(commandHolder);
         }
 
         /// <summary>
