@@ -45,12 +45,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             }
             else
             {
-                // Other process related information.
-                var processInfo = new ProcessStartInfo()
-                {
-                    WorkingDirectory = processOptions.WorkingDirectory
-                };
-
                 // Convert the options into a new command holder.
                 var commandHolder = new CommandHolder
                 {
@@ -58,7 +52,11 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     Caller = caller,
                     Command = new Shell(
                         e => e.ThrowOnError()
-                    ).Run(processOptions.Executable, processOptions.Arguments, processInfo)
+                    ).Run(processOptions.Executable, processOptions.Arguments, 
+                        options: o => o
+                            .DisposeOnExit(processOptions.DisposeOnExit)
+                            .WorkingDirectory(processOptions.WorkingDirectory)
+                        )
                 };
 
                 // Attach command objects
@@ -117,8 +115,11 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 {
                     // Check to see if the process is still running, if so close it.
                     if (!commandHolder.Command.Process.HasExited)
+                    {
                         _logger.LogWarning("The service state has changed, the process has been instructed to close.");
-                    commandHolder.Command.Process.Close();
+                        commandHolder.Command.Process.Close();
+                    }
+                       
 
                     // Remove from the list
                     _runningCommands.Remove(commandHolder);
