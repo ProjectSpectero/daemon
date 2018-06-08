@@ -29,7 +29,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="commandHolder"></param>
-        public static async void Standard(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
+        private static async void Standard(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
         {
             string line;
             while ((line = await commandHolder.Command.StandardOutput.ReadLineAsync().ConfigureAwait(false)) != null)
@@ -41,11 +41,23 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="commandHolder"></param>
-        public static async void Error(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
+        private static async void Error(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
         {
             string line;
             while ((line = await commandHolder.Command.StandardError.ReadLineAsync().ConfigureAwait(false)) != null)
                 logger.LogError(line);
+        }
+
+        public static Action<ILogger<ProcessRunner>, CommandHolder> StandardAction(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
+        {
+            Action<ILogger<ProcessRunner>, CommandHolder> act = Standard;
+            return act;
+        }
+
+        public static Action<ILogger<ProcessRunner>, CommandHolder> ErrorAction(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
+        {
+            Action< ILogger<ProcessRunner>, CommandHolder> act = Error;
+            return act;
         }
     }
 }
