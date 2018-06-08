@@ -60,10 +60,12 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 };
 
                 // Attach command objects
-                commandHolder.Options.streamProcessor.StandardOutputProcessor =
-                    CommandLogger.StandardAction(_logger, commandHolder);
-                commandHolder.Options.streamProcessor.ErrorOutputProcessor =
-                    CommandLogger.ErrorAction(_logger, commandHolder);
+                commandHolder.Options.streamProcessor.StandardOutputProcessor =                    CommandLogger.StandardAction();
+                commandHolder.Options.streamProcessor.ErrorOutputProcessor =                    CommandLogger.ErrorAction();
+                
+                // Log to the console
+                GetStreamProcessor(commandHolder).StandardOutputProcessor(_logger, commandHolder);
+                GetStreamProcessor(commandHolder).ErrorOutputProcessor(_logger, commandHolder);
 
                 // Check if we should monitor.
                 if (commandHolder.Options.Monitor)
@@ -237,5 +239,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // Start them all again.
             StartAllTrackedCommands();
         }
+
+        public StreamProcessor GetStreamProcessor(CommandHolder commandHolder) => commandHolder.Options.streamProcessor; 
     }
 }

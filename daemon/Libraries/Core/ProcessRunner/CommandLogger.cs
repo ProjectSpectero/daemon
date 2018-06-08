@@ -48,13 +48,13 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 logger.LogError(line);
         }
 
-        public static Action<ILogger<ProcessRunner>, CommandHolder> StandardAction(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
+        public static Action<ILogger<ProcessRunner>, CommandHolder> StandardAction()
         {
             Action<ILogger<ProcessRunner>, CommandHolder> act = Standard;
             return act;
         }
 
-        public static Action<ILogger<ProcessRunner>, CommandHolder> ErrorAction(ILogger<ProcessRunner> logger, CommandHolder commandHolder)
+        public static Action<ILogger<ProcessRunner>, CommandHolder> ErrorAction()
         {
             Action< ILogger<ProcessRunner>, CommandHolder> act = Error;
             return act;
