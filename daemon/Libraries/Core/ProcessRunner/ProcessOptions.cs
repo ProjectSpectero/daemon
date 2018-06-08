@@ -1,12 +1,13 @@
 ﻿using System;
 using Medallion.Shell;
+using Microsoft.Extensions.Logging;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner
 {
     public class StreamProcessor
     {
-        public Action<Command> StandardOutputProcessor;
-        public Action<Command> ErrorOutputProcessor;
+        public Action<ILogger<ProcessRunner>, CommandHolder> StandardOutputProcessor;
+        public Action<ILogger<ProcessRunner>, CommandHolder> ErrorOutputProcessor;
     }
 
     public class ProcessOptions

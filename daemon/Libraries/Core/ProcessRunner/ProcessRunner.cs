@@ -52,7 +52,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     Caller = caller,
                     Command = new Shell(
                         e => e.ThrowOnError()
-                    ).Run(processOptions.Executable, processOptions.Arguments, 
+                    ).Run(processOptions.Executable, processOptions.Arguments,
                         options: o => o
                             .DisposeOnExit(processOptions.DisposeOnExit)
                             .WorkingDirectory(processOptions.WorkingDirectory)
@@ -60,7 +60,10 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 };
 
                 // Attach command objects
-                CommandLogger.LatchQuickly(_logger, commandHolder);
+                commandHolder.Options.streamProcessor.StandardOutputProcessor =
+                    CommandLogger.StandardAction(_logger, commandHolder);
+                commandHolder.Options.streamProcessor.ErrorOutputProcessor =
+                    CommandLogger.ErrorAction(_logger, commandHolder);
 
                 // Check if we should monitor.
                 if (commandHolder.Options.Monitor)
