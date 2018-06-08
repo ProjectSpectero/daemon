@@ -60,8 +60,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 };
 
                 // Attach command objects
-                commandHolder.Options.streamProcessor.StandardOutputProcessor =                    CommandLogger.StandardAction();
-                commandHolder.Options.streamProcessor.ErrorOutputProcessor =                    CommandLogger.ErrorAction();
+                commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
+                commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
                 
                 // Log to the console
                 GetStreamProcessor(commandHolder).StandardOutputProcessor(_logger, commandHolder);
