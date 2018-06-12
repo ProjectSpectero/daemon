@@ -327,15 +327,15 @@ namespace Spectero.daemon.Controllers
                     foreach (var vpnConfig in configs)
                     {
                         var castConfig = vpnConfig as OpenVPNConfig;
-                        if (castConfig?.listener != null)
+                        if (castConfig?.Listener != null)
                         {
                             // ReSharper disable once InconsistentNaming
-                            var translatedIP = await _ipResolver.Translate(castConfig.listener.IPAddress);
+                            var translatedIP = await _ipResolver.Translate(castConfig.Listener.IPAddress);
 
                             // This is done to force a translation of local addresses
-                            castConfig.listener.IPAddress = translatedIP.ToString();
+                            castConfig.Listener.IPAddress = translatedIP.ToString();
 
-                            allListeners.Add(castConfig.listener);
+                            allListeners.Add(castConfig.Listener);
 
                             // Setting it only once would be ideal, but eh -- overhead is low enough to make this work.
                             sanitizedOpenVPNConfig = castConfig;

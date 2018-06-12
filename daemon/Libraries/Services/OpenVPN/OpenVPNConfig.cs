@@ -14,7 +14,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
     public class OpenVPNConfig : IServiceConfig
     {
         private readonly IRazorLightEngine _engine;
-        public readonly IIdentityProvider _identity;
+        public readonly IIdentityProvider Identity;
         public bool AllowMultipleConnectionsFromSameClient;
 
         [JsonIgnore] public X509Certificate2 CACert;
@@ -28,12 +28,12 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
          * string = Local subnet (IPNetwork)
          */
 
-        public OpenVPNListener listener;
+        public OpenVPNListener Listener;
         public bool ClientToClient;
-        public List<Tuple<DhcpOptions, string>> dhcpOptions;
+        public List<Tuple<DhcpOptions, string>> DhcpOptions;
         public int MaxClients;
-        public List<IPNetwork> pushedNetworks;
-        public List<RedirectGatewayOptions> redirectGateway;
+        public List<IPNetwork> PushedNetworks;
+        public List<RedirectGatewayOptions> RedirectGateway;
         public int ManagementPort;
 
 
@@ -56,7 +56,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public OpenVPNConfig(IRazorLightEngine engine, IIdentityProvider identity)
         {
             _engine = engine;
-            _identity = identity;
+            Identity = identity;
         }
 
         /// <summary>

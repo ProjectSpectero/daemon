@@ -33,9 +33,9 @@ namespace Spectero.daemon.Libraries.Core.Constants
                 {
                     AllowMultipleConnectionsFromSameClient = false,
                     ClientToClient = false,
-                    pushedNetworks = new List<IPNetwork>(),
-                    redirectGateway = new List<RedirectGatewayOptions> {RedirectGatewayOptions.Def1},
-                    dhcpOptions = new List<Tuple<DhcpOptions, string>>(),
+                    PushedNetworks = new List<IPNetwork>(),
+                    RedirectGateway = new List<RedirectGatewayOptions> {RedirectGatewayOptions.Def1},
+                    DhcpOptions = new List<Tuple<DhcpOptions, string>>(),
                     MaxClients = 1024
 
                 };

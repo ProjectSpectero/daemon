@@ -135,7 +135,7 @@ namespace Spectero.daemon.Libraries.Config
                        
                         foreach (var listener in listeners)
                         {
-                            var localConfig = new OpenVPNConfig(_engine, _identity) {listener = listener};
+                            var localConfig = new OpenVPNConfig(_engine, _identity) {Listener = listener};
                             configs.Add(localConfig);
                         }
 
@@ -147,9 +147,9 @@ namespace Spectero.daemon.Libraries.Config
                             cfg.AllowMultipleConnectionsFromSameClient = baseOpenVPNConfig.AllowMultipleConnectionsFromSameClient;
                             cfg.ClientToClient = baseOpenVPNConfig.ClientToClient;
                             cfg.MaxClients = baseOpenVPNConfig.MaxClients;
-                            cfg.dhcpOptions = baseOpenVPNConfig.dhcpOptions;
-                            cfg.redirectGateway = baseOpenVPNConfig.redirectGateway;
-                            cfg.pushedNetworks = baseOpenVPNConfig.pushedNetworks;
+                            cfg.DhcpOptions = baseOpenVPNConfig.DhcpOptions;
+                            cfg.RedirectGateway = baseOpenVPNConfig.RedirectGateway;
+                            cfg.PushedNetworks = baseOpenVPNConfig.PushedNetworks;
                         }
 
                         return configs;

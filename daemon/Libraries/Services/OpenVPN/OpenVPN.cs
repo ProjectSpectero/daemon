@@ -31,7 +31,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private IEnumerable<OpenVPNConfig> _vpnConfig;
 
         // Class variables that will be modified.
-        private readonly ServiceState State = ServiceState.Running;
+        private readonly ServiceState _state = ServiceState.Running;
         private readonly List<string> _configsOnDisk;
 
         /// <summary>
@@ -196,7 +196,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 new ProcessOptions()
                 {
                     Executable = DetermineBinaryPath(),
-                    Arguments = new string[1] {configPath},
+                    Arguments = new[] {configPath},
                     Daemonized = true,
                     Monitor = true,
                     DisposeOnExit = false,
@@ -225,7 +225,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// </summary>
         /// <param name="serviceConfig"></param>
         public void Reload(IEnumerable<IServiceConfig> serviceConfig = null) =>
-            new NotSupportedException();
+            throw new NotSupportedException();
 
         /// <summary>
         /// Stop the OpenVPN Service.
@@ -248,7 +248,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Get the state of the service.
         /// </summary>
         /// <returns></returns>
-        public ServiceState GetState() => State;
+        public ServiceState GetState() => _state;
 
         /// <summary>
         /// Get the list of configurations.
@@ -264,7 +264,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// </summary>
         /// <param name="caller"></param>
         public void LogState(string caller) =>
-            new NotSupportedException();
+            throw new NotSupportedException();
 
         /// <summary>
         /// Apply a list of configurations to this instance of the OpenVPN Class.
