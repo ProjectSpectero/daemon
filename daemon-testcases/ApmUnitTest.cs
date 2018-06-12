@@ -2,7 +2,6 @@ using System;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Spectero.daemon.Libraries.APM;
-using Assert = NUnit.Framework.Assert;
 
 namespace daemon_testcases
 {
@@ -12,7 +11,7 @@ namespace daemon_testcases
       */
 
     [TestFixture]
-    public class ApmUnitTest
+    public class ApmUnitTest : BaseUnitTest
     {
         [Test]
         public void IsSerializable()

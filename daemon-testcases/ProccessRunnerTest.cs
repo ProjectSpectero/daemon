@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading;
+﻿using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -11,87 +10,44 @@ using Spectero.daemon.Libraries.Services;
 namespace daemon_testcases
 {
     [TestFixture]
-    public class ProccessRunnerTest
+    public class ProccessRunnerTest : BaseUnitTest
     {
         [Test]
-        public void Restart()
+        public void TestMonitoring()
         {
-            // Build a fake service
-            IService service = new FakeService();
+            var svcMock = new Mock<IService>();
+            var loggerMock = new Mock<ILogger<ProcessRunner>>();
+            var configMonitorMock = new Mock<IOptionsMonitor<AppConfig>>();
 
-
-            ILogger<ProcessRunner> logger = new Mock<ILogger<ProcessRunner>>().Object;
-            IOptionsMonitor<AppConfig> configMonitor = new Mock<OptionsMonitor<AppConfig>>().Object;
 
             // Get a process runner going.
-            ProcessRunner processRunner = new ProcessRunner(configMonitor, logger);
+            var processRunner = new ProcessRunner(configMonitorMock.Object, loggerMock.Object);
 
             // Build the command options
-            ProcessOptions processOptions = new ProcessOptions()
+            var processOptions = new ProcessOptions()
             {
                 Executable =
                     AppConfig.isUnix
                         ? "top"
-                        : "cmd", // top and cmd are both processes that will run continiously until closed.
-                DisposeOnExit = true,
+                        : "cmd", // top and cmd are both processes that will run continuously until closed.
+                DisposeOnExit = false,
                 Monitor = true,
             };
 
             // Run the example command.
-            processRunner.Run(processOptions, service);
+            var runningProcess = processRunner.Run(processOptions, svcMock.Object);
+            var oldPid = runningProcess.Command.ProcessId;
 
-            // Sleep 1 seconds before initializing restart
-            Thread.Sleep(10000);
-            processRunner.RestartAllTrackedCommands();
-        }
-    }
+            // Sleep 500 ms before killing it
+            Thread.Sleep(5000);
 
-    /// <summary>
-    /// The sole purpose of this fake service, is to pass as a variable to the process runner.
-    /// </summary>
-    public class FakeService : IService
-    {
-        // I added this specifically, as I knwo it is state dependent.
-        private readonly ServiceState _state = ServiceState.Running;
+            runningProcess.Command.Kill();
 
-        public IEnumerable<IServiceConfig> GetConfig()
-        {
-            throw new System.NotImplementedException();
-        }
+            // Now we wait 2 seconds for it to restart by itself
+            Thread.Sleep(20000);
+            var newPid = runningProcess.Command.ProcessId;
 
-        public ServiceState GetState()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void LogState(string caller)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void Reload(IEnumerable<IServiceConfig> serviceConfig)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void Stop()
-        {
-            throw new System.NotImplementedException();
+            Assert.AreNotEqual(oldPid, newPid);
         }
     }
 }
