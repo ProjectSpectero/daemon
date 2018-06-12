@@ -87,31 +87,30 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // While we should track the process.
             while (_runningCommands.Contains(commandHolder))
             {
-                if (service.GetState() == ServiceState.Running)
+                // Check if we need to restart the command
+                if (commandHolder.Command.Process.HasExited)
                 {
-                    // Check if we need to restart the command
-                    if (commandHolder.Command.Process.HasExited)
+                    if (commandHolder.Options.DisposeOnExit)
                     {
-                        if (commandHolder.Options.DisposeOnExit)
+                        _runningCommands.Remove(commandHolder);
+                        _logger.LogInformation("A process has been disposed of gracefully.");
+                    }
+                    else
+                    {
+                        // Check if we should restar the process if it does.
+                        if (commandHolder.Options.Daemonized)
                         {
-                            _runningCommands.Remove(commandHolder);
-                            _logger.LogInformation("A process has been disposed of gracefully.");
-                        }
-                        else
-                        {
-                            // Check if we should restar the process if it does.
-                            if (commandHolder.Options.Daemonized)
+                            if (service.GetState() == ServiceState.Running)
                             {
-                                if (service.GetState() == ServiceState.Running)
-                                {
-                                    // Restart the process.
-                                    commandHolder.Command.Process.Start();
-                                    _logger.LogWarning("The process has died, and was instructed to restart.");
-                                }
-                                else
-                                {
-                                    _logger.LogError("Failed to restart the process as the state of the service was not running.");
-                                }
+                                // Restart the process.
+                                commandHolder.Command.Process.Start();
+                                _logger.LogWarning("The process has died, and was instructed to restart.");
+                            }
+                            else
+                            {
+                                // OK, it's a daemon project whose caller is gone, let's get rid of it.
+                                _runningCommands.Remove(commandHolder);
+                                _logger.LogError("Failed to restart the process as the state of the service was not running, references have been cleaned up.");
                             }
                         }
                     }
