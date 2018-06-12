@@ -16,8 +16,12 @@ namespace daemon_testcases
         public void TestMonitoring()
         {
             var svcMock = new Mock<IService>();
+            svcMock.Setup(x => x.GetState()).Returns(ServiceState.Running);
+
             var loggerMock = new Mock<ILogger<ProcessRunner>>();
+
             var configMonitorMock = new Mock<IOptionsMonitor<AppConfig>>();
+            configMonitorMock.Setup(x => x.CurrentValue).Returns(new AppConfig());
 
 
             // Get a process runner going.
