@@ -123,7 +123,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                                 // OK, it's a daemon project whose caller is gone, let's get rid of it.
                                 _runningCommands.Remove(commandHolder);
                                 _logger.LogError(
-                                    "Failed to restart the process as the state of the service was not running, references have been cleaned up.");
+                                    "Failed to restart the process as the state of the service was not running, references have been cleaned up."
+                                );
                             }
                         }
                     }
@@ -156,7 +157,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <summary>
         /// Start tracking a list of processes
         /// </summary>
-        /// <param name="referencedCommandList"></param>
+        /// <param name="commandHolderList"></param>
         public void Track(List<CommandHolder> commandHolderList)
         {
             foreach (var command in commandHolderList)

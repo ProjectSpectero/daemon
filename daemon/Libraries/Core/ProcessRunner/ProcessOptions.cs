@@ -41,6 +41,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         // We'll also bundle a default implementation in the ProcessRunner if this is null which just `Log.Debug`s the generated data.
         public StreamProcessor streamProcessor = new StreamProcessor();
 
+        // The working directory of where the OpenVPN Configuration should have its diffie hellman keys.
         public string WorkingDirectory;
     }
 }
