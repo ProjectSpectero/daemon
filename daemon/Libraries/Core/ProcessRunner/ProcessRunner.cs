@@ -46,18 +46,29 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             else
             {
                 // Convert the options into a new command holder.
-                var commandHolder = new CommandHolder
+                CommandHolder commandHolder = null;
+               
+                // Check if we should run as root/admin.
+                if (!processOptions.InvokeAsSuperuser)
                 {
-                    Options = processOptions,
-                    Caller = caller,
-                    Command = new Shell(
+                    // Nope.
+                    commandHolder = new CommandHolder
+                    {
+                        Options = processOptions,
+                        Caller = caller,
+                        Command = new Shell(
                         e => e.ThrowOnError()
                     ).Run(processOptions.Executable, processOptions.Arguments,
                         options: o => o
                             .DisposeOnExit(processOptions.DisposeOnExit)
                             .WorkingDirectory(processOptions.WorkingDirectory)
                         )
-                };
+                    };
+                } else
+                {
+                    // Yes.
+                    throw new Exception("Superuser utilization is not yet implemented.");
+                }
 
                 // Attach command objects
                 commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();

@@ -12,6 +12,10 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
     public class ProcessOptions
     {
+        // Windows: Run as administrator.
+        // Linux: Run as root.
+        public bool InvokeAsSuperuser = false;
+
         // The primary executable to call
         public string Executable;
 
