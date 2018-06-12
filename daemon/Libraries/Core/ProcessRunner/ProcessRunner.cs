@@ -47,7 +47,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             {
                 // Convert the options into a new command holder.
                 CommandHolder commandHolder = null;
-               
+
                 // Check if we should run as root/admin.
                 if (!processOptions.InvokeAsSuperuser)
                 {
@@ -57,14 +57,15 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Options = processOptions,
                         Caller = caller,
                         Command = new Shell(
-                        e => e.ThrowOnError()
-                    ).Run(processOptions.Executable, processOptions.Arguments,
-                        options: o => o
-                            .DisposeOnExit(processOptions.DisposeOnExit)
-                            .WorkingDirectory(processOptions.WorkingDirectory)
+                            e => e.ThrowOnError()
+                        ).Run(processOptions.Executable, processOptions.Arguments,
+                            options: o => o
+                                .DisposeOnExit(processOptions.DisposeOnExit)
+                                .WorkingDirectory(processOptions.WorkingDirectory)
                         )
                     };
-                } else
+                }
+                else
                 {
                     // Yes.
                     throw new Exception("Superuser utilization is not yet implemented.");
@@ -73,7 +74,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 // Attach command objects
                 commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
                 commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
-                
+
                 // Log to the console
                 GetStreamProcessor(commandHolder).StandardOutputProcessor(_logger, commandHolder);
                 GetStreamProcessor(commandHolder).ErrorOutputProcessor(_logger, commandHolder);
@@ -121,7 +122,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                             {
                                 // OK, it's a daemon project whose caller is gone, let's get rid of it.
                                 _runningCommands.Remove(commandHolder);
-                                _logger.LogError("Failed to restart the process as the state of the service was not running, references have been cleaned up.");
+                                _logger.LogError(
+                                    "Failed to restart the process as the state of the service was not running, references have been cleaned up.");
                             }
                         }
                     }
@@ -134,7 +136,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         _logger.LogWarning("The service state has changed, the process has been instructed to close.");
                         commandHolder.Command.Process.Close();
                     }
-                       
+
 
                     // Remove from the list
                     _runningCommands.Remove(commandHolder);
@@ -250,6 +252,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             StartAllTrackedCommands();
         }
 
-        public StreamProcessor GetStreamProcessor(CommandHolder commandHolder) => commandHolder.Options.streamProcessor; 
+        public StreamProcessor GetStreamProcessor(CommandHolder commandHolder) => commandHolder.Options.streamProcessor;
     }
 }

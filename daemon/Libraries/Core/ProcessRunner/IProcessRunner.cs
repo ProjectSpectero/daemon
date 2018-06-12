@@ -11,6 +11,5 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         void CloseAllTrackedCommands();
         void TerminateAllTrackedCommands();
         void RestartAllTrackedCommands(bool force);
-
     }
 }

@@ -203,7 +203,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                     WorkingDirectory = Path.Combine(Program.GetAssemblyLocation(), "3rdParty\\OpenVPN")
                 },
                 // The calling object.
-                this 
+                this
             );
 
         /// <summary>

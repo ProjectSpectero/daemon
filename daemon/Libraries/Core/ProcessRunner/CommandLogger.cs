@@ -56,7 +56,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
         public static Action<ILogger<ProcessRunner>, CommandHolder> ErrorAction()
         {
-            Action< ILogger<ProcessRunner>, CommandHolder> act = Error;
+            Action<ILogger<ProcessRunner>, CommandHolder> act = Error;
             return act;
         }
     }

@@ -17,10 +17,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public readonly IIdentityProvider _identity;
         public bool AllowMultipleConnectionsFromSameClient;
 
-        [JsonIgnore]
-        public X509Certificate2 CACert;
-        [JsonIgnore]
-        public X509Certificate2 ServerCert;
+        [JsonIgnore] public X509Certificate2 CACert;
+        [JsonIgnore] public X509Certificate2 ServerCert;
         public string PKCS12Certificate;
 
         /*
