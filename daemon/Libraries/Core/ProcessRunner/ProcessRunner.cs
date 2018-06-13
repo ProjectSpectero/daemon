@@ -100,47 +100,56 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             while (_runningCommands.Contains(commandHolder))
             {
                 // Check if we need to restart the command
-                if (commandHolder.Command.Process.HasExited)
+                if (commandHolder.Options.DisposeOnExit)
                 {
-                    if (commandHolder.Options.DisposeOnExit)
+                    if (service.GetState() == ServiceState.Running)
                     {
-                        _runningCommands.Remove(commandHolder);
-                        _logger.LogInformation("A process has been disposed of gracefully.");
+                        if (commandHolder.Command.Process.HasExited)
+                        {
+                            _logger.LogWarning(string.Format("A process has exited gracefully."));
+                            _runningCommands.Remove(commandHolder);
+                        }
                     }
                     else
                     {
-                        // Check if we should restar the process if it does.
-                        if (commandHolder.Options.Daemonized)
+                        if (!commandHolder.Command.Process.HasExited)
                         {
-                            if (service.GetState() == ServiceState.Running)
-                            {
-                                // Restart the process.
-                                commandHolder.Command.Process.Start();
-                                _logger.LogWarning("The process has died, and was instructed to restart.");
-                            }
-                            else
-                            {
-                                // OK, it's a daemon project whose caller is gone, let's get rid of it.
-                                _runningCommands.Remove(commandHolder);
-                                _logger.LogError(
-                                    "Failed to restart the process as the state of the service was not running, references have been cleaned up."
-                                );
-                            }
+                            _logger.LogWarning(
+                                string.Format(
+                                    "The service state has changed, Process ID {0} will be killed.",
+                                    commandHolder.Command.Process.Id
+                                )
+                            );
+                            commandHolder.Command.Process.Close();
+                            _runningCommands.Remove(commandHolder);
                         }
                     }
                 }
-                else
+                else // if process not dispose on exit
                 {
-                    // Check to see if the process is still running, if so close it.
-                    if (!commandHolder.Command.Process.HasExited)
+                    if (service.GetState() == ServiceState.Running)
                     {
-                        _logger.LogWarning("The service state has changed, the process has been instructed to close.");
-                        commandHolder.Command.Process.Close();
+                        if (commandHolder.Command.Process.HasExited)
+                        {
+                            _logger.LogWarning(
+                                string.Format("A process has exited unexpectedly, and will be restarted.")
+                            );
+                            commandHolder.Command.Process.Start();
+                        }
                     }
-
-
-                    // Remove from the list
-                    _runningCommands.Remove(commandHolder);
+                    else
+                    {
+                        if (!commandHolder.Command.Process.HasExited)
+                        {
+                            _logger.LogWarning(
+                                string.Format(
+                                    "The service state has changed, Process ID {0} will be killed.",
+                                    commandHolder.Command.Process.Id
+                                )
+                            );
+                            commandHolder.Command.Process.Close();
+                        }
+                    }
                 }
 
                 // Wait for the monitoring interval.
