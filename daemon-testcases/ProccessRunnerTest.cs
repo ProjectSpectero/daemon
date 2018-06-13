@@ -36,19 +36,20 @@ namespace daemon_testcases
                         : "cmd", // top and cmd are both processes that will run continuously until closed.
                 DisposeOnExit = false,
                 Monitor = true,
+                MonitoringInterval = 5
             };
 
             // Run the example command.
             var runningProcess = processRunner.Run(processOptions, svcMock.Object);
             var oldPid = runningProcess.Command.ProcessId;
 
-            // Sleep 500 ms before killing it
+            // Sleep 5000 ms before killing it
             Thread.Sleep(5000);
 
             runningProcess.Command.Kill();
 
-            // Now we wait 2 seconds for it to restart by itself
-            Thread.Sleep(20000);
+            // Now we wait 20 seconds for it to restart by itself
+            Thread.Sleep(20 * 1000);
             var newPid = runningProcess.Command.ProcessId;
 
             Assert.AreNotEqual(oldPid, newPid);
