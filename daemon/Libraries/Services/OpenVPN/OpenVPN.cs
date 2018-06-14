@@ -134,7 +134,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                     var whichFinder = Medallion.Shell.Command.Run("which", "openvpn");
 
                     // Parse the output and get the absolute path.
-                    binaryPath = whichFinder.StandardOutput.GetLines().ToList()[0];
+                    var ovpnPath = whichFinder.StandardOutput.GetLines().ToList()[0];
+                    _logger.LogDebug("OpenVPN was found: {0}", ovpnPath);
+                    binaryPath = ovpnPath;
                 }
                 catch (Exception)
                 {
