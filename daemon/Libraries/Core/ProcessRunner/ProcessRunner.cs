@@ -7,6 +7,7 @@ using System.Threading;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Org.BouncyCastle.Crypto.Agreement.Kdf;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Services;
 
@@ -38,6 +39,10 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <returns></returns>
         public CommandHolder Run(ProcessOptions processOptions, IService caller)
         {
+            // Convert the options into a new command holder.
+            CommandHolder commandHolder = null;
+
+            // Check the state of the service.
             if (caller.GetState() != ServiceState.Running && caller.GetState() != ServiceState.Restarting)
             {
                 _logger.LogInformation("The service state prohibited a proccess from running.");
@@ -45,9 +50,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             }
             else
             {
-                // Convert the options into a new command holder.
-                CommandHolder commandHolder = null;
-
                 // Check if we should run as root/admin.
                 if (!processOptions.InvokeAsSuperuser)
                 {
@@ -67,8 +69,48 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 }
                 else
                 {
-                    // Yes.
-                    throw new Exception("Superuser utilization is not yet implemented.");
+                    // Yes, check the operating system to know what we have to do.
+                    if (AppConfig.isWindows)
+                    {
+                        // runas verb, build the command holder witht he runas verb.
+                        commandHolder = new CommandHolder
+                        {
+                            Options = processOptions,
+                            Caller = caller,
+                            Command = new Shell(
+                                e => e.ThrowOnError()
+                            ).Run(processOptions.Executable, processOptions.Arguments,
+                                options: o => o
+                                    .StartInfo(s => s
+                                            // The runas attribute will run as administrator.
+                                            .Verb = "runas"
+                                    )
+                                    .DisposeOnExit(processOptions.DisposeOnExit)
+                                    .WorkingDirectory(processOptions.WorkingDirectory)
+                            )
+                        };
+                    }
+                    else if (AppConfig.isUnix)
+                    {
+                        // TODO: Test that we can use verb eventually, i'd rather have an explicit call right now though for sanity.
+                        // sudo, a little more complex - copy all the objects into a new argument array.
+                        string[] fixedArguments = {processOptions.Executable};
+                        Array.Copy(processOptions.Arguments, 0, fixedArguments, fixedArguments.Length, processOptions.Arguments.Length);
+
+                        // Build the command holder with a sudo as the executable.
+                        commandHolder = new CommandHolder
+                        {
+                            Options = processOptions,
+                            Caller = caller,
+                            Command = new Shell(
+                                e => e.ThrowOnError()
+                            ).Run("sudo", fixedArguments,
+                                options: o => o
+                                    .DisposeOnExit(processOptions.DisposeOnExit)
+                                    .WorkingDirectory(processOptions.WorkingDirectory)
+                            )
+                        };
+                    }
                 }
 
                 // Attach command objects
@@ -262,6 +304,23 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             StartAllTrackedCommands();
         }
 
+        /// <summary>
+        /// Gets the stream processor for the command holder
+        /// </summary>
+        /// <param name="commandHolder"></param>
+        /// <returns></returns>
         public StreamProcessor GetStreamProcessor(CommandHolder commandHolder) => commandHolder.Options.streamProcessor;
+
+        /// <summary>
+        /// Reassign the command holder's command with the provided.
+        /// </summary>
+        /// <param name="commandHolder"></param>
+        /// <param name="command"></param>
+        /// <returns></returns>
+        public CommandHolder ReassignCommand(CommandHolder commandHolder, Command command)
+        {
+            commandHolder.Command = command;
+            return commandHolder;
+        }
     }
 }

@@ -48,8 +48,8 @@ namespace daemon_testcases
 
             runningProcess.Command.Kill();
 
-            // Now we wait 20 seconds for it to restart by itself
-            Thread.Sleep(20 * 1000);
+            // Now we wait 10 seconds for it to restart by itself
+            Thread.Sleep(10 * 1000);
             var newPid = runningProcess.Command.ProcessId;
 
             Assert.AreNotEqual(oldPid, newPid);
