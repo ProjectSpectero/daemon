@@ -41,7 +41,7 @@ namespace daemon_testcases
 
             // Run the example command.
             var runningProcess = processRunner.Run(processOptions, svcMock.Object);
-            var oldPid = runningProcess.Command.ProcessId;
+            var oldPid = runningProcess.Command.Process.Id;
 
             // Sleep 5000 ms before killing it
             Thread.Sleep(5000);
@@ -50,7 +50,7 @@ namespace daemon_testcases
 
             // Now we wait 10 seconds for it to restart by itself
             Thread.Sleep(10 * 1000);
-            var newPid = runningProcess.Command.ProcessId;
+            var newPid = runningProcess.Command.Process.Id;
 
             Assert.AreNotEqual(oldPid, newPid);
         }
