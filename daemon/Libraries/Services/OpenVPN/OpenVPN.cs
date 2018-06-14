@@ -147,8 +147,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 // Potential installation paths of OpenVPN.
                 string[] potentialOpenVpnPaths =
                 {
-                    "C:\\Program Files (x86)\\OpenVPN\\bin\\OpenVPN.exe",
-                    "C:\\Program Files\\OpenVPN\\bin\\OpenVPN.exe",
+                    "C:\\Program Files (x86)\\OpenVPN\\bin\\openvpn.exe",
+                    "C:\\Program Files\\OpenVPN\\bin\\openvpn.exe",
                 };
 
                 // Iterate through each potential path and find what exists.
