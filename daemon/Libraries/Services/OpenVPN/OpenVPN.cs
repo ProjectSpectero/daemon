@@ -131,7 +131,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 // Attempt to properly find the path of OpenVPN
                 try
                 {
-                    var whichFinder = Medallion.Shell.Command.Run("which", "openvpn");
+                    var whichArray = new string[] {"which", "openvpn"};
+                    var whichFinder = Medallion.Shell.Command.Run("sudo", whichArray);
 
                     // Parse the output and get the absolute path.
                     var ovpnPath = whichFinder.StandardOutput.GetLines().ToList()[0];
@@ -155,11 +156,12 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
                 // Iterate through each potential path and find what exists.
                 foreach (var currentOpenVpnPath in potentialOpenVpnPaths)
-                    if (File.Exists(currentOpenVpnPath))
-                    {
-                        binaryPath = currentOpenVpnPath;
-                        break; // No need to needlessly continue the loop if we found what we were looking for.
-                    }
+                {
+                    if (!File.Exists(currentOpenVpnPath)) continue;
+                    _logger.LogDebug("OpenVPN was found: {0}", currentOpenVpnPath);
+                    binaryPath = currentOpenVpnPath;
+                    break;
+                }
             }
             else
             {
@@ -179,9 +181,12 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             if (binaryPath.IsNullOrEmpty())
             {
                 _logger.LogError(
-                    "OpenVPN init: we couldn't find the OpenVPN binary. Please make sure it is installed (for Unix: use your package manager), for Windows: download and install the binary distribution.");
-                throw
-                    new EInternalError(); // TODO: Dress this up properly to make disclosing just what the hell went wrong easier.
+                    "OpenVPN init: we couldn't find the OpenVPN binary. Please make sure it is installed " +
+                    "(for Unix: use your package manager), for Windows: download and install the binary distribution."
+                );
+                
+                // TODO: Dress this up properly to make disclosing just what the hell went wrong easier.
+                throw new EInternalError(); 
             }
         }
 
