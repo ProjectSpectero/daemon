@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
@@ -94,8 +95,11 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         // TODO: Test that we can use verb eventually, i'd rather have an explicit call right now though for sanity.
                         // sudo, a little more complex - copy all the objects into a new argument array.
-                        string[] fixedArguments = {processOptions.Executable};
-                        Array.Copy(processOptions.Arguments, 0, fixedArguments, fixedArguments.Length, processOptions.Arguments.Length);
+                        string[] executableStringArray = {processOptions.Executable};
+                        string[] argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
+                        string compiledStringArgument = string.Join(' ', argumentArray);
+                        _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
+                        
 
                         // Build the command holder with a sudo as the executable.
                         commandHolder = new CommandHolder
@@ -104,7 +108,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                             Caller = caller,
                             Command = new Shell(
                                 e => e.ThrowOnError()
-                            ).Run("sudo", fixedArguments,
+                            ).Run("/usr/bin/sudo", argumentArray,
                                 options: o => o
                                     .DisposeOnExit(processOptions.DisposeOnExit)
                                     .WorkingDirectory(processOptions.WorkingDirectory)
