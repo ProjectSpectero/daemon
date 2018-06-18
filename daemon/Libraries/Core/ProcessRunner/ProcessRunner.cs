@@ -44,17 +44,37 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             CommandHolder commandHolder = null;
 
             // Check the state of the service.
-            if (caller.GetState() != ServiceState.Running && caller.GetState() != ServiceState.Restarting)
+            var currentState = caller.GetState();
+            if (currentState != ServiceState.Running
+            || currentState != ServiceState.Restarting)
             {
                 _logger.LogInformation("The service state prohibited a proccess from running.");
                 return null;
             }
+            
+            // Check if we should run as root/admin.
+            if (!processOptions.InvokeAsSuperuser)
+            {
+                // Nope.
+                commandHolder = new CommandHolder
+                {
+                    Options = processOptions,
+                    Caller = caller,
+                    Command = new Shell(
+                        e => e.ThrowOnError()
+                    ).Run(processOptions.Executable, processOptions.Arguments,
+                        options: o => o
+                            .DisposeOnExit(processOptions.DisposeOnExit)
+                            .WorkingDirectory(processOptions.WorkingDirectory)
+                    )
+                };
+            }
             else
             {
-                // Check if we should run as root/admin.
-                if (!processOptions.InvokeAsSuperuser)
+                // Yes, check the operating system to know what we have to do.
+                if (AppConfig.isWindows)
                 {
-                    // Nope.
+                    // runas verb, build the command holder witht he runas verb.
                     commandHolder = new CommandHolder
                     {
                         Options = processOptions,
@@ -63,78 +83,58 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                             e => e.ThrowOnError()
                         ).Run(processOptions.Executable, processOptions.Arguments,
                             options: o => o
+                                .StartInfo(s => s
+                                        // The runas attribute will run as administrator.
+                                        .Verb = "runas"
+                                )
                                 .DisposeOnExit(processOptions.DisposeOnExit)
                                 .WorkingDirectory(processOptions.WorkingDirectory)
                         )
                     };
                 }
-                else
+                else if (AppConfig.isUnix)
                 {
-                    // Yes, check the operating system to know what we have to do.
-                    if (AppConfig.isWindows)
-                    {
-                        // runas verb, build the command holder witht he runas verb.
-                        commandHolder = new CommandHolder
-                        {
-                            Options = processOptions,
-                            Caller = caller,
-                            Command = new Shell(
-                                e => e.ThrowOnError()
-                            ).Run(processOptions.Executable, processOptions.Arguments,
-                                options: o => o
-                                    .StartInfo(s => s
-                                            // The runas attribute will run as administrator.
-                                            .Verb = "runas"
-                                    )
-                                    .DisposeOnExit(processOptions.DisposeOnExit)
-                                    .WorkingDirectory(processOptions.WorkingDirectory)
-                            )
-                        };
-                    }
-                    else if (AppConfig.isUnix)
-                    {
-                        // TODO: Test that we can use verb eventually, i'd rather have an explicit call right now though for sanity.
-                        // sudo, a little more complex - copy all the objects into a new argument array.
-                        string[] executableStringArray = {processOptions.Executable};
-                        string[] argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
-                        string compiledStringArgument = string.Join(' ', argumentArray);
-                        _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
+                    // TODO: Test that we can use verb eventually, i'd rather have an explicit call right now though for sanity.
+                    // sudo, a little more complex - copy all the objects into a new argument array.
+                    string[] executableStringArray = {processOptions.Executable};
+                    string[] argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
+                    string compiledStringArgument = string.Join(' ', argumentArray);
+                    _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
                         
 
-                        // Build the command holder with a sudo as the executable.
-                        commandHolder = new CommandHolder
-                        {
-                            Options = processOptions,
-                            Caller = caller,
-                            Command = new Shell(
-                                e => e.ThrowOnError()
-                            ).Run("/usr/bin/sudo", argumentArray,
-                                options: o => o
-                                    .DisposeOnExit(processOptions.DisposeOnExit)
-                                    .WorkingDirectory(processOptions.WorkingDirectory)
-                            )
-                        };
-                    }
+                    // Build the command holder with a sudo as the executable.
+                    commandHolder = new CommandHolder
+                    {
+                        Options = processOptions,
+                        Caller = caller,
+                        Command = new Shell(
+                            e => e.ThrowOnError()
+                        ).Run("/usr/bin/sudo", argumentArray,
+                            options: o => o
+                                .DisposeOnExit(processOptions.DisposeOnExit)
+                                .WorkingDirectory(processOptions.WorkingDirectory)
+                        )
+                    };
                 }
-
-                // Attach command objects
-                commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
-                commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
-
-                // Log to the console
-                GetStreamProcessor(commandHolder).StandardOutputProcessor(_logger, commandHolder);
-                GetStreamProcessor(commandHolder).ErrorOutputProcessor(_logger, commandHolder);
-
-                // Check if we should monitor.
-                if (commandHolder.Options.Monitor)
-                    new Thread(() => Monitor(commandHolder, caller)).Start();
-
-                // Keep track of the object.
-                Track(commandHolder);
-
-                // Return
-                return commandHolder;
             }
+
+            // Attach command objects
+            commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
+            commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
+
+            // Log to the console
+            GetStreamProcessor(commandHolder).StandardOutputProcessor(_logger, commandHolder);
+            GetStreamProcessor(commandHolder).ErrorOutputProcessor(_logger, commandHolder);
+
+            // Check if we should monitor.
+            if (commandHolder.Options.Monitor)
+                new Thread(() => Monitor(commandHolder, caller)).Start();
+
+            // Keep track of the object.
+            Track(commandHolder);
+
+            // Return
+            return commandHolder;
         }
 
         public void Monitor(CommandHolder commandHolder, IService service)
