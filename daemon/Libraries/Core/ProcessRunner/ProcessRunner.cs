@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Org.BouncyCastle.Crypto.Agreement.Kdf;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner
@@ -45,11 +46,12 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
             // Check the state of the service.
             var currentState = caller.GetState();
-            if (currentState != ServiceState.Running
-            || currentState != ServiceState.Restarting)
+
+            var allowedStates = new[] {ServiceState.Running, ServiceState.Restarting};
+            if (! allowedStates.Any(x => x.Equals(currentState)))
             {
                 _logger.LogInformation("The service state prohibited a proccess from running.");
-                return null;
+                throw new InvalidOperationException($"Service state was {currentState}, invocation can NOT continue.");
             }
             
             // Check if we should run as root/admin.

@@ -23,6 +23,8 @@ namespace daemon_testcases
             var configMonitorMock = new Mock<IOptionsMonitor<AppConfig>>();
             configMonitorMock.Setup(x => x.CurrentValue).Returns(new AppConfig());
 
+            Assert.AreEqual(svcMock.Object.GetState(), ServiceState.Running);
+
 
             // Get a process runner going.
             var processRunner = new ProcessRunner(configMonitorMock.Object, loggerMock.Object);
@@ -43,13 +45,10 @@ namespace daemon_testcases
             var runningProcess = processRunner.Run(processOptions, svcMock.Object);
             var oldPid = runningProcess.Command.Process.Id;
 
-            // Sleep 5000 ms before killing it
-            Thread.Sleep(5000);
-
             runningProcess.Command.Kill();
 
-            // Now we wait 10 seconds for it to restart by itself
-            Thread.Sleep(10 * 1000);
+            // Now we wait monitoringInterval + 1 seconds for it to restart by itself
+            Thread.Sleep((processOptions.MonitoringInterval + 1) * 1000);
             var newPid = runningProcess.Command.Process.Id;
 
             Assert.AreNotEqual(oldPid, newPid);
