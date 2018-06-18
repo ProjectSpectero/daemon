@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Org.BouncyCastle.Crypto.Agreement.Kdf;
+using Microsoft.Extensions.Options;;
 using Spectero.daemon.Libraries.Config;
-using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner
@@ -99,8 +94,10 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     // TODO: Test that we can use verb eventually, i'd rather have an explicit call right now though for sanity.
                     // sudo, a little more complex - copy all the objects into a new argument array.
                     string[] executableStringArray = {processOptions.Executable};
-                    string[] argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
-                    string compiledStringArgument = string.Join(' ', argumentArray);
+
+                    var argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
+                    var compiledStringArgument = string.Join(' ', argumentArray);
+
                     _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
                         
 
@@ -154,7 +151,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         if (commandHolder.Command.Process.HasExited)
                         {
-                            _logger.LogWarning(string.Format("A process has exited gracefully."));
+                            _logger.LogWarning("A process has exited gracefully.");
                             _runningCommands.Remove(commandHolder);
                         }
                     }
@@ -180,7 +177,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         if (commandHolder.Command.Process.HasExited)
                         {
                             _logger.LogWarning(
-                                string.Format("A process has exited unexpectedly, and will be restarted.")
+                                "A process has exited unexpectedly, and will be restarted."
                             );
                             commandHolder.Command.Process.Start();
                         }
