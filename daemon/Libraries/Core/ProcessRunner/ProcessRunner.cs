@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;;
+using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Services;
 
