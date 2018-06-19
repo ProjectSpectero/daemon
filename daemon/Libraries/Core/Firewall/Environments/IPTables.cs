@@ -12,9 +12,13 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
     {
         // Interface to the logger.
         private readonly ILogger<object> _logger;
-
+        
+        // List of active firewall commands.
         private List<NetworkRule> _rules;
 
+        private const string SNatTemplate = "-t nat POSTROUTING -p TCP -o {interface} -J SNAT --to {address}";
+        private const string MasqueradeTempalte = "POSTROUTING -S {network} -o {interface} -J MASQUERADE";
+        
         /// <summary>
         /// Initialize the logger from the firewall handler.
         /// </summary>
