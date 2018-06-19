@@ -98,18 +98,25 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             // Get the default network interace.
             var defaultNetworkInterface = _firewall.GetDefaultInterface();
 
-            // Now, let's render the configurations into proper OpenVPN config files.
-            var renderedConfigs = _vpnConfig.Select(x => x.GetStringConfig().Result);
+            // Context-aware dictionary of OpenVPN configs and their rendered forms.
+            var configDictionary = new Dictionary<OpenVPNConfig, string>();
+
+            foreach (var vpnConfig in _vpnConfig)
+            {
+                var renderedConfig = vpnConfig.GetStringConfig().Result;
+                configDictionary.Add(vpnConfig, renderedConfig);
+            }
+
 
             // Iterate through each pending configuration.
-            foreach (var config in renderedConfigs)
+            foreach (var configHolder in configDictionary)
             {
                 // Get the properly formatted path of where the configuration will be stored..
                 var onDiskName = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".ovpn");
 
                 // Write the configuration to the disk.
                 using (var writer = new StreamWriter(onDiskName))
-                    writer.Write(config);
+                    writer.Write(configHolder.Value);
 
                 // Keep track of the configuration path.
                 _configsOnDisk.Add(onDiskName);
