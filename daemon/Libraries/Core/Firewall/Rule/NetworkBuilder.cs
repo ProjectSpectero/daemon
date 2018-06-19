@@ -11,6 +11,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Rule
             template = template.ReplaceAll("{type}", networkRule.Type.ToString().ToUpper());
             template = template.ReplaceAll("{network}", networkRule.Network);
             template = template.ReplaceAll("{interface}", networkRule.Interface);
+            template = template.ReplaceAll("{protocol}", networkRule.Protocol.ToString().ToLower());
 
             // Return the modified template to the user.
             return template;

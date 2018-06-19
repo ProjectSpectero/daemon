@@ -13,14 +13,14 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
     {
         // Interface to the logger.
         private readonly ILogger<object> _logger;
-        
+
         // List of active firewall commands.
         private List<NetworkRule> _rules;
 
         // Templates.
         private const string SNatTemplate = "-t nat POSTROUTING -p TCP -o {interface} -J SNAT --to {address}";
         private const string MasqueradeTemplate = "POSTROUTING -S {network} -o {interface} -J MASQUERADE";
-        
+
         /// <summary>
         /// Initialize the logger from the firewall handler.
         /// </summary>
@@ -39,7 +39,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         {
             // Todo: write a function to do this once
             var processOptions = NetworkBuilder.BuildProcessOptions("iptables", true);
-            
+
             switch (networkRule.Type)
             {
                 // MASQUERADE
@@ -56,7 +56,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 default:
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
-            
+
             //TODO: Implement Process Execution
 
             // Track the rule.
@@ -71,7 +71,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public void DeleteRule(NetworkRule networkRule)
         {
             var processOptions = NetworkBuilder.BuildProcessOptions("iptables", true);
-            
+
             switch (networkRule.Type)
             {
                 // MASQUERADE
@@ -88,7 +88,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 default:
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
-            
+
             //TODO: Implement Process Execution
 
             // Forget the rule.
@@ -99,9 +99,6 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 
         public NetworkRule Masquerade(string network, string networkInterface)
         {
-            // Run the firewall command (-A for Append)
-            Process.Start("iptables", string.Format("-A POSTROUTING -S {0} -o {1} -J MASQUERADE", network, networkInterface));
-
             // Define the rule
             var rule = new NetworkRule()
             {
@@ -110,11 +107,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 Interface = network
             };
 
-            // Keep track of what we did
-            _rules.Add(rule);
-
-            // Tell the console.
-            _logger.LogDebug("Enabled masquerade rule on interface {1} for network {0}", network, networkInterface);
+            // Add the rule safely.
+            AddRule(rule);
 
             // Return the rule if the user wants it.
             return rule;
@@ -126,34 +120,23 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             if (networkRule.Type != NetworkRuleType.Masquerade)
                 throw FirewallExceptions.NetworkRuleMismatchException();
 
-            // Run the firewall command (-D for Delete)
-            Process.Start("iptables", string.Format("-D POSTROUTING -S {0} -o {1} -J MASQUERADE", networkRule.Network, networkRule.Interface));
-
-            // Remove from the tracking.
-            _rules.Remove(networkRule);
-
-            // Tell the console.
-            _logger.LogDebug("Disabled masquerade rule on interface {1} for network {0}", networkRule.Network, networkRule.Interface);
+            // Delete the rule
+            DeleteRule(networkRule);
         }
 
         public NetworkRule SourceNetworkAddressTranslation(string network, string networkInterface)
         {
-            // Run the firewall command (-A for Append)
-            Process.Start("iptables", string.Format("-t nat -A POSTROUTING -p TCP -o {1} -J SNAT --to {0}", network, networkInterface));
-
+            // Define the rule
             var rule = new NetworkRule()
             {
-                Type = NetworkRuleType.SourceNetworkAddressTranslation,
+                Type = NetworkRuleType.Masquerade,
                 Network = network,
                 Interface = network,
                 Protocol = NetworkRuleProtocol.Tcp
             };
 
-            // Keep track of what we did
-            _rules.Add(rule);
-
-            // Log to the console.
-            _logger.LogDebug("Enabled masquerade rule on interface {1} for network {0}", network, networkInterface);
+            // Add the rule safely.
+            AddRule(rule);
 
             // Return the rule if the user wants it.
             return rule;
@@ -165,14 +148,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             if (networkRule.Type != NetworkRuleType.SourceNetworkAddressTranslation)
                 throw FirewallExceptions.NetworkRuleMismatchException();
 
-            // Run the firewall command (-D for Delete)
-            Process.Start("iptables", string.Format("-t nat -D POSTROUTING -p TCP -o {1} -J SNAT --to {0}", networkRule.Network, networkRule.Interface));
-
-            // Remove from the tracking.
-            _rules.Remove(networkRule);
-
-            // Tell the console.
-            _logger.LogDebug("Disabled masquerade rule on interface {1} for network {0}", networkRule.Network, networkRule.Interface);
+            // Safely delete the rule.
+            DeleteRule(networkRule);
         }
 
         public InterfaceInformation GetDefaultInterface()
