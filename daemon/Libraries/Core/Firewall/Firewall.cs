@@ -11,16 +11,33 @@ namespace Spectero.daemon.Libraries.Core.Firewall
     {
         /// <summary>
         /// Instance Holder
-        /// This variable hosts the instance of the firewall.
+        /// This variable holds the reference to the process runner.
         /// </summary>
-        private IFirewallEnvironment _firewall;
+        private ProcessRunner.ProcessRunner _processRunner;
+
+        /// <summary>
+        /// Reference to the new logger for the specific firewall class.
+        /// </summary>
+        private ILogger<Firewall> _logger;
+
+        /// <summary>
+        /// Environment Holder
+        /// This variable hosts the instance of the firewall for the specific operating system.
+        /// </summary>
+        private readonly IFirewallEnvironment _firewall;
 
         /// <summary>
         /// Class Constructor.
         /// </summary>
         /// <exception cref="???"></exception>
-        public Firewall(ILogger<object> logger)
+        public Firewall(ILogger<Firewall> logger, ProcessRunner.ProcessRunner processRunner)
         {
+            // Store the reference to the process runner.
+            _processRunner = processRunner;
+
+            // Store the reference to the logger.
+            _logger = logger;
+
             // Check if we're the following operating systems and create a new instance. 
             if (AppConfig.isWindows)
             {
@@ -30,7 +47,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall
             }
             else if (AppConfig.isLinux)
             {
-                this._firewall = new IPTables(logger);
+                _firewall = new IPTables(this);
             }
             else if (AppConfig.isMac)
             {
@@ -45,9 +62,9 @@ namespace Spectero.daemon.Libraries.Core.Firewall
 
         /// <summary>
         /// Passthrough object, will allow the caller to use the class as such:
-        /// Firewall.Rule.Masquerade();
+        /// Firewall.Rules.Masquerade();
         /// </summary>
-        public IFirewallEnvironment Rule => _firewall;
+        public IFirewallEnvironment Rules => _firewall;
 
         /// <summary>
         /// Pointer method to get the interface from the initialized firewall.
@@ -55,6 +72,11 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// <returns></returns>
         public InterfaceInformation GetInterface() => _firewall.GetDefaultInterface();
 
-        
+        /// <summary>
+        /// Get the logger stored in the class.
+        /// This function is meant to be called from the specific environment.
+        /// </summary>
+        /// <returns></returns>
+        public ILogger<object> GetLogger() => _logger;
     }
 }

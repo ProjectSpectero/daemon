@@ -11,23 +11,20 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 {
     public class IPTables : IFirewallEnvironment
     {
-        // Interface to the logger.
-        private readonly ILogger<object> _logger;
+        // Parent class
+        private Firewall _firewallHandler;
 
         // List of active firewall commands.
         private List<NetworkRule> _rules;
 
-        // Templates.
-        private const string SNatTemplate = "-t nat POSTROUTING -p TCP -o {interface} -J SNAT --to {address}";
-        private const string MasqueradeTemplate = "POSTROUTING -S {network} -o {interface} -J MASQUERADE";
-
         /// <summary>
         /// Initialize the logger from the firewall handler.
         /// </summary>
-        /// <param name="logger"></param>
-        public IPTables(ILogger<object> logger)
+        /// <param name="parent"></param>
+        public IPTables(Firewall parent)
         {
-            _logger = logger;
+            // Store the reference to the parrent
+            _firewallHandler = parent;
         }
 
         /// <summary>
@@ -37,23 +34,30 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         /// <exception cref="Exception"></exception>
         public void AddRule(NetworkRule networkRule)
         {
-            // Todo: write a function to do this once
+            // Build standard process options.
             var processOptions = NetworkBuilder.BuildProcessOptions("iptables", true);
 
+            // Get local interface information
+            var interfaceInformation = GetDefaultInterface();
+
+            // Determine how to handle the rule.
             switch (networkRule.Type)
             {
                 // MASQUERADE
                 case NetworkRuleType.Masquerade:
-                    processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(MasqueradeTemplate, networkRule)).Split(" ");
+                    processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.MASQUERADE, networkRule, interfaceInformation)).Split(" ");
+                    _firewallHandler.GetLogger().LogInformation("Created MASQUERADE rule for {0}", networkRule.Network);
                     break;
 
                 // SNAT
                 case NetworkRuleType.SourceNetworkAddressTranslation:
-                    processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(SNatTemplate, networkRule)).Split(" ");
+                    processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.SNAT, networkRule, interfaceInformation)).Split(" ");
+                    _firewallHandler.GetLogger().LogInformation("Created SNAT rule for {0}", networkRule.Network);
                     break;
 
                 // Unhandled Exception
                 default:
+                    _firewallHandler.GetLogger().LogError("Firewall environment was provided undefined rule type.");
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
 
@@ -70,22 +74,28 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         /// <exception cref="Exception"></exception>
         public void DeleteRule(NetworkRule networkRule)
         {
+            // Build standard process options.
             var processOptions = NetworkBuilder.BuildProcessOptions("iptables", true);
 
+            // Get local interface information
+            var interfaceInformation = GetDefaultInterface();
+
+            // Determine how to handle the rule.
             switch (networkRule.Type)
             {
                 // MASQUERADE
                 case NetworkRuleType.Masquerade:
-                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(MasqueradeTemplate, networkRule)).Split(" ");
+                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.MASQUERADE, networkRule, interfaceInformation)).Split(" ");
                     break;
 
                 // SNAT
                 case NetworkRuleType.SourceNetworkAddressTranslation:
-                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(SNatTemplate, networkRule)).Split(" ");
+                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.SNAT, networkRule, interfaceInformation)).Split(" ");
                     break;
 
                 // Unhandled Exception
                 default:
+                    _firewallHandler.GetLogger().LogError("Firewall environment was provided undefined rule type.");
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
 
@@ -94,8 +104,6 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             // Forget the rule.
             _rules.Remove(networkRule);
         }
-
-        // ANYTHING BEYOND THIS POINT WILL BE REFACTORED.
 
         public NetworkRule Masquerade(string network, string networkInterface)
         {
