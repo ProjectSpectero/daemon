@@ -38,11 +38,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public void AddRule(NetworkRule networkRule)
         {
             // Todo: write a function to do this once
-            var processOptions = new ProcessOptions()
-            {
-                InvokeAsSuperuser = true,
-                Executable = "iptables",
-            };
+            var processOptions = NetworkBuilder.BuildProcessOptions("iptables", true);
             
             switch (networkRule.Type)
             {
@@ -60,6 +56,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 default:
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
+            
+            //TODO: Implement Process Execution
 
             // Track the rule.
             _rules.Add(networkRule);
@@ -72,12 +70,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         /// <exception cref="Exception"></exception>
         public void DeleteRule(NetworkRule networkRule)
         {
-            // Todo: write a function to do this once
-            var processOptions = new ProcessOptions()
-            {
-                InvokeAsSuperuser = true,
-                Executable = "iptables",
-            };
+            var processOptions = NetworkBuilder.BuildProcessOptions("iptables", true);
             
             switch (networkRule.Type)
             {
@@ -95,6 +88,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 default:
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
+            
+            //TODO: Implement Process Execution
 
             // Forget the rule.
             _rules.Remove(networkRule);

@@ -1,4 +1,5 @@
 ﻿using ServiceStack;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 
 namespace Spectero.daemon.Libraries.Core.Firewall.Rule
 {
@@ -15,6 +16,15 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Rule
             return template;
         }
 
+
+        public static ProcessOptions BuildProcessOptions(string executable, bool root)
+        {
+            return new ProcessOptions()
+            {
+                Executable = executable,
+                InvokeAsSuperuser = root
+            };
+        }
         
     }
 }
