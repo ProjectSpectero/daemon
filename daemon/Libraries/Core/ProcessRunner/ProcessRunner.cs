@@ -43,12 +43,12 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             var currentState = caller.GetState();
 
             var allowedStates = new[] {ServiceState.Running, ServiceState.Restarting};
-            if (! allowedStates.Any(x => x.Equals(currentState)))
+            if (!allowedStates.Any(x => x.Equals(currentState)))
             {
                 _logger.LogInformation("The service state prohibited a proccess from running.");
                 throw new InvalidOperationException($"Service state was {currentState}, invocation can NOT continue.");
             }
-            
+
             // Check if we should run as root/admin.
             if (!processOptions.InvokeAsSuperuser)
             {
@@ -99,7 +99,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     var compiledStringArgument = string.Join(' ', argumentArray);
 
                     _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
-                        
+
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
@@ -131,6 +131,90 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
             // Keep track of the object.
             Track(commandHolder);
+
+            // Return
+            return commandHolder;
+        }
+
+        /// <summary>
+        ///  Process options without service state, or a one off instance.
+        /// </summary>
+        /// <param name="processOptions"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public CommandHolder RunSingle(ProcessOptions processOptions)
+        {
+            // Convert the options into a new command holder.
+            CommandHolder commandHolder = null;
+
+            // Check if we should run as root/admin.
+            if (!processOptions.InvokeAsSuperuser)
+            {
+                // Nope.
+                commandHolder = new CommandHolder
+                {
+                    Options = processOptions,
+                    Command = new Shell(
+                        e => e.ThrowOnError()
+                    ).Run(processOptions.Executable, processOptions.Arguments,
+                        options: o => o
+                            .DisposeOnExit(processOptions.DisposeOnExit)
+                            .WorkingDirectory(processOptions.WorkingDirectory)
+                    )
+                };
+            }
+            else
+            {
+                // Yes, check the operating system to know what we have to do.
+                if (AppConfig.isWindows)
+                {
+                    // runas verb, build the command holder witht he runas verb.
+                    commandHolder = new CommandHolder
+                    {
+                        Options = processOptions,
+                        Command = new Shell(
+                            e => e.ThrowOnError()
+                        ).Run(processOptions.Executable, processOptions.Arguments,
+                            options: o => o
+                                .StartInfo(s => s
+                                        // The runas attribute will run as administrator.
+                                        .Verb = "runas"
+                                )
+                                .DisposeOnExit(processOptions.DisposeOnExit)
+                                .WorkingDirectory(processOptions.WorkingDirectory)
+                        )
+                    };
+                }
+                else if (AppConfig.isUnix)
+                {
+                    // TODO: Test that we can use verb eventually, i'd rather have an explicit call right now though for sanity.
+                    // sudo, a little more complex - copy all the objects into a new argument array.
+                    string[] executableStringArray = {processOptions.Executable};
+
+                    var argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
+                    var compiledStringArgument = string.Join(' ', argumentArray);
+
+                    _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
+
+
+                    // Build the command holder with a sudo as the executable.
+                    commandHolder = new CommandHolder
+                    {
+                        Options = processOptions,
+                        Command = new Shell(
+                            e => e.ThrowOnError()
+                        ).Run("/usr/bin/sudo", argumentArray,
+                            options: o => o
+                                .DisposeOnExit(processOptions.DisposeOnExit)
+                                .WorkingDirectory(processOptions.WorkingDirectory)
+                        )
+                    };
+                }
+            }
+
+            // Attach command objects
+            commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
+            commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
 
             // Return
             return commandHolder;
