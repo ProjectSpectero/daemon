@@ -96,7 +96,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 throw new InvalidOperationException("OpenVPN init: config list was null.");
 
             // Get the default network interace.
-            var defaultnetworkInterface = _firewall.GetInterface();
+            var defaultNetworkInterface = _firewall.GetDefaultInterface();
 
             // Now, let's render the configurations into proper OpenVPN config files.
             var renderedConfigs = _vpnConfig.Select(x => x.GetStringConfig().Result);
@@ -124,11 +124,11 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
                 // Check for OpenVZ.
                 if (!AppConfig.IsOpenVZContainer())
-                    _firewall.Rules.Masquerade("{ADDRESS}", defaultnetworkInterface.Name);
+                    _firewall.Rules.Masquerade("{ADDRESS}", defaultNetworkInterface.Name);
                 else
                 {
                     _logger.LogWarning("OpenVZ Container detected - using SNAT over MASQUERADE.");
-                    _firewall.Rules.SourceNetworkAddressTranslation("{NETWORK}", defaultnetworkInterface.Name);
+                    _firewall.Rules.SourceNetworkAddressTranslation("{NETWORK}", defaultNetworkInterface.Name);
                 }
             }
 

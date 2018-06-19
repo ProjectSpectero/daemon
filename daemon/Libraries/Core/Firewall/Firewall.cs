@@ -70,7 +70,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// Pointer method to get the interface from the initialized firewall.
         /// </summary>
         /// <returns></returns>
-        public InterfaceInformation GetInterface() => _firewall.GetDefaultInterface();
+        public InterfaceInformation GetDefaultInterface() => _firewall.GetDefaultInterface();
 
         /// <summary>
         /// Get the logger stored in the class.
