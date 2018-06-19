@@ -53,7 +53,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// Pointer method to get the interface from the initialized firewall.
         /// </summary>
         /// <returns></returns>
-        public string GetInterface() => _firewall.GetDefaultInterface();
+        public InterfaceInformation GetInterface() => _firewall.GetDefaultInterface();
 
         /// <summary>
         /// Exception that signals kthe the operating system doesn't currently have an implementation in the daemon to handle the respectives firewall.

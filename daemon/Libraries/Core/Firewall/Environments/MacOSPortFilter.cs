@@ -25,7 +25,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             throw new System.NotImplementedException();
         }
 
-        public string GetDefaultInterface()
+        public InterfaceInformation GetDefaultInterface()
         {
             throw new System.NotImplementedException();
         }

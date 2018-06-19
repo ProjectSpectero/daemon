@@ -13,7 +13,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         void DisableSourceNetworkAddressTranslation(NetworkRule networkRule);
 
         // Interface
-        string GetDefaultInterface();
+        InterfaceInformation GetDefaultInterface();
 
         // Tracked commands
         List<NetworkRule> GetNetworkRules();

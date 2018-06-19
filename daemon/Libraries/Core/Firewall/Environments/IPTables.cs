@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.NetworkInformation;
+using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using Remotion.Linq.Parsing.Structure.IntermediateModel;
 using ServiceStack;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
+using Command = Medallion.Shell.Command;
 
 namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 {
@@ -102,9 +104,16 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             _logger.LogDebug("Disabled masquerade rule on interface {1} for network {0}", networkRule.Network, networkRule.Interface);
         }
 
-        public string GetDefaultInterface()
+        public InterfaceInformation GetDefaultInterface()
         {
-            throw new System.NotImplementedException();
+            var cmd = Command.Run("ip", "r g 8.8.8.8");
+            var splitShellResponse = cmd.StandardOutput.GetLines().ToList()[0].Split(" ");
+
+            return new InterfaceInformation()
+            {
+                Name = splitShellResponse[4],
+                Address = splitShellResponse[6]
+            };
         }
 
         /// <summary>
