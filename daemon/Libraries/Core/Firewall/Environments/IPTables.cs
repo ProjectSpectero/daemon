@@ -6,6 +6,7 @@ using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
+using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 {
@@ -61,7 +62,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
 
-            //TODO: Implement Process Execution
+            //TODO: Ask paul for help here. Not sure what we should do.
+            _firewallHandler.GetProcessRunner().Run(processOptions, null);
 
             // Track the rule.
             _rules.Add(networkRule);
@@ -99,7 +101,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
 
-            //TODO: Implement Process Execution
+            //TODO: Ask paul for help here. Not sure what we should do.
+            _firewallHandler.GetProcessRunner().Run(processOptions, null);
 
             // Forget the rule.
             _rules.Remove(networkRule);

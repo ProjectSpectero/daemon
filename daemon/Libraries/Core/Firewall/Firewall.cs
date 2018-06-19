@@ -78,5 +78,12 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// </summary>
         /// <returns></returns>
         public ILogger<object> GetLogger() => _logger;
+
+        /// <summary>
+        /// Get the process runner stored in the class.
+        /// This function is meant to be called from the specific environment.
+        /// </summary>
+        /// <returns></returns>
+        public ProcessRunner.ProcessRunner GetProcessRunner() => _processRunner;
     }
 }
