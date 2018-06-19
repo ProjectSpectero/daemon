@@ -129,7 +129,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 // Check for OpenVZ.
                 if (!AppConfig.IsOpenVZContainer())
                     // Hook a MASQUERADE rule into the firewall.
-                    _firewall.Rules.Masquerade(defaultNetworkInterface.Address, defaultNetworkInterface.Name);
+                    _firewall.Rules.Masquerade(configHolder.Key.Listener.Network, defaultNetworkInterface.Name);
                 else
                 {
                     // Hook a SNAT rule into the firewall.
