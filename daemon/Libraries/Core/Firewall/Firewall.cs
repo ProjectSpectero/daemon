@@ -26,7 +26,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall
             {
                 // TODO: Implement support for Windows Firewall.
                 // We're not yet sure that we can do masquerading on windows.
-                throw UnsupportedOperatingSystemException();
+                throw FirewallExceptions.UnsupportedOperatingSystemException();
             }
             else if (AppConfig.isLinux)
             {
@@ -35,11 +35,11 @@ namespace Spectero.daemon.Libraries.Core.Firewall
             else if (AppConfig.isMac)
             {
                 // TODO: Implement support for PF, OS X's equivelant of iptables.
-                throw UnsupportedOperatingSystemException();
+                throw FirewallExceptions.UnsupportedOperatingSystemException();
             }
             else
             {
-                throw UnsupportedOperatingSystemException();
+                throw FirewallExceptions.UnsupportedOperatingSystemException();
             }
         }
 
@@ -55,25 +55,6 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// <returns></returns>
         public InterfaceInformation GetInterface() => _firewall.GetDefaultInterface();
 
-        /// <summary>
-        /// Exception that signals kthe the operating system doesn't currently have an implementation in the daemon to handle the respectives firewall.
-        /// You should only throw this inside of the constructor
-        ///
-        /// TODO(Andrew): Make this it's own class.
-        /// </summary>
-        /// <returns></returns>
-        private Exception UnsupportedOperatingSystemException()
-        {
-            return new Exception("A firewall mechanism is not handled for this operating system.");
-        }
         
-        /// <summary>
-        /// Generic exception to inform the console that the application has provided the wrong ruleset to the wrong function.
-        /// </summary>
-        /// <returns></returns>
-        public static Exception NetworkRuleMismatchException()
-        {
-            return new Exception("The NetworkRule object you provided to the function is incompatable.");
-        }
     }
 }

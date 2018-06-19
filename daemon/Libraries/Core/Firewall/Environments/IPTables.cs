@@ -2,13 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.NetworkInformation;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
-using Remotion.Linq.Parsing.Structure.IntermediateModel;
-using ServiceStack;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
-using Command = Medallion.Shell.Command;
 
 namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 {
@@ -27,6 +23,60 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         {
             _logger = logger;
         }
+
+        /// <summary>
+        /// Add a rule to track.
+        /// </summary>
+        /// <param name="networkRule"></param>
+        /// <exception cref="Exception"></exception>
+        public void AddRule(NetworkRule networkRule)
+        {
+            switch (networkRule.Type)
+            {
+                // MASQUERADE
+                case NetworkRuleType.Masquerade:
+                    break;
+
+                // SNAT
+                case NetworkRuleType.SourceNetworkAddressTranslation:
+                    break;
+
+                // Unhandled Exception
+                default:
+                    throw new Exception("Unhandled Network Rule Type");
+            }
+
+            // Track the rule.
+            _rules.Add(networkRule);
+        }
+
+        /// <summary>
+        /// Delete a rule from the tracked objects.
+        /// </summary>
+        /// <param name="networkRule"></param>
+        /// <exception cref="Exception"></exception>
+        public void DeleteRule(NetworkRule networkRule)
+        {
+            switch (networkRule.Type)
+            {
+                // MASQUERADE
+                case NetworkRuleType.Masquerade:
+                    break;
+
+                // SNAT
+                case NetworkRuleType.SourceNetworkAddressTranslation:
+                    break;
+
+                // Unhandled Exception
+                default:
+                    throw new Exception("Unhandled Network Rule Type");
+            }
+
+            // Forget the rule.
+            _rules.Remove(networkRule);
+        }
+
+        // ANYTHING BEYOND THIS POINT WILL BE REFACTORED.
 
         public NetworkRule Masquerade(string network, string networkInterface)
         {
@@ -54,7 +104,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public void DisableMasquerade(NetworkRule networkRule)
         {
             // Check if we have the right rule.
-            if (networkRule.Type != NetworkRuleType.Masquerade) throw Firewall.NetworkRuleMismatchException();
+            if (networkRule.Type != NetworkRuleType.Masquerade)
+                throw FirewallExceptions.NetworkRuleMismatchException();
 
             // Run the firewall command (-D for Delete)
             Process.Start("iptables", string.Format("-D POSTROUTING -S {0} -o {1} -J MASQUERADE", networkRule.Network, networkRule.Interface));
@@ -92,7 +143,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public void DisableSourceNetworkAddressTranslation(NetworkRule networkRule)
         {
             // Check if we have the right rule.
-            if (networkRule.Type != NetworkRuleType.SourceNetworkAddressTranslation) throw Firewall.NetworkRuleMismatchException();
+            if (networkRule.Type != NetworkRuleType.SourceNetworkAddressTranslation)
+                throw FirewallExceptions.NetworkRuleMismatchException();
 
             // Run the firewall command (-D for Delete)
             Process.Start("iptables", string.Format("-t nat -D POSTROUTING -p TCP -o {1} -J SNAT --to {0}", networkRule.Network, networkRule.Interface));
