@@ -166,6 +166,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public InterfaceInformation GetDefaultInterface()
         {
             var cmd = Command.Run("ip", "r g 8.8.8.8");
+            cmd.Wait();
+            
             var splitShellResponse = cmd.StandardOutput.GetLines().ToList()[0].Split(" ");
 
             return new InterfaceInformation()
