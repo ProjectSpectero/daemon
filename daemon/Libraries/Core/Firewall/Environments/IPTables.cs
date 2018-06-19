@@ -5,6 +5,7 @@ using System.Linq;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 
 namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 {
@@ -16,8 +17,9 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         // List of active firewall commands.
         private List<NetworkRule> _rules;
 
+        // Templates.
         private const string SNatTemplate = "-t nat POSTROUTING -p TCP -o {interface} -J SNAT --to {address}";
-        private const string MasqueradeTempalte = "POSTROUTING -S {network} -o {interface} -J MASQUERADE";
+        private const string MasqueradeTemplate = "POSTROUTING -S {network} -o {interface} -J MASQUERADE";
         
         /// <summary>
         /// Initialize the logger from the firewall handler.
@@ -35,19 +37,28 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         /// <exception cref="Exception"></exception>
         public void AddRule(NetworkRule networkRule)
         {
+            // Todo: write a function to do this once
+            var processOptions = new ProcessOptions()
+            {
+                InvokeAsSuperuser = true,
+                Executable = "iptables",
+            };
+            
             switch (networkRule.Type)
             {
                 // MASQUERADE
                 case NetworkRuleType.Masquerade:
+                    processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(MasqueradeTemplate, networkRule)).Split(" ");
                     break;
 
                 // SNAT
                 case NetworkRuleType.SourceNetworkAddressTranslation:
+                    processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(SNatTemplate, networkRule)).Split(" ");
                     break;
 
                 // Unhandled Exception
                 default:
-                    throw new Exception("Unhandled Network Rule Type");
+                    throw FirewallExceptions.UnhandledNetworkRuleException();
             }
 
             // Track the rule.
@@ -61,19 +72,28 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         /// <exception cref="Exception"></exception>
         public void DeleteRule(NetworkRule networkRule)
         {
+            // Todo: write a function to do this once
+            var processOptions = new ProcessOptions()
+            {
+                InvokeAsSuperuser = true,
+                Executable = "iptables",
+            };
+            
             switch (networkRule.Type)
             {
                 // MASQUERADE
                 case NetworkRuleType.Masquerade:
+                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(MasqueradeTemplate, networkRule)).Split(" ");
                     break;
 
                 // SNAT
                 case NetworkRuleType.SourceNetworkAddressTranslation:
+                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(SNatTemplate, networkRule)).Split(" ");
                     break;
 
                 // Unhandled Exception
                 default:
-                    throw new Exception("Unhandled Network Rule Type");
+                    throw FirewallExceptions.UnhandledNetworkRuleException();
             }
 
             // Forget the rule.
