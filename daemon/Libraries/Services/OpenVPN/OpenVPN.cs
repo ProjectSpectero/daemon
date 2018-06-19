@@ -36,7 +36,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly List<string> _configsOnDisk;
 
         private Firewall _firewall;
-        
+
         /// <summary>
         /// Standard Constructor
         /// Initializes the class without any form of dependency injection
@@ -77,7 +77,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
             // This is tracked so we can clean it up when stopping (assuming managed stop).
             _configsOnDisk = new List<string>();
-            
+
             // Invoke the firewall, talk to paul about this.
             _firewall = new Firewall(null, _processRunner);
         }
@@ -94,6 +94,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             // Check if configurations are passed.
             if (_vpnConfig == null || !_vpnConfig.Any())
                 throw new InvalidOperationException("OpenVPN init: config list was null.");
+
+            // Get the default network interace.
+            var defaultnetworkInterface = _firewall.GetInterface();
 
             // Now, let's render the configurations into proper OpenVPN config files.
             var renderedConfigs = _vpnConfig.Select(x => x.GetStringConfig().Result);
@@ -116,9 +119,17 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
                 // At this stage, we have the configs ready and on disk. Let us simply bootstrap the processes.
                 StartDaemon(onDiskName);
-                
+
                 //TODO: Hook the firewall
-                _firewall.Rules.Masquerade("{ADDRESS}", _firewall.GetInterface().Name);
+
+                // Check for OpenVZ.
+                if (!AppConfig.IsOpenVZContainer())
+                    _firewall.Rules.Masquerade("{ADDRESS}", defaultnetworkInterface.Name);
+                else
+                {
+                    _logger.LogWarning("OpenVZ Container detected - using SNAT over MASQUERADE.");
+                    _firewall.Rules.SourceNetworkAddressTranslation("{NETWORK}", defaultnetworkInterface.Name);
+                }
             }
 
             // TODO: Invoke OpenVPN once per config on disk and track the process handle somewhere.
@@ -193,9 +204,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                     "OpenVPN init: we couldn't find the OpenVPN binary. Please make sure it is installed " +
                     "(for Unix: use your package manager), for Windows: download and install the binary distribution."
                 );
-                
+
                 // TODO: Dress this up properly to make disclosing just what the hell went wrong easier.
-                throw new EInternalError(); 
+                throw new EInternalError();
             }
         }
 
