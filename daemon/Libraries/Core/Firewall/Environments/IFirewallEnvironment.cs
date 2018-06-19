@@ -8,9 +8,12 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         // Basic firewall functions
         NetworkRule Masquerade(string network, string networkInterface);
         void DisableMasquerade(NetworkRule networkRule);
-
         NetworkRule SourceNetworkAddressTranslation(string network, string networkInterface);
         void DisableSourceNetworkAddressTranslation(NetworkRule networkRule);
+
+        // Rule adding funct ions
+        void AddRule(NetworkRule networkRule);
+        void DeleteRule(NetworkRule networkRule);
 
         // Interface
         InterfaceInformation GetDefaultInterface();

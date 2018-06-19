@@ -25,6 +25,16 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             throw new System.NotImplementedException();
         }
 
+        public void AddRule(NetworkRule networkRule)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void DeleteRule(NetworkRule networkRule)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public InterfaceInformation GetDefaultInterface()
         {
             throw new System.NotImplementedException();
