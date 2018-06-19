@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.Firewall;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
@@ -34,6 +35,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly ServiceState _state = ServiceState.Running;
         private readonly List<string> _configsOnDisk;
 
+        private Firewall _firewall;
+        
         /// <summary>
         /// Standard Constructor
         /// Initializes the class without any form of dependency injection
@@ -74,6 +77,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
             // This is tracked so we can clean it up when stopping (assuming managed stop).
             _configsOnDisk = new List<string>();
+            
+            // Invoke the firewall, talk to paul about this.
+            _firewall = new Firewall(null, _processRunner);
         }
 
         /// <summary>
@@ -110,6 +116,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
                 // At this stage, we have the configs ready and on disk. Let us simply bootstrap the processes.
                 StartDaemon(onDiskName);
+                
+                //TODO: Hook the firewall
+                _firewall.Rules.Masquerade("{ADDRESS}", _firewall.GetInterface().Name);
             }
 
             // TODO: Invoke OpenVPN once per config on disk and track the process handle somewhere.

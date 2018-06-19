@@ -13,7 +13,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// Instance Holder
         /// This variable holds the reference to the process runner.
         /// </summary>
-        private ProcessRunner.ProcessRunner _processRunner;
+        private ProcessRunner.IProcessRunner _processRunner;
 
         /// <summary>
         /// Reference to the new logger for the specific firewall class.
@@ -30,7 +30,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// Class Constructor.
         /// </summary>
         /// <exception cref="???"></exception>
-        public Firewall(ILogger<Firewall> logger, ProcessRunner.ProcessRunner processRunner)
+        public Firewall(ILogger<Firewall> logger, ProcessRunner.IProcessRunner processRunner)
         {
             // Store the reference to the process runner.
             _processRunner = processRunner;
@@ -84,6 +84,6 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// This function is meant to be called from the specific environment.
         /// </summary>
         /// <returns></returns>
-        public ProcessRunner.ProcessRunner GetProcessRunner() => _processRunner;
+        public ProcessRunner.IProcessRunner GetProcessRunner() => _processRunner;
     }
 }
