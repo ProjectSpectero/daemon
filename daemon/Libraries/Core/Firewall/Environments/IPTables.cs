@@ -52,7 +52,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public void DisableMasquerade(NetworkRule networkRule)
         {
             // Check if we have the right rule.
-            if (networkRule.Type != NetworkRuleType.Masquerade) throw NetworkRuleMismatchException();
+            if (networkRule.Type != NetworkRuleType.Masquerade) throw Firewall.NetworkRuleMismatchException();
 
             // Run the firewall command (-D for Delete)
             Process.Start("iptables", string.Format("-D POSTROUTING -S {0} -o {1} -J MASQUERADE", networkRule.Network, networkRule.Interface));
@@ -90,7 +90,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public void DisableSourceNetworkAddressTranslation(NetworkRule networkRule)
         {
             // Check if we have the right rule.
-            if (networkRule.Type != NetworkRuleType.SourceNetworkAddressTranslation) throw NetworkRuleMismatchException();
+            if (networkRule.Type != NetworkRuleType.SourceNetworkAddressTranslation) throw Firewall.NetworkRuleMismatchException();
 
             // Run the firewall command (-D for Delete)
             Process.Start("iptables", string.Format("-t nat -D POSTROUTING -p TCP -o {1} -J SNAT --to {0}", networkRule.Network, networkRule.Interface));
@@ -105,15 +105,6 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public string GetDefaultInterface()
         {
             throw new System.NotImplementedException();
-        }
-
-        /// <summary>
-        /// Generic exception to inform the console that the application has provided the wrong ruleset to the wrong function.
-        /// </summary>
-        /// <returns></returns>
-        private Exception NetworkRuleMismatchException()
-        {
-            return new Exception("The NetworkRule object you provided to the function is incompatable.");
         }
 
         /// <summary>
