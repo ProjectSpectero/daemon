@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
+using ServiceStack;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Services;
@@ -165,10 +166,10 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 
         public InterfaceInformation GetDefaultInterface()
         {
-            var cmd = Command.Run("ip", "r g 8.8.8.8");
+            var shell = new Shell(o => o.ThrowIfNull());
+            var cmd = shell.Run("/bin/ip", "route", "get", "8.8.8.8");
             cmd.Wait();
-            
-            var splitShellResponse = cmd.StandardOutput.GetLines().ToList()[0].Split(" ");
+            var splitShellResponse = cmd.StandardOutput.ReadToEnd().Split(" ");
 
             return new InterfaceInformation()
             {

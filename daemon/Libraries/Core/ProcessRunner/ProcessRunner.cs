@@ -59,7 +59,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     Caller = caller,
                     Command = new Shell(
                         e => e.ThrowOnError()
-                    ).Run(processOptions.Executable, processOptions.Arguments,
+                    ).Run(processOptions.Executable,
+                        arguments: processOptions.Arguments,
                         options: o => o
                             .DisposeOnExit(processOptions.DisposeOnExit)
                             .WorkingDirectory(processOptions.WorkingDirectory)
@@ -78,7 +79,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Caller = caller,
                         Command = new Shell(
                             e => e.ThrowOnError()
-                        ).Run(processOptions.Executable, processOptions.Arguments,
+                        ).Run(processOptions.Executable,
+                            arguments: processOptions.Arguments,
                             options: o => o
                                 .StartInfo(s => s
                                         // The runas attribute will run as administrator.
@@ -100,7 +102,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
                     _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
 
-
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
                     {
@@ -108,7 +109,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Caller = caller,
                         Command = new Shell(
                             e => e.ThrowOnError()
-                        ).Run("/usr/bin/sudo", argumentArray,
+                        ).Run("/usr/bin/sudo",
+                            arguments: argumentArray,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
                                 .WorkingDirectory(processOptions.WorkingDirectory)
@@ -156,7 +158,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     Options = processOptions,
                     Command = new Shell(
                         e => e.ThrowOnError()
-                    ).Run(processOptions.Executable, processOptions.Arguments,
+                    ).Run(processOptions.Executable,
+                        arguments: processOptions.Arguments,
                         options: o => o
                             .DisposeOnExit(processOptions.DisposeOnExit)
                             .WorkingDirectory(processOptions.WorkingDirectory)
@@ -174,7 +177,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Options = processOptions,
                         Command = new Shell(
                             e => e.ThrowOnError()
-                        ).Run(processOptions.Executable, processOptions.Arguments,
+                        ).Run(processOptions.Executable,
+                            arguments: processOptions.Arguments,
                             options: o => o
                                 .StartInfo(s => s
                                         // The runas attribute will run as administrator.
@@ -203,7 +207,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Options = processOptions,
                         Command = new Shell(
                             e => e.ThrowOnError()
-                        ).Run("/usr/bin/sudo", argumentArray,
+                        ).Run("/usr/bin/sudo",
+                            arguments: argumentArray,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
                                 .WorkingDirectory(processOptions.WorkingDirectory)
