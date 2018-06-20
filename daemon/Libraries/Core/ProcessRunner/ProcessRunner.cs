@@ -57,9 +57,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 {
                     Options = processOptions,
                     Caller = caller,
-                    Command = new Shell(
-                        e => e.ThrowOnError()
-                    ).Run(processOptions.Executable,
+                    Command = Command.Run(
+                        executable: processOptions.Executable,
                         arguments: processOptions.Arguments,
                         options: o => o
                             .DisposeOnExit(processOptions.DisposeOnExit)
@@ -77,9 +76,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         Options = processOptions,
                         Caller = caller,
-                        Command = new Shell(
-                            e => e.ThrowOnError()
-                        ).Run(processOptions.Executable,
+                        Command = Command.Run(
+                            executable: processOptions.Executable,
                             arguments: processOptions.Arguments,
                             options: o => o
                                 .StartInfo(s => s
@@ -107,9 +105,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         Options = processOptions,
                         Caller = caller,
-                        Command = new Shell(
-                            e => e.ThrowOnError()
-                        ).Run("/usr/bin/sudo",
+                        Command = Command.Run(
+                            executable: "/usr/bin/sudo",
                             arguments: argumentArray,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
@@ -175,9 +172,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     commandHolder = new CommandHolder
                     {
                         Options = processOptions,
-                        Command = new Shell(
-                            e => e.ThrowOnError()
-                        ).Run(processOptions.Executable,
+                        Command = Command.Run(
+                            executable: processOptions.Executable,
                             arguments: processOptions.Arguments,
                             options: o => o
                                 .StartInfo(s => s
@@ -205,9 +201,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     commandHolder = new CommandHolder
                     {
                         Options = processOptions,
-                        Command = new Shell(
-                            e => e.ThrowOnError()
-                        ).Run("/usr/bin/sudo",
+                        Command = Command.Run(
+                            executable: "/usr/bin/sudo",
                             arguments: argumentArray,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
