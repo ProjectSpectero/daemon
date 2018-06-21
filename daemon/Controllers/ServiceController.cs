@@ -17,6 +17,7 @@ using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Models;
+using Spectero.daemon.Models.Opaque.Requests;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 using Utility = Spectero.daemon.Libraries.Core.Utility;
 
@@ -83,6 +84,20 @@ namespace Spectero.daemon.Controllers
 
             _response.Errors.Add(Errors.INVALID_SERVICE_OR_ACTION_ATTEMPT, "");
             return BadRequest(_response);
+        }
+
+        [HttpPut("OpenVPN/config", Name = "HandleOpenVPNConfigUpdate")]
+        public async Task<IActionResult> HandleOpenVPNConfigUpdate([FromBody] OpenVPNConfigUpdateRequest config)
+        {
+            if (!ModelState.IsValid || !config.Validate(out var errors))
+            {
+                _response.Errors.Add(Errors.VALIDATION_FAILED, errors);
+                return BadRequest(_response);
+            }
+
+            // Validate and properly commit to DB afterwards, return back the new OpenVPN config once done (see Manage -> config)
+
+            return Ok(_response);
         }
 
         [HttpPut("HTTPProxy/config", Name = "HandleHTTPProxyConfigUpdate")]
