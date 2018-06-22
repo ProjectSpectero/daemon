@@ -5,6 +5,13 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 {
     public class MacOSPortFilter : IFirewallEnvironment
     {
+        private Firewall _firewallHandler;
+
+        public MacOSPortFilter(Firewall parent)
+        {
+            _firewallHandler = parent;
+        }
+        
         public NetworkRule Masquerade(string network, string networkInterface)
         {
             throw new System.NotImplementedException();

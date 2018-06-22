@@ -43,7 +43,9 @@ namespace Spectero.daemon.Libraries.Core.Firewall
             {
                 // TODO: Implement support for Windows Firewall.
                 // We're not yet sure that we can do masquerading on windows.
-                throw FirewallExceptions.UnsupportedOperatingSystemException();
+                // throw FirewallExceptions.UnsupportedOperatingSystemException();
+
+                _firewall = new WindowsFirewall(this);
             }
             else if (AppConfig.isLinux)
             {
@@ -56,7 +58,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall
             }
             else
             {
-                throw FirewallExceptions.UnsupportedOperatingSystemException();
+                // throw FirewallExceptions.UnsupportedOperatingSystemException();
+                _firewall = new MacOSPortFilter(this);
             }
         }
 

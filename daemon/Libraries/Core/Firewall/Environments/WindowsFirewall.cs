@@ -1,48 +1,66 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.NetworkInformation;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
 
 namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 {
-    public class WindowsFirewall: IFirewallEnvironment
+    public class WindowsFirewall : IFirewallEnvironment
     {
+        private Firewall _firewallHandler;
+
+        public WindowsFirewall(Firewall parent)
+        {
+            _firewallHandler = parent;
+        }
+
         public NetworkRule Masquerade(string network, string networkInterface)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public void DisableMasquerade(NetworkRule networkRule)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public NetworkRule SourceNetworkAddressTranslation(string network, string networkInterface)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public void DisableSourceNetworkAddressTranslation(NetworkRule networkRule)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public void AddRule(NetworkRule networkRule)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public void DeleteRule(NetworkRule networkRule)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public InterfaceInformation GetDefaultInterface()
         {
-            throw new System.NotImplementedException();
+            var nic = NetworkInterface
+                .GetAllNetworkInterfaces()
+                .FirstOrDefault(i => i.NetworkInterfaceType != NetworkInterfaceType.Loopback && i.NetworkInterfaceType != NetworkInterfaceType.Tunnel);
+            
+            return new InterfaceInformation()
+            {
+                Name = nic.Name,
+                Address = nic.GetPhysicalAddress().ToString()
+            };
         }
 
         public List<NetworkRule> GetNetworkRules()
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 }
