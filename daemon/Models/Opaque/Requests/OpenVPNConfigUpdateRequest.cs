@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
 using ServiceStack;
+using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Services.OpenVPN;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
@@ -77,8 +78,15 @@ namespace Spectero.daemon.Models.Opaque.Requests
              */
 
             // Add the result's errors to the compiled builder array.
-            foreach (var seedErrorMessage in result.ErrorMessages) 
+            foreach (var seedErrorMessage in result.ErrorMessages)
                 builder.Add(seedErrorMessage);
+
+            // Check if there's an error, if so return
+            if (builder.Count != 0)
+            {
+                errors = builder.ToImmutable();
+                return result.Succeeded;
+            }
 
             // Check if the multiple connections from same address attribute is undefined.
             if (commons.AllowMultipleConnectionsFromSameClient == null)
@@ -87,7 +95,7 @@ namespace Spectero.daemon.Models.Opaque.Requests
                 errors = builder.ToImmutable();
                 return result.Succeeded;
             }
-                
+
 
             // Check if the client to client attribute is undefined.
             if (commons.ClientToClient == null)
