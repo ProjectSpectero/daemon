@@ -49,6 +49,8 @@ namespace Spectero.daemon.Models.Opaque.Requests
             // TODO: @Andrew - validate the required properties for each property accordingly here.
             // I assume these are requests.
 
+            ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
+
             IValitResult result = ValitRules<OpenVPNConfigUpdateRequest>
                 .Create()
 
@@ -66,28 +68,37 @@ namespace Spectero.daemon.Models.Opaque.Requests
 
             /*
              * Non-Standard Form Validaton
+             *
              * Anything beyond this point has been implemented due to a problem with the .Required()
              * Attribute above.
+             *
+             * Commit all errors to the builder to produce an easy ImmutableArray<string>.
+             * Return afterwards to reduce CPU cycles.
              */
 
+            // Add the result's errors to the compiled builder array.
+            foreach (var seedErrorMessage in result.ErrorMessages) 
+                builder.Add(seedErrorMessage);
 
             // Check if the multiple connections from same address attribute is undefined.
             if (commons.AllowMultipleConnectionsFromSameClient == null)
-                throw new Exception(FormatValidationError(Errors.FIELD_REQUIRED, "commons.allowMultipleConnectionsFromSameClient"));
+            {
+                builder.Add(FormatValidationError(Errors.FIELD_REQUIRED, "commons.allowMultipleConnectionsFromSameClient"));
+                errors = builder.ToImmutable();
+                return result.Succeeded;
+            }
+                
 
             // Check if the client to client attribute is undefined.
             if (commons.ClientToClient == null)
-	            result.ErrorMessages.Append(FormatValidationError(Errors.FIELD_REQUIRED, "commons.clientToClient"));
+            {
+                //TODO: Revisit and get a better understanding, find a way to properly start the array with value.
+                builder.Add(FormatValidationError(Errors.FIELD_REQUIRED, "commons.commons.clientToClient"));
+                errors = builder.ToImmutable();
+                return result.Succeeded;
+            }
 
-            // TODO - (Paul/Andrew) - Revisit this later.
-	        // Check if the maximum number of clients is defined, and if within a range of 10 <-> 4096.
-            if (commons.MaxClients == null)
-                throw new Exception(FormatValidationError(Errors.FIELD_INVALID, "commons.maxClients"));
-            else if (commons.MaxClients < 10 || commons.MaxClients > 4096)
-	            result.ErrorMessages.Append(FormatValidationError(Errors.FIELD_INVALID_RANGE, "commons.maxClients"));
-	        
-	        
-            errors = result.ErrorMessages;
+            errors = builder.ToImmutable();
             return result.Succeeded;
         }
     }
