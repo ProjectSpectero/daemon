@@ -209,6 +209,10 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                                 .WorkingDirectory(processOptions.WorkingDirectory)
                         )
                     };
+                    
+                    Console.WriteLine($"FileName: '{commandHolder.Command.Process.StartInfo.FileName}'");
+                    Console.WriteLine($"Arguments: '{commandHolder.Command.Process.StartInfo.Arguments}'");
+                    Console.WriteLine($"UseShellExecute: '{commandHolder.Command.Process.StartInfo.UseShellExecute}'");
                 }
             }
 
