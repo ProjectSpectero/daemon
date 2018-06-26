@@ -94,11 +94,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     // TODO: Test that we can use verb eventually, i'd rather have an explicit call right now though for sanity.
                     // sudo, a little more complex - copy all the objects into a new argument array.
                     string[] executableStringArray = {processOptions.Executable};
-
                     var argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
-                    var compiledStringArgument = string.Join(' ', argumentArray);
 
-                    _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
+                    _logger.LogDebug("Built arugment array: {0}", string.Join(", ", argumentArray));
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
@@ -106,7 +104,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Options = processOptions,
                         Caller = caller,
                         Command = Command.Run(
-                            executable: "/usr/bin/sudo",
+                            executable: Program.GetSudoPath(),
                             arguments: argumentArray,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
@@ -115,6 +113,11 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     };
                 }
             }
+            
+            // Debugging
+            Console.WriteLine($"FileName: '{commandHolder.Command.Process.StartInfo.FileName}'");
+            Console.WriteLine($"Arguments: '{commandHolder.Command.Process.StartInfo.Arguments}'");
+            Console.WriteLine($"UseShellExecute: '{commandHolder.Command.Process.StartInfo.UseShellExecute}'");
 
             // Attach command objects
             commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
@@ -209,10 +212,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                                 .WorkingDirectory(processOptions.WorkingDirectory)
                         )
                     };
-                    
-                    Console.WriteLine($"FileName: '{commandHolder.Command.Process.StartInfo.FileName}'");
-                    Console.WriteLine($"Arguments: '{commandHolder.Command.Process.StartInfo.Arguments}'");
-                    Console.WriteLine($"UseShellExecute: '{commandHolder.Command.Process.StartInfo.UseShellExecute}'");
                 }
             }
 
