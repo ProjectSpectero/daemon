@@ -52,7 +52,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // Check if we should run as root/admin.
             if (!processOptions.InvokeAsSuperuser)
             {
-                // Nope.
+                // Nope - platform independent specification, go wild.
                 commandHolder = new CommandHolder
                 {
                     Options = processOptions,
@@ -101,7 +101,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         argumentArray.Append(processOptions.Arguments[i] ?? "");
 
                     // Write to the console.
-                    _logger.LogDebug("Built arugment array: " + string.Join(", ", argumentArray));
+                    _logger.LogDebug("Built linux specific superuser arugment array: " + string.Join(", ", argumentArray));
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
@@ -116,13 +116,13 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                                 .WorkingDirectory(processOptions.WorkingDirectory)
                         )
                     };
+
+                    // Debugging
+                    Console.WriteLine($"FileName: '{commandHolder.Command.Process.StartInfo.FileName}'");
+                    Console.WriteLine($"Arguments: '{commandHolder.Command.Process.StartInfo.Arguments}'");
+                    Console.WriteLine($"UseShellExecute: '{commandHolder.Command.Process.StartInfo.UseShellExecute}'");
                 }
             }
-
-            // Debugging
-            Console.WriteLine($"FileName: '{commandHolder.Command.Process.StartInfo.FileName}'");
-            Console.WriteLine($"Arguments: '{commandHolder.Command.Process.StartInfo.Arguments}'");
-            Console.WriteLine($"UseShellExecute: '{commandHolder.Command.Process.StartInfo.UseShellExecute}'");
 
             // Attach command objects
             commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
@@ -202,8 +202,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     var argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
                     var compiledStringArgument = string.Join(' ', argumentArray);
 
-                    _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
 
+                    _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
