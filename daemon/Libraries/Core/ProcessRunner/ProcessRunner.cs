@@ -71,7 +71,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 // Yes, check the operating system to know what we have to do.
                 if (AppConfig.isWindows)
                 {
-                    // runas verb, build the command holder witht he runas verb.
+                    // WINDOWS =====
+                    // runas verb, build the command holder with the runas verb.
                     commandHolder = new CommandHolder
                     {
                         Options = processOptions,
@@ -91,12 +92,16 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 }
                 else if (AppConfig.isUnix)
                 {
-                    // TODO: Test that we can use verb eventually, i'd rather have an explicit call right now though for sanity.
-                    // sudo, a little more complex - copy all the objects into a new argument array.
-                    string[] executableStringArray = {processOptions.Executable};
-                    var argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
+                    // LINUX/MACOS =====
 
-                    _logger.LogDebug("Built arugment array: {0}", string.Join(", ", argumentArray));
+                    // Build the argument array.
+                    string[] argumentArray = { };
+                    argumentArray.Append(processOptions.Executable);
+                    for (var i = 0; i != processOptions.Arguments.Length - 1; i++)
+                        argumentArray.Append(processOptions.Arguments[i] ?? "");
+
+                    // Write to the console.
+                    _logger.LogDebug("Built arugment array: " + string.Join(", ", argumentArray));
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
@@ -113,7 +118,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     };
                 }
             }
-            
+
             // Debugging
             Console.WriteLine($"FileName: '{commandHolder.Command.Process.StartInfo.FileName}'");
             Console.WriteLine($"Arguments: '{commandHolder.Command.Process.StartInfo.Arguments}'");
@@ -205,7 +210,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         Options = processOptions,
                         Command = Command.Run(
-                            executable: "/usr/bin/sudo",
+                            executable: Program.GetSudoPath(),
                             arguments: argumentArray,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
