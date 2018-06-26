@@ -125,17 +125,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
                 // At this stage, we have the configs ready and on disk. Let us simply bootstrap the processes.
                 StartDaemon(onDiskName);
-
-                // Check for OpenVZ.
-                if (!AppConfig.IsOpenVZContainer())
-                    // Hook a MASQUERADE rule into the firewall.
-                    _firewall.Rules.Masquerade(configHolder.Key.Listener.Network, defaultNetworkInterface.Name);
-                else
-                {
-                    // Hook a SNAT rule into the firewall.
-                    _logger.LogWarning("OpenVZ Container detected - using SNAT over MASQUERADE.");
-                    _firewall.Rules.SourceNetworkAddressTranslation(configHolder.Key.Listener.Network, defaultNetworkInterface.Name);
-                }
+ 
+                _firewall.Rules.Masquerade(configHolder.Key.Listener.Network, defaultNetworkInterface.Name);
             }
 
             // TODO: Invoke OpenVPN once per config on disk and track the process handle somewhere.

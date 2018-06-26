@@ -5,6 +5,7 @@ using System.Linq;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using ServiceStack;
+using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Services;
@@ -47,13 +48,16 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             {
                 // MASQUERADE
                 case NetworkRuleType.Masquerade:
-                    processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.MASQUERADE, networkRule, interfaceInformation)).Split(" ");
+                    processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.MASQUERADE,
+                                                    networkRule, interfaceInformation)).Split(" ");
                     _firewallHandler.GetLogger().LogInformation("Created MASQUERADE rule for {0}", networkRule.Network);
                     break;
 
                 // SNAT
                 case NetworkRuleType.SourceNetworkAddressTranslation:
-                    processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.SNAT, networkRule, interfaceInformation)).Split(" ");
+                    processOptions.Arguments =
+                        ("-A " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.SNAT, networkRule,
+                             interfaceInformation)).Split(" ");
                     _firewallHandler.GetLogger().LogInformation("Created SNAT rule for {0}", networkRule.Network);
                     break;
 
@@ -88,12 +92,15 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             {
                 // MASQUERADE
                 case NetworkRuleType.Masquerade:
-                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.MASQUERADE, networkRule, interfaceInformation)).Split(" ");
+                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.MASQUERADE,
+                                                    networkRule, interfaceInformation)).Split(" ");
                     break;
 
                 // SNAT
                 case NetworkRuleType.SourceNetworkAddressTranslation:
-                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.SNAT, networkRule, interfaceInformation)).Split(" ");
+                    processOptions.Arguments =
+                        ("-D " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.SNAT, networkRule,
+                             interfaceInformation)).Split(" ");
                     break;
 
                 // Unhandled Exception
@@ -114,7 +121,9 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             // Define the rule
             var rule = new NetworkRule()
             {
-                Type = NetworkRuleType.Masquerade,
+                Type = (AppConfig.IsOpenVZContainer())
+                    ? NetworkRuleType.Masquerade
+                    : NetworkRuleType.SourceNetworkAddressTranslation,
                 Network = network,
                 Interface = network
             };

@@ -70,7 +70,6 @@ namespace Spectero.daemon.Libraries.Config
         /// <exception cref="Exception"></exception>
         public static bool IsOpenVZContainer()
         {
-            if (!isUnix) throw new Exception("Invalid Container Operating System.");
             return (File.Exists("/proc/user_beancounters") || Directory.Exists("/proc/bc/"));
         }
     }
