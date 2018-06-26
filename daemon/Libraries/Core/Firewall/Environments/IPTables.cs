@@ -121,7 +121,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             // Define the rule
             var rule = new NetworkRule()
             {
-                Type = (AppConfig.IsOpenVZContainer())
+                Type = (!AppConfig.IsOpenVZContainer())
                     ? NetworkRuleType.Masquerade
                     : NetworkRuleType.SourceNetworkAddressTranslation,
                 Network = network,
