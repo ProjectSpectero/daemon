@@ -91,12 +91,17 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 }
                 else if (AppConfig.isUnix)
                 {
-                    // TODO: Test that we can use verb eventually, i'd rather have an explicit call right now though for sanity.
-                    // sudo, a little more complex - copy all the objects into a new argument array.
-                    string[] executableStringArray = {processOptions.Executable};
-                    var argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
+                    // Build a string array for the arguments programatically.
+                    string[] executableStringArray = { };
 
-                    _logger.LogDebug("Built arugment array: {0}", string.Join(", ", argumentArray));
+                    // Add the executable
+                    executableStringArray.Append(processOptions.Executable);
+
+                    // Add 3 potential arguments.
+                    for (var i = 0; i != 2; i++) executableStringArray.Append(processOptions.Arguments[i] ?? "");
+
+                    // Tell the logger.
+                    _logger.LogDebug("Built arugment array: " + string.Join(", ", executableStringArray));
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
@@ -105,7 +110,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Caller = caller,
                         Command = Command.Run(
                             executable: Program.GetSudoPath(),
-                            arguments: argumentArray,
+                            arguments: executableStringArray,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
                                 .WorkingDirectory(processOptions.WorkingDirectory)
@@ -113,11 +118,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     };
                 }
             }
-            
-            // Debugging
-            Console.WriteLine($"FileName: '{commandHolder.Command.Process.StartInfo.FileName}'");
-            Console.WriteLine($"Arguments: '{commandHolder.Command.Process.StartInfo.Arguments}'");
-            Console.WriteLine($"UseShellExecute: '{commandHolder.Command.Process.StartInfo.UseShellExecute}'");
 
             // Attach command objects
             commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
