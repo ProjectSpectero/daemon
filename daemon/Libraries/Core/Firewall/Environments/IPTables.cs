@@ -9,6 +9,7 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Services;
+using Command = Medallion.Shell.Command;
 
 namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 {
@@ -173,10 +174,17 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             DeleteRule(networkRule);
         }
 
+        public string GetIPCommandPath()
+        {
+            var cmd = Command.Run("which", "ip");
+            cmd.Wait();
+            return cmd.StandardOutput.ReadToEnd().Trim();
+        }
+
         public InterfaceInformation GetDefaultInterface()
         {
             var shell = new Shell(o => o.ThrowIfNull());
-            var cmd = shell.Run("/bin/ip", "route", "get", "8.8.8.8");
+            var cmd = shell.Run(GetIPCommandPath(), "route", "get", "8.8.8.8");
             cmd.Wait();
             var splitShellResponse = cmd.StandardOutput.ReadToEnd().Split(" ");
 

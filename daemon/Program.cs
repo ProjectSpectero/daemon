@@ -10,7 +10,7 @@ namespace Spectero.daemon
 {
     public class Program
     {
-        private static string _sudoPath;
+        private static string _sudoPath = null;
 
         public static void Main(string[] args)
         {
@@ -42,7 +42,7 @@ namespace Spectero.daemon
             if (_sudoPath == null)
             {
                 var cmd = Command.Run("which", "sudo");
-                _sudoPath = cmd.StandardOutput.ReadLine().First().ToString();
+                _sudoPath = cmd.StandardOutput.ReadToEnd().Trim();
             }
 
             // Return the path to the sudo binary.

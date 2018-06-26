@@ -48,7 +48,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 _logger.LogInformation("The service state prohibited a proccess from running.");
                 throw new InvalidOperationException($"Service state was {currentState}, invocation can NOT continue.");
             }
-
+            
             // Check if we should run as root/admin.
             if (!processOptions.InvokeAsSuperuser)
             {
@@ -95,13 +95,13 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     // LINUX/MACOS =====
 
                     // Build the argument array.
-                    string[] argumentArray = { };
-                    argumentArray.Append(processOptions.Executable);
-                    for (var i = 0; i != processOptions.Arguments.Length - 1; i++)
-                        argumentArray.Append(processOptions.Arguments[i] ?? "");
+                    List<string> arguments = new List<string>();
+                    arguments.Add(processOptions.Executable);
+                    for (var i = 0; i != processOptions.Arguments.Length; i++)
+                        arguments.Add(processOptions.Arguments[i] ?? "");
 
                     // Write to the console.
-                    _logger.LogDebug("Built linux specific superuser arugment array: " + string.Join(", ", argumentArray));
+                    _logger.LogDebug("Built linux specific superuser arugment array: " + string.Join(" ", arguments));
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
@@ -110,7 +110,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Caller = caller,
                         Command = Command.Run(
                             executable: Program.GetSudoPath(),
-                            arguments: argumentArray,
+                            arguments: arguments,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
                                 .WorkingDirectory(processOptions.WorkingDirectory)
@@ -150,7 +150,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
         public CommandHolder RunSingle(ProcessOptions processOptions)
-        {
+        {           
             // Convert the options into a new command holder.
             CommandHolder commandHolder = null;
 
