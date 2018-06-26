@@ -52,7 +52,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // Check if we should run as root/admin.
             if (!processOptions.InvokeAsSuperuser)
             {
-                // Nope.
+                // Nope - platform independent specification, go wild.
                 commandHolder = new CommandHolder
                 {
                     Options = processOptions,
@@ -71,7 +71,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 // Yes, check the operating system to know what we have to do.
                 if (AppConfig.isWindows)
                 {
-                    // runas verb, build the command holder witht he runas verb.
+                    // WINDOWS =====
+                    // runas verb, build the command holder with the runas verb.
                     commandHolder = new CommandHolder
                     {
                         Options = processOptions,
@@ -91,17 +92,16 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 }
                 else if (AppConfig.isUnix)
                 {
-                    // Build a string array for the arguments programatically.
-                    string[] executableStringArray = { };
+                    // LINUX/MACOS =====
 
-                    // Add the executable
-                    executableStringArray.Append(processOptions.Executable);
+                    // Build the argument array.
+                    string[] argumentArray = { };
+                    argumentArray.Append(processOptions.Executable);
+                    for (var i = 0; i != processOptions.Arguments.Length - 1; i++)
+                        argumentArray.Append(processOptions.Arguments[i] ?? "");
 
-                    // Add 3 potential arguments.
-                    for (var i = 0; i != 2; i++) executableStringArray.Append(processOptions.Arguments[i] ?? "");
-
-                    // Tell the logger.
-                    _logger.LogDebug("Built arugment array: " + string.Join(", ", executableStringArray));
+                    // Write to the console.
+                    _logger.LogDebug("Built linux specific superuser arugment array: " + string.Join(", ", argumentArray));
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
@@ -110,12 +110,17 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Caller = caller,
                         Command = Command.Run(
                             executable: Program.GetSudoPath(),
-                            arguments: executableStringArray,
+                            arguments: argumentArray,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
                                 .WorkingDirectory(processOptions.WorkingDirectory)
                         )
                     };
+
+                    // Debugging
+                    Console.WriteLine($"FileName: '{commandHolder.Command.Process.StartInfo.FileName}'");
+                    Console.WriteLine($"Arguments: '{commandHolder.Command.Process.StartInfo.Arguments}'");
+                    Console.WriteLine($"UseShellExecute: '{commandHolder.Command.Process.StartInfo.UseShellExecute}'");
                 }
             }
 
@@ -197,15 +202,15 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     var argumentArray = executableStringArray.Union(processOptions.Arguments).ToArray();
                     var compiledStringArgument = string.Join(' ', argumentArray);
 
-                    _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
 
+                    _logger.LogDebug("Built arugment array: {0}", compiledStringArgument);
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
                     {
                         Options = processOptions,
                         Command = Command.Run(
-                            executable: "/usr/bin/sudo",
+                            executable: Program.GetSudoPath(),
                             arguments: argumentArray,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
