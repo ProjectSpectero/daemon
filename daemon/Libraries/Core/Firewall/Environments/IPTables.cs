@@ -93,15 +93,13 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             {
                 // MASQUERADE
                 case NetworkRuleType.Masquerade:
-                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.MASQUERADE,
-                                                    networkRule, interfaceInformation)).Split(" ");
+                    processOptions.Arguments = ("-D " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.MASQUERADE, networkRule, interfaceInformation)).Split(" ");
                     break;
 
                 // SNAT
                 case NetworkRuleType.SourceNetworkAddressTranslation:
                     processOptions.Arguments =
-                        ("-D " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.SNAT, networkRule,
-                             interfaceInformation)).Split(" ");
+                        ("-D " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.SNAT, networkRule, interfaceInformation)).Split(" ");
                     break;
 
                 // Unhandled Exception
@@ -122,13 +120,18 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             // Define the rule
             var rule = new NetworkRule()
             {
-                Type = (!AppConfig.IsOpenVZContainer())
-                    ? NetworkRuleType.Masquerade
-                    : NetworkRuleType.SourceNetworkAddressTranslation,
                 Network = network,
                 Interface = network
             };
 
+            if (!AppConfig.IsOpenVZContainer())
+                rule.Type = NetworkRuleType.Masquerade;
+            else
+            {
+                _firewallHandler.GetLogger().LogWarning("OpenVZ Detected - Favoring SNAT rule over MASQUERADE.");
+                rule.Type = NetworkRuleType.SourceNetworkAddressTranslation;
+            }
+            
             // Add the rule safely.
             AddRule(rule);
 
