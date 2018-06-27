@@ -225,7 +225,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                     Monitor = true,
                     DisposeOnExit = false,
                     InvokeAsSuperuser = true,
-                    WorkingDirectory = Path.Combine(Program.GetAssemblyLocation(), "3rdParty\\OpenVPN")
+                    WorkingDirectory = Path.Combine(Program.GetAssemblyLocation(), "3rdParty/OpenVPN")
                 },
                 // The calling object.
                 this
