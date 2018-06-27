@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Transport.Libuv.Internal.Networking;
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Firewall.Environments;
+using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.Core.Firewall
 {
@@ -18,7 +19,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// <summary>
         /// Reference to the new logger for the specific firewall class.
         /// </summary>
-        private ILogger<Firewall> _logger;
+        private ILogger<ServiceManager> _logger;
 
         /// <summary>
         /// Environment Holder
@@ -30,7 +31,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// Class Constructor.
         /// </summary>
         /// <exception cref="???"></exception>
-        public Firewall(ILogger<Firewall> logger, ProcessRunner.IProcessRunner processRunner)
+        public Firewall(ILogger<ServiceManager> logger, ProcessRunner.IProcessRunner processRunner)
         {
             // Store the reference to the process runner.
             _processRunner = processRunner;

@@ -79,7 +79,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _configsOnDisk = new List<string>();
 
             // Invoke the firewall, talk to paul about this.
-            _firewall = new Firewall(null, _processRunner);
+            _firewall = new Firewall(logger, _processRunner);
         }
 
         /// <summary>
