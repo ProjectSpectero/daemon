@@ -99,7 +99,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     var procArgStr = string.Join(" ", arguments);
 
                     // Write to the console.
-                    _logger.LogDebug("Built linux specific superuser arugment array: " + procArgStr);
+                    _logger.LogDebug("Built linux specific superuser argument array: " + procArgStr);
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
@@ -189,7 +189,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     var procArgStr = string.Join(" ", arguments);
 
                     // Write to the console.
-                    _logger.LogDebug("Built linux specific superuser arugment array: " + procArgStr);
+                    _logger.LogDebug("Built linux specific superuser argument array: " + procArgStr);
 
                     // Build the command holder with a sudo as the executable.
                     commandHolder = new CommandHolder
