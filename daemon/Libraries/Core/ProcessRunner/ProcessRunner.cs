@@ -66,7 +66,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 {
                     Options = processOptions,
                     Caller = caller,
-                    Command = Command.Run(
+                    Command = new Shell(e => e.ThrowOnError()).Run(
                         executable: processOptions.Executable,
                         arguments: processOptions.Arguments,
                         options: o => o
@@ -86,17 +86,18 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         Options = processOptions,
                         Caller = caller,
-                        Command = Command.Run(
-                            executable: processOptions.Executable,
-                            arguments: processOptions.Arguments,
-                            options: o => o
-                                .StartInfo(s => s
-                                        // The runas attribute will run as administrator.
-                                        .Verb = "runas"
-                                )
-                                .DisposeOnExit(processOptions.DisposeOnExit)
-                                .WorkingDirectory(processOptions.WorkingDirectory)
-                        )
+                        Command = new Shell(e => e.ThrowOnError())
+                            .Run(
+                                executable: processOptions.Executable,
+                                arguments: processOptions.Arguments,
+                                options: o => o
+                                    .StartInfo(s => s
+                                            // The runas attribute will run as administrator.
+                                            .Verb = "runas"
+                                    )
+                                    .DisposeOnExit(processOptions.DisposeOnExit)
+                                    .WorkingDirectory(processOptions.WorkingDirectory)
+                            )
                     };
                 }
                 else if (AppConfig.isUnix)
@@ -118,13 +119,14 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         Options = processOptions,
                         Caller = caller,
-                        Command = Command.Run(
-                            executable: Program.GetSudoPath(),
-                            arguments: arguments,
-                            options: o => o
-                                .DisposeOnExit(processOptions.DisposeOnExit)
-                                .WorkingDirectory(processOptions.WorkingDirectory)
-                        )
+                        Command = new Shell(e => e.ThrowOnError())
+                            .Run(
+                                executable: Program.GetSudoPath(),
+                                arguments: arguments,
+                                options: o => o
+                                    .DisposeOnExit(processOptions.DisposeOnExit)
+                                    .WorkingDirectory(processOptions.WorkingDirectory)
+                            )
                     };
                 }
             }
@@ -185,17 +187,18 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     commandHolder = new CommandHolder
                     {
                         Options = processOptions,
-                        Command = Command.Run(
-                            executable: processOptions.Executable,
-                            arguments: processOptions.Arguments,
-                            options: o => o
-                                .StartInfo(s => s
-                                        // The runas attribute will run as administrator.
-                                        .Verb = "runas"
-                                )
-                                .DisposeOnExit(processOptions.DisposeOnExit)
-                                .WorkingDirectory(processOptions.WorkingDirectory)
-                        )
+                        Command = new Shell(e => e.ThrowOnError())
+                            .Run(
+                                executable: processOptions.Executable,
+                                arguments: processOptions.Arguments,
+                                options: o => o
+                                    .StartInfo(s => s
+                                            // The runas attribute will run as administrator.
+                                            .Verb = "runas"
+                                    )
+                                    .DisposeOnExit(processOptions.DisposeOnExit)
+                                    .WorkingDirectory(processOptions.WorkingDirectory)
+                            )
                     };
                 }
                 else if (AppConfig.isUnix)
@@ -214,13 +217,14 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     commandHolder = new CommandHolder
                     {
                         Options = processOptions,
-                        Command = Command.Run(
-                            executable: Program.GetSudoPath(),
-                            arguments: arguments,
-                            options: o => o
-                                .DisposeOnExit(processOptions.DisposeOnExit)
-                                .WorkingDirectory(processOptions.WorkingDirectory)
-                        )
+                        Command = new Shell(e => e.ThrowOnError())
+                            .Run(
+                                executable: Program.GetSudoPath(),
+                                arguments: arguments,
+                                options: o => o
+                                    .DisposeOnExit(processOptions.DisposeOnExit)
+                                    .WorkingDirectory(processOptions.WorkingDirectory)
+                            )
                     };
                 }
             }
