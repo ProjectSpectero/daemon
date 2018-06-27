@@ -69,7 +69,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             }
 
             //TODO: Ask paul for help here. Not sure what we should do.
-            _firewallHandler.GetProcessRunner().Run(processOptions, null);
+            _firewallHandler.GetProcessRunner().RunSingle(processOptions);
 
             // Track the rule.
             _rules.Add(networkRule);
