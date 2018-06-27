@@ -7,7 +7,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 {
     public class CommandHolder
     {
-        public Process Command { get; set; }
+        public Command Command { get; set; }
         public ProcessOptions Options { get; set; }
         public IService Caller { get; set; }
     }

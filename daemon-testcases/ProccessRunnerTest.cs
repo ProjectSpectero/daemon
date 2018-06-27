@@ -43,13 +43,13 @@ namespace daemon_testcases
 
             // Run the example command.
             var runningProcess = processRunner.Run(processOptions, svcMock.Object);
-            var oldPid = runningProcess.Command.Id;
+            var oldPid = runningProcess.Command.Process.Id;
 
             runningProcess.Command.Kill();
 
             // Now we wait monitoringInterval + 1 seconds for it to restart by itself
             Thread.Sleep((processOptions.MonitoringInterval + 1) * 1000);
-            var newPid = runningProcess.Command.Id;
+            var newPid = runningProcess.Command.Process.Id;
 
             Assert.AreNotEqual(oldPid, newPid);
         }
