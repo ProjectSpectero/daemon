@@ -38,10 +38,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <returns></returns>
         public CommandHolder Run(ProcessOptions processOptions, IService caller)
         {
-            _logger.LogDebug("Working directory: " + processOptions.WorkingDirectory);
-            _logger.LogDebug("Directory exists?: " + Directory.Exists(processOptions.WorkingDirectory).ToString());
-
-
             // Convert the options into a new command holder.
             CommandHolder commandHolder = null;
 
