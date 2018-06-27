@@ -7,6 +7,7 @@ using System.Threading;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ServiceStack.DataAnnotations;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Services;
 
@@ -50,6 +51,12 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 _logger.LogInformation("The service state prohibited a proccess from running.");
                 throw new InvalidOperationException($"Service state was {currentState}, invocation can NOT continue.");
             }
+
+            // Validate that the provided directory exists.
+            if (processOptions.WorkingDirectory != null)
+                if (!Directory.Exists(processOptions.WorkingDirectory))
+                    throw WorkingDirectoryDoesntExistException(processOptions.WorkingDirectory);
+
 
             // Check if we should run as root/admin.
             if (!processOptions.InvokeAsSuperuser)
@@ -415,5 +422,13 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             commandHolder.Command = command;
             return commandHolder;
         }
+
+        /// <summary>
+        /// Throw this when the working directory does not exist.
+        /// </summary>
+        /// <param name="workingDirectory"></param>
+        /// <returns></returns>
+        public Exception WorkingDirectoryDoesntExistException(string workingDirectory) =>
+            new Exception("The WorkingDirectory attribute value provided did not exist.");
     }
 }
