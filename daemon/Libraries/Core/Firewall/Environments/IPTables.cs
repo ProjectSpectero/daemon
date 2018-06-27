@@ -29,6 +29,9 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         {
             // Store the reference to the parrent
             _firewallHandler = parent;
+            
+            // Initialize the rule list
+            _rules = new List<NetworkRule>();
         }
 
         /// <summary>
