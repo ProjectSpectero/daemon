@@ -50,7 +50,6 @@ nobind
 
 dev tun
 dev-type tun
-ns-cert-type server
 reneg-sec 604800
 sndbuf 100000
 rcvbuf 100000
@@ -58,7 +57,7 @@ max-routes 2048
 
 # NOTE: LZO commands are pushed by the Access Server at connect time.
 # NOTE: The below line doesn't disable LZO.
-comp-lzo no
+comp-lzo
 verb 3
 setenv PUSH_PEER_INFO
 
