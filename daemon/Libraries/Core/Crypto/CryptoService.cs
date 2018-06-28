@@ -116,7 +116,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             var caBytes = Convert.FromBase64String(caBlob);
             var ca = LoadCertificate(caBytes, caPassword);
 
-            var subjectName = "CN=" + userAuthKey + ".users." + _identityProvider.GetGuid() + ".instance.spectero.io";
+            var subjectName = "CN=" + userAuthKey;
             
             var userCert = IssueCertificate(subjectName, ca, null, usages, password);
 
@@ -283,6 +283,8 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             // This is what makes the subsequent validation pass.
             if (isCertificateAuthority)
                 AddCAKeyUsages(certificateGenerator, new KeyUsage(KeyUsage.CrlSign | KeyUsage.DigitalSignature | KeyUsage.KeyCertSign | KeyUsage.KeyEncipherment ));
+
+            certificateGenerator.AddExtension(X509Extensions.);
 
             // The certificate is signed with the issuer's private key.
             var certificate = certificateGenerator.Generate(issuerKeyPair.Private, random);

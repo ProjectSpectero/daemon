@@ -119,7 +119,7 @@ namespace Spectero.daemon.Migrations
 
                 specteroCertKey = PasswordUtils.GeneratePassword(48, 8);
                 specteroCertificate = _cryptoService.IssueCertificate(
-                    "CN=" + "spectero" + ".users." + instanceId + ".instance.spectero.io",
+                    "CN=" + "spectero",
                     ca, null, new[] { KeyPurposeID.AnyExtendedKeyUsage, KeyPurposeID.IdKPServerAuth, KeyPurposeID.IdKPClientAuth }, specteroCertKey);
 
                 _db.Insert(new Configuration
