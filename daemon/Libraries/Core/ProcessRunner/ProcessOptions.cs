@@ -43,5 +43,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
         // The working directory of where the OpenVPN Configuration should have its diffie hellman keys.
         public string WorkingDirectory;
+
+        // Should medallion shell throw an error when there's a problem.
+        public bool ThrowOnError = true;
     }
 }
