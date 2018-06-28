@@ -266,7 +266,11 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             // The subject's public key goes in the certificate.
             certificateGenerator.SetPublicKey(subjectKeyPair.Public);
 
+            // This breaks validation due to reversed serial numbers.
+            // See https://security.stackexchange.com/questions/188605/openssl-unable-to-verify-certificate-issued-by-local-ca
+            // TODO: Come back to fix this someday.
             AddAuthorityKeyIdentifier(certificateGenerator, issuerDN, issuerKeyPair, issuerSerialNumber);
+            
             AddSubjectKeyIdentifier(certificateGenerator, subjectKeyPair);
             AddBasicConstraints(certificateGenerator, isCertificateAuthority);
 

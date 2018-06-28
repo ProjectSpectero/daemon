@@ -149,7 +149,7 @@ namespace Spectero.daemon.Migrations
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.ServerPFXChain,
-                    Value = Convert.ToBase64String(_cryptoService.ExportCertificateChain(serverCertificate, ca))
+                    Value = Convert.ToBase64String(_cryptoService.ExportCertificateChain(serverCertificate, ca)) // Yes, passwordless. Somewhat intentionally, as this is mostly consumed by 3rd party apps.
                 });
 
                 // OpenVPN defaults
