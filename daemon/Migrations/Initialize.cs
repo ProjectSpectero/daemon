@@ -113,7 +113,7 @@ namespace Spectero.daemon.Migrations
                 var caPassword = PasswordUtils.GeneratePassword(48, 8);
                 var serverPassword = PasswordUtils.GeneratePassword(48, 8);
                 ca = _cryptoService.CreateCertificateAuthorityCertificate("CN=" + instanceId + ".ca.instance.spectero.io",
-                    null, new [] { KeyPurposeID.AnyExtendedKeyUsage }, caPassword);
+                    null, null, caPassword);
                 var serverCertificate = _cryptoService.IssueCertificate("CN=" + instanceId + ".instance.spectero.io",
                     ca, null, new[] { KeyPurposeID.IdKPServerAuth }, serverPassword);
 
