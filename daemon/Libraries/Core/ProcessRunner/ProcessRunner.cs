@@ -66,13 +66,15 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 {
                     Options = processOptions,
                     Caller = caller,
-                    Command = new Shell(e => e.ThrowOnError()).Run(
-                        executable: processOptions.Executable,
-                        arguments: processOptions.Arguments,
-                        options: o => o
-                            .DisposeOnExit(processOptions.DisposeOnExit)
-                            .WorkingDirectory(processOptions.WorkingDirectory)
-                    )
+                    Command = new Shell(
+                        e => e.ThrowOnError(processOptions.ThrowOnError)
+                    ).Run(
+                            executable: processOptions.Executable,
+                            arguments: processOptions.Arguments,
+                            options: o => o
+                                .DisposeOnExit(processOptions.DisposeOnExit)
+                                .WorkingDirectory(processOptions.WorkingDirectory)
+                        )
                 };
             }
             else
@@ -86,8 +88,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         Options = processOptions,
                         Caller = caller,
-                        Command = new Shell(e => e.ThrowOnError())
-                            .Run(
+                        Command = new Shell(
+                            e => e.ThrowOnError(processOptions.ThrowOnError)
+                        ).Run(
                                 executable: processOptions.Executable,
                                 arguments: processOptions.Arguments,
                                 options: o => o
@@ -119,8 +122,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         Options = processOptions,
                         Caller = caller,
-                        Command = new Shell(e => e.ThrowOnError())
-                            .Run(
+                        Command = new Shell(
+                            e => e.ThrowOnError(processOptions.ThrowOnError)
+                        ).Run(
                                 executable: Program.GetSudoPath(),
                                 arguments: arguments,
                                 options: o => o
@@ -169,7 +173,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 {
                     Options = processOptions,
                     Command = new Shell(
-                        e => e.ThrowOnError()
+                        e => e.ThrowOnError(processOptions.ThrowOnError)
                     ).Run(processOptions.Executable,
                         arguments: processOptions.Arguments,
                         options: o => o
@@ -187,8 +191,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     commandHolder = new CommandHolder
                     {
                         Options = processOptions,
-                        Command = new Shell(e => e.ThrowOnError())
-                            .Run(
+                        Command = new Shell(
+                            e => e.ThrowOnError(processOptions.ThrowOnError)
+                        ).Run(
                                 executable: processOptions.Executable,
                                 arguments: processOptions.Arguments,
                                 options: o => o
@@ -217,8 +222,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     commandHolder = new CommandHolder
                     {
                         Options = processOptions,
-                        Command = new Shell(e => e.ThrowOnError())
-                            .Run(
+                        Command = new Shell(
+                            e => e.ThrowOnError(processOptions.ThrowOnError)
+                        ).Run(
                                 executable: Program.GetSudoPath(),
                                 arguments: arguments,
                                 options: o => o
