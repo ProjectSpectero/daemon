@@ -184,7 +184,7 @@ namespace Spectero.daemon.Migrations
                     FullName = "Spectero Administrator",
                     EmailAddress = "changeme@example.com",
                     Password = BCrypt.Net.BCrypt.HashPassword(password, (int) viablePasswordCost),
-                    Cert = specteroCertificate != null && ca != null ? Convert.ToBase64String(_cryptoService.ExportCertificateChain(specteroCertificate, ca)) : "",
+                    Cert = specteroCertificate != null && ca != null ? Convert.ToBase64String(_cryptoService.ExportCertificateChain(specteroCertificate, ca, specteroCertKey)) : "",
                     CertKey = specteroCertKey,
                     Source = User.SourceTypes.Local,
                     CreatedDate = DateTime.Now

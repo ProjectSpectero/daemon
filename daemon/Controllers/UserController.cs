@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -344,6 +345,7 @@ namespace Spectero.daemon.Controllers
 
                     if (!allListeners.IsNullOrEmpty())
                     {
+                    
                         serviceReference.AccessConfig = await _razorLightEngine.CompileRenderAsync("OpenVPNUser", new OpenVPNUserConfig
                         {
                             Listeners = allListeners,

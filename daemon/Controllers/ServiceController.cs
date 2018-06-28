@@ -97,6 +97,7 @@ namespace Spectero.daemon.Controllers
 
             // Validate and properly commit to DB afterwards, return back the new OpenVPN config once done (see Manage -> config)
 
+            _response.Result = config;
             return Ok(_response);
         }
 

@@ -18,8 +18,10 @@ using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.X509;
 using ServiceStack;
 using ServiceStack.OrmLite;
+using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
+using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Models;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 
@@ -56,6 +58,17 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             var stringKey = _db.Single<Configuration>(x => x.Key == ConfigKeys.JWTSymmetricSecurityKey).Value;
             jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(stringKey));
             return jwtKey;
+        }
+
+        public X509Certificate2 LoadDatabaseCertificate(string configKey, string passwordKey)
+        {
+            var storedConfig = ConfigUtils.GetConfig(_db, configKey).Result;
+
+            string storedConfigPassword = null;
+            if (passwordKey != null)
+                storedConfigPassword = ConfigUtils.GetConfig(_db, passwordKey).Result.Value;
+
+            return LoadCertificate(Convert.FromBase64String(storedConfig.Value), storedConfigPassword);
         }
 
         public X509Certificate2 LoadCertificate(string issuerFileName, string password = null)
@@ -98,7 +111,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             }
 
             if (caBlob.IsEmpty() || caPassword.IsEmpty())
-                return new byte[] { };
+                throw new CryptoException("Could not resolve CA from datastore, please validate your config.");
 
             var caBytes = Convert.FromBase64String(caBlob);
             var ca = LoadCertificate(caBytes, caPassword);
@@ -114,6 +127,19 @@ namespace Spectero.daemon.Libraries.Core.Crypto
         {
             var collection = new X509Certificate2Collection {new X509Certificate2(ca.RawData), cert};
             return collection.Export(X509ContentType.Pkcs12, storePassword);
+        }
+
+        public byte[] ExportCertificateChain(X509Certificate2 ca, X509Certificate2[] certificates,
+            string storePassword = null)
+        {
+            var collection = new X509Certificate2Collection
+            {
+                new X509Certificate2(ca.RawData)
+            };
+            collection.AddRange(certificates);
+
+            return collection.Export(X509ContentType.Pkcs12, storePassword);
+
         }
 
 

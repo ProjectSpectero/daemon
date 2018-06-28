@@ -28,7 +28,7 @@ namespace Spectero.daemon.CLI.Commands
         [Command(typeof(Shell), Description = "Invokes the Spectero Shell")]
         shell,
 
-        [Command(typeof(Version), Description = "Shows the Spectero Installer and Linked Daemon Versions")]
+        [Command(typeof(Version), Description = "Shows the Spectero CLI and Linked Daemon Versions")]
         version
     }
 }

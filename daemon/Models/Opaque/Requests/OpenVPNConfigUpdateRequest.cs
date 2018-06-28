@@ -40,12 +40,17 @@ namespace Spectero.daemon.Models.Opaque.Requests
      */
 
 
-    public class OpenVPNConfigUpdateRequest : BaseModel
+    public class OpenVPNConfigUpdateRequest : OpaqueBase
     {
-        public OpenVPNConfig commons;
-        public List<OpenVPNListener> listeners;
+        public bool AllowMultipleConnectionsFromSameClient;
+        public bool ClientToClient;
+        public List<Tuple<DhcpOptions, string>> DhcpOptions;
+        public int MaxClients;
+        public List<string> PushedNetworks;
+        public List<RedirectGatewayOptions> RedirectGateway;
+        public List<OpenVPNListener> Listeners;
 
-        public bool Validate(out ImmutableArray<string> errors)
+        public bool Validate(out ImmutableArray<string> errors, CRUDOperation operation = CRUDOperation.Create)
         {
             // TODO: @Andrew - validate the required properties for each property accordingly here.
             // I assume these are requests.
@@ -54,14 +59,8 @@ namespace Spectero.daemon.Models.Opaque.Requests
 
             IValitResult result = ValitRules<OpenVPNConfigUpdateRequest>
                 .Create()
-
-                // Ensure the commons array exists in the request.
-                .Ensure(m => m.commons, _ => _
-                    .Required()
-                    .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "commons")))
-
                 // Ensure the listeners array exists in the request.
-                .Ensure(m => m.listeners, _ => _
+                .Ensure(m => m.Listeners, _ => _
                     .Required()
                     .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "listeners")))
                 .For(this)
@@ -89,7 +88,7 @@ namespace Spectero.daemon.Models.Opaque.Requests
             }
 
             // Check if the multiple connections from same address attribute is undefined.
-            if (commons.AllowMultipleConnectionsFromSameClient == null)
+            if (AllowMultipleConnectionsFromSameClient == null)
             {
                 builder.Add(FormatValidationError(Errors.FIELD_REQUIRED, "commons.allowMultipleConnectionsFromSameClient"));
                 errors = builder.ToImmutable();
@@ -98,7 +97,7 @@ namespace Spectero.daemon.Models.Opaque.Requests
 
 
             // Check if the client to client attribute is undefined.
-            if (commons.ClientToClient == null)
+            if (ClientToClient == null)
             {
                 //TODO: Revisit and get a better understanding, find a way to properly start the array with value.
                 builder.Add(FormatValidationError(Errors.FIELD_REQUIRED, "commons.commons.clientToClient"));
