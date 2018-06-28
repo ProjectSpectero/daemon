@@ -38,7 +38,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly ProxyServer _proxyServer;
         private HTTPConfig _proxyConfig;
         
-        private ServiceState State = ServiceState.Halted;
+        private ServiceState _state = ServiceState.Halted;
         private readonly Uri _blockedRedirectUri;
 
         public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger,
@@ -71,7 +71,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         {
             LogState("Start");
 
-            if (State == ServiceState.Halted)
+            if (_state == ServiceState.Halted)
             {
                 if (serviceConfig != null)
                     SetConfig(serviceConfig);
@@ -113,7 +113,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
 
                 _proxyServer.Start();
-                State = ServiceState.Running;
+                _state = ServiceState.Running;
                 _logger.LogInformation("SS: now listening on " + _proxyConfig.listeners.Count + " endpoints.");
             }
             LogState("Start");
@@ -130,10 +130,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         public void Stop()
         {
             LogState("Stop");
-            if (State == ServiceState.Running)
+            if (_state == ServiceState.Running)
             {
                 _proxyServer.Stop();
-                State = ServiceState.Halted;
+                _state = ServiceState.Halted;
             }
             LogState("Stop");
         }
@@ -141,7 +141,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
         {
             LogState("ReStart");
-            if (State == ServiceState.Running)
+            if (_state == ServiceState.Running)
             {
                 Stop();
                 Start(serviceConfig);
@@ -156,12 +156,12 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         public void LogState(string caller)
         {
-            _logger.LogDebug("[" + GetType().Name + "][" + caller + "] Current state is " + State);
+            _logger.LogDebug("[" + GetType().Name + "][" + caller + "] Current state is " + _state);
         }
 
         public ServiceState GetState()
         {
-            return State;
+            return _state;
         }
 
         private void CheckProxyMode(string host, ref string failReason)
