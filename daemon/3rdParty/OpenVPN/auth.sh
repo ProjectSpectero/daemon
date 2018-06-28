@@ -6,4 +6,4 @@ password=${lines[1]};
 
 spectero cli auth OpenVPN $username $password;
 
-exit -e $?;
+exit $?;
