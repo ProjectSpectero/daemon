@@ -277,7 +277,8 @@ namespace Spectero.daemon.Libraries.Core.Crypto
                 AddSubjectAlternativeNames(certificateGenerator, subjectAlternativeNames);
 
             // This is what makes the subsequent validation pass.
-            AddCAKeyUsages(certificateGenerator, new KeyUsage(KeyUsage.CrlSign | KeyUsage.DigitalSignature | KeyUsage.KeyCertSign | KeyUsage.KeyEncipherment ));
+            if (isCertificateAuthority)
+                AddCAKeyUsages(certificateGenerator, new KeyUsage(KeyUsage.CrlSign | KeyUsage.DigitalSignature | KeyUsage.KeyCertSign | KeyUsage.KeyEncipherment ));
 
             // The certificate is signed with the issuer's private key.
             var certificate = certificateGenerator.Generate(issuerKeyPair.Private, random);
