@@ -284,8 +284,6 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             if (isCertificateAuthority)
                 AddCAKeyUsages(certificateGenerator, new KeyUsage(KeyUsage.CrlSign | KeyUsage.DigitalSignature | KeyUsage.KeyCertSign | KeyUsage.KeyEncipherment ));
 
-            certificateGenerator.AddExtension(X509Extensions.);
-
             // The certificate is signed with the issuer's private key.
             var certificate = certificateGenerator.Generate(issuerKeyPair.Private, random);
             return certificate;
