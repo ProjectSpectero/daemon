@@ -1,4 +1,4 @@
-﻿#!/bin/env bash
+﻿#!/usr/bin/env bash
 
 readarray -t lines < $1
 username=${lines[0]}
