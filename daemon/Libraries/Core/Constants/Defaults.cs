@@ -19,7 +19,7 @@ namespace Spectero.daemon.Libraries.Core.Constants
             {
                 var listeners = new List<Tuple<string, int>>
                 {
-                    Tuple.Create(IPAddress.Any.ToString(), 8800)
+                    Tuple.Create(IPAddress.Any.ToString(), 10240)
                 };
                 return new Lazy<HTTPConfig>(new HTTPConfig(listeners, HTTPProxyModes.Normal));
             }

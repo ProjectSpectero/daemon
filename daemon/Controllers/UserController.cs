@@ -94,7 +94,12 @@ namespace Spectero.daemon.Controllers
                 _response.Message = Messages.USER_AUTHKEY_FLATTENED;
             }
 
-            user.CertKey = PasswordUtils.GeneratePassword(48, 6);
+            // Check if the user would like their certificate encrypted.
+            if (user.EncryptCertificate.HasValue && user.EncryptCertificate.Value)
+                user.CertKey = PasswordUtils.GeneratePassword(48, 6);
+            else
+                user.CertKey = null;
+
             var userCertBytes = _cryptoService.IssueUserChain(user.AuthKey, new[] {KeyPurposeID.IdKPServerAuth}, user.CertKey);
 
             user.Cert = Convert.ToBase64String(userCertBytes);

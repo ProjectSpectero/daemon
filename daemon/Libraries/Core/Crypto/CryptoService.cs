@@ -430,14 +430,16 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             // Add the private key.
             store.SetKeyEntry(friendlyName, new AsymmetricKeyEntry(subjectKeyPair.Private), new[] { certificateEntry });
 
+            var temporaryPassword = password ?? PasswordUtils.GeneratePassword(12, 6);
+
             // Convert it to an X509Certificate2 object by saving/loading it from a MemoryStream.
             // It needs a password. Since we'll remove this later, it doesn't particularly matter what we use.
             var stream = new MemoryStream();
-            store.Save(stream, password.ToCharArray(), random);
+            store.Save(stream, temporaryPassword.ToCharArray(), random);
 
             var convertedCertificate =
                 new X509Certificate2(stream.ToArray(),
-                                     password,
+                                     temporaryPassword,
                                      X509KeyStorageFlags.Exportable);
             return convertedCertificate;
         }
