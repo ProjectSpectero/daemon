@@ -1,9 +1,9 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 
-readarray -t lines < $1
-username=${lines[0]}
-password=${lines[1]}
+readarray -t lines < $1;
+username=${lines[0]};
+password=${lines[1]};
 
-spectero cli auth OpenVPN $username $password
+spectero cli auth OpenVPN $username $password;
 
-exit $?
+exit -e $?;
