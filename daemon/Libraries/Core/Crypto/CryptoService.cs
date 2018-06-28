@@ -276,6 +276,9 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             if (subjectAlternativeNames != null && subjectAlternativeNames.Any())
                 AddSubjectAlternativeNames(certificateGenerator, subjectAlternativeNames);
 
+            // This is what makes the subsequent validation pass.
+            AddCAKeyUsages(certificateGenerator, new KeyUsage(KeyUsage.CrlSign | KeyUsage.DigitalSignature | KeyUsage.KeyCertSign | KeyUsage.KeyEncipherment ));
+
             // The certificate is signed with the issuer's private key.
             var certificate = certificateGenerator.Generate(issuerKeyPair.Private, random);
             return certificate;
@@ -311,6 +314,8 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             var subjectKeyPair = keyPairGenerator.GenerateKeyPair();
             return subjectKeyPair;
         }
+
+
 
         /// <summary>
         /// Add the Authority Key Identifier. According to http://www.alvestrand.no/objectid/2.5.29.35.html, this
@@ -354,6 +359,14 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             certificateGenerator.AddExtension(
                 X509Extensions.SubjectAlternativeName.Id, false, subjectAlternativeNamesExtension);
         }
+
+
+        /// <summary>
+        /// Add the "Key Usage" extension, specifying (for example) "certificate signing".
+        /// </summary>
+        /// <param name="certificateGenerator"></param>
+        /// <param name="encodedKeyUsage"></param>
+        public void AddCAKeyUsages(X509V3CertificateGenerator certificateGenerator, KeyUsage encodedKeyUsage) => certificateGenerator.AddExtension(X509Extensions.KeyUsage.Id, true, encodedKeyUsage);
 
         /// <summary>
         /// Add the "Extended Key Usage" extension, specifying (for example) "server authentication".
