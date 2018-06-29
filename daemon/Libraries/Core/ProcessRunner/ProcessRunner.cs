@@ -421,6 +421,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// </summary>
         public void TerminateAllTrackedCommands()
         {
+            _logger.LogDebug($"Terminating {_runningCommands.Count} tracked commands");
             foreach (var commandHolder in _runningCommands)
             {
                 // Kill the monitoring thread, if one exists.

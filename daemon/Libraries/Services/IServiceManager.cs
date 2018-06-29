@@ -8,6 +8,6 @@ namespace Spectero.daemon.Libraries.Services
         string Process(string name, string action, out String error);
         ConcurrentDictionary<Type, IService> GetServices();
         IService GetService(Type type);
-
+        void StopServices();
     }
 }

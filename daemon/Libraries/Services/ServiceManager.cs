@@ -182,6 +182,20 @@ namespace Spectero.daemon.Libraries.Services
             initiated = true;
         }
 
+        public void StopServices()
+        {
+            // Nothing to kill bruh.
+            if (! initiated)
+                return;
+
+            // Let's stop it all.
+            foreach (var service in GetServices())
+            {
+                _logger.LogDebug($"Processing stop request for {service.Key}");
+                service.Value.Stop();
+            }
+        }
+
         public ConcurrentDictionary<Type, IService> GetServices()
         {
             InitiateServices();
