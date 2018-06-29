@@ -92,7 +92,7 @@ namespace Spectero.daemon.Migrations
                 viablePasswordCost = AuthUtils.GenerateViableCost(_config.PasswordCostCalculationTestTarget,
                     _config.PasswordCostCalculationIterations,
                     _config.PasswordCostTimeThreshold, _config.PasswordCostLowerThreshold);
-                _logger.LogDebug("Firstrun: Determined " + viablePasswordCost + " to be the optimal password hashing cost.");
+                _logger.LogDebug($"Firstrun: Determined {viablePasswordCost} to be the optimal password hashing cost.");
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.PasswordHashingCost,
@@ -112,15 +112,15 @@ namespace Spectero.daemon.Migrations
                 // Ought to be good enough for everyone. -- The IPv4 working group, 1996
                 var caPassword = PasswordUtils.GeneratePassword(48, 8);
                 var serverPassword = PasswordUtils.GeneratePassword(48, 8);
-                ca = _cryptoService.CreateCertificateAuthorityCertificate("CN=" + instanceId + ".ca.instance.spectero.io",
+                ca = _cryptoService.CreateCertificateAuthorityCertificate($"CN={instanceId}.ca.instance.spectero.io",
                     null, null, caPassword);
-                var serverCertificate = _cryptoService.IssueCertificate("CN=" + instanceId + ".instance.spectero.io",
+                var serverCertificate = _cryptoService.IssueCertificate($"CN={instanceId}.instance.spectero.io",
                     ca, null, new[] { KeyPurposeID.AnyExtendedKeyUsage, KeyPurposeID.IdKPServerAuth, KeyPurposeID.IdKPClientAuth }, serverPassword);
 
                 specteroCertKey = PasswordUtils.GeneratePassword(48, 8);
                 specteroCertificate = _cryptoService.IssueCertificate(
                     "CN=" + "spectero",
-                    ca, null, new[] { KeyPurposeID.AnyExtendedKeyUsage, KeyPurposeID.IdKPServerAuth, KeyPurposeID.IdKPClientAuth }, specteroCertKey);
+                    ca, null, new[] { KeyPurposeID.IdKPClientAuth }, specteroCertKey);
 
                 _db.Insert(new Configuration
                 {

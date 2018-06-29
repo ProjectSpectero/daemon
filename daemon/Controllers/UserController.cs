@@ -99,7 +99,7 @@ namespace Spectero.daemon.Controllers
             else
                 user.CertKey = null;
 
-            var userCertBytes = _cryptoService.IssueUserChain(user.AuthKey, new[] {KeyPurposeID.IdKPServerAuth}, user.CertKey);
+            var userCertBytes = _cryptoService.IssueUserChain(user.AuthKey, new[] {KeyPurposeID.IdKPClientAuth}, user.CertKey);
 
             user.Cert = Convert.ToBase64String(userCertBytes);
 
