@@ -32,9 +32,10 @@ Full Unit Testing code coverage is planned, will likely integrate with a continu
 
 Import daemon.sln on VS2017, dedicated test builds are not yet available.
 
-End user software
+### Documentation ###
 
-Windows/OSX/Linux clients for VPN functionality
-Login/signup to their spectero.com accounts
-Enabling VPN connectivity to our free VPN options and user self-hosted options after login to spectero.com account
-Is still possible to bypass your spectero.com account and connect directly to your server
+Documentation for this project is hosted [here.](https://spectero.atlassian.net/wiki/spaces/docs/pages/98323/Overview)
+
+### Contribution Guidelines and Code of Conduct ###
+
+Please review our [contribution guidelines and code of conduct here.](https://spectero.atlassian.net/wiki/spaces/docs/pages/1081408/Open+Source)
