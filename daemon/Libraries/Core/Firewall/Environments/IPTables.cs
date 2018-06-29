@@ -30,8 +30,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             // Store the reference to the parrent
             _parent = parent;
 
-            _processRunner = _processRunner;
-            _logger = _logger;
+            _processRunner = _parent.GetProcessRunner();
+            _logger = _parent.GetLogger();
             
             // Initialize the rule list
             _rules = new List<NetworkRule>();
