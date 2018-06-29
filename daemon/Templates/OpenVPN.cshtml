@@ -249,6 +249,9 @@ keepalive 10 120
 ;cipher AES-128-CBC   # AES
 ;cipher DES-EDE3-CBC  # Triple-DES
 
+; It would be nice if we could require GCM, but that's only available on 2.4+ and we have no real guarantee of what version the package manager will install.
+cipher AES-256-CBC
+
 # Enable compression on the VPN link.
 # If you enable it here, you must also
 # enable it in the client config file.
