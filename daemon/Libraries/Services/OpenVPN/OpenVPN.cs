@@ -31,9 +31,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly Firewall _firewall;
         private readonly List<string> _configsOnDisk;
 
-
         // Class variables that will be modified.
-        private ServiceState _state = ServiceState.Running;
+        private ServiceState _state = ServiceState.Halted;
         private IEnumerable<OpenVPNConfig> _vpnConfig;
         
 
@@ -317,7 +316,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// </summary>
         /// <param name="caller"></param>
         public void LogState(string caller) =>
-            _logger.LogDebug($"OpenVPN: current state is {_state}");
+            _logger.LogDebug($"OpenVPN ({caller}): current state is {_state}");
 
         /// <summary>
         /// Apply a list of configurations to this instance of the OpenVPN Class.
