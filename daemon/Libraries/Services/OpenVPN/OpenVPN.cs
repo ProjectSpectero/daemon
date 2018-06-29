@@ -242,10 +242,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 return;
             }
             
+            _state = ServiceState.Running;
             Initialize(serviceConfig);
 
-            _state = ServiceState.Running;
-            
             LogState("Stop");
         }
             
