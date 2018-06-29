@@ -378,6 +378,26 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 commandHolder.Command.Process.Close();
         }
 
+        public void CloseAllBelongingToService(IService service)
+        {
+            // This is a particularly bad (and heavy) implementation. We should probably keep a Map<IService, CommandHolder> to make this easier.
+            // Not bothering with it right now, however.
+            
+            // Why this? Because you cannot operate on the same Collection you're iterating.
+            var iterator = _runningCommands.ToArray();
+            
+            foreach (var holder in iterator)
+            {
+                if (holder.Caller == null || holder.Caller.GetType() != service.GetType()) continue;
+                
+                // If we have a match, kill the process and remove the element from the running commands list.
+                // TODO: Explicitly kill the associated thread here as well.
+                
+                holder.Command.Process.Close();
+                _runningCommands.Remove(holder);
+            }
+        }
+
         /// <summary>
         /// Terminate all tracked processes forcefully.
         /// </summary>
@@ -438,7 +458,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// </summary>
         /// <param name="workingDirectory"></param>
         /// <returns></returns>
-        public Exception WorkingDirectoryDoesntExistException(string workingDirectory) =>
-            new Exception("The WorkingDirectory attribute value provided did not exist.");
+        private Exception WorkingDirectoryDoesntExistException(string workingDirectory) =>
+            new Exception($"The WorkingDirectory attribute value provided ({workingDirectory}) did not exist.");
     }
 }

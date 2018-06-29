@@ -29,13 +29,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         private readonly IStatistician _statistician;
         private readonly IMemoryCache _cache;
         private readonly IProcessRunner _processRunner;
-        private IEnumerable<OpenVPNConfig> _vpnConfig;
-
-        // Class variables that will be modified.
-        private readonly ServiceState _state = ServiceState.Running;
+        private readonly Firewall _firewall;
         private readonly List<string> _configsOnDisk;
 
-        private Firewall _firewall;
+
+        // Class variables that will be modified.
+        private ServiceState _state = ServiceState.Running;
+        private IEnumerable<OpenVPNConfig> _vpnConfig;
+        
 
         /// <summary>
         /// Standard Constructor
@@ -128,9 +129,6 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
  
                 _firewall.Rules.Masquerade(configHolder.Key.Listener.Network, defaultNetworkInterface.Name);
             }
-
-            // TODO: Invoke OpenVPN once per config on disk and track the process handle somewhere.
-            // TODO: We also need to hook into netlink+netfilter (or its OS specific counterparts) to enable MASQUERADE/SNAT for our NATed IPs.
         }
 
         /// <summary>
@@ -148,7 +146,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 // Attempt to properly find the path of OpenVPN
                 try
                 {
-                    var whichArray = new string[] {"which", "openvpn"};
+                    var whichArray = new[] {"which", "openvpn"};
                     var whichFinder = Medallion.Shell.Command.Run("sudo", whichArray);
 
                     // Parse the output and get the absolute path.
@@ -235,22 +233,44 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Start the OpenVPN Service from the provided List{IServiceConfig}.
         /// </summary>
         /// <param name="serviceConfig"></param>
-        public void Start(IEnumerable<IServiceConfig> serviceConfig = null) =>
+        public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
+        {
+            LogState("Stop");
+            
+            var allowedStates = new[] {ServiceState.Halted, ServiceState.Restarting};
+            if (! allowedStates.Any(x => x == _state))
+            {
+                _logger.LogError($"OpenVPN: cowardly refusing start because current state ({_state}) does not allow OpenVPN startup.");
+                return;
+            }
+            
             Initialize(serviceConfig);
+
+            _state = ServiceState.Running;
+            
+            LogState("Stop");
+        }
+            
 
         /// <summary>
         /// Restart the OpenVPN Service.
         /// </summary>
         /// <param name="serviceConfig"></param>
-        public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null) =>
-            _vpnConfig = serviceConfig as List<OpenVPNConfig>;
+        public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
+        {
+            SetConfig(serviceConfig);
+            _state = ServiceState.Restarting;
+            Stop();
+            Start();
+        }
+
 
         /// <summary>
-        /// TODO: IMPLEMENT THIS FUNCTION.
+        /// Effectively similar to restart in this context.
         /// </summary>
         /// <param name="serviceConfig"></param>
         public void Reload(IEnumerable<IServiceConfig> serviceConfig = null) =>
-            throw new NotSupportedException();
+            ReStart(serviceConfig);
 
         /// <summary>
         /// Stop the OpenVPN Service.
@@ -258,8 +278,13 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// </summary>
         public void Stop()
         {
+            LogState("Stop");
+            
+            // We should probably think about if we want this to throw an exception instead, because the invocation would effectively be illegal at that stage.
+            if (_state != ServiceState.Running) return;
+            
             // Stop all running configurations
-            _processRunner.CloseAllTrackedCommands();
+            _processRunner.CloseAllBelongingToService(this);
 
             // Iterate through each configuration on the disk.
             foreach (var fileOnDisk in _configsOnDisk)
@@ -267,6 +292,10 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
             // Clear the list of configurations on the disk.
             _configsOnDisk.Clear();
+
+            _state = ServiceState.Halted;
+            
+            LogState("Stop");
         }
 
         /// <summary>
@@ -289,14 +318,23 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// </summary>
         /// <param name="caller"></param>
         public void LogState(string caller) =>
-            throw new NotSupportedException();
+            _logger.LogDebug($"OpenVPN: current state is {_state}");
 
         /// <summary>
         /// Apply a list of configurations to this instance of the OpenVPN Class.
         /// </summary>
         /// <param name="config"></param>
         /// <param name="restartNeeded"></param>
-        public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false) =>
-            _vpnConfig = config as List<OpenVPNConfig>;
+        public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
+        {
+            if (config != null)
+            {
+                _vpnConfig = config as List<OpenVPNConfig>;
+                if (restartNeeded)
+                    ReStart();
+            }
+                
+        }
+            
     }
 }
