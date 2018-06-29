@@ -233,7 +233,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// <param name="serviceConfig"></param>
         public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
         {
-            LogState("Stop");
+            LogState("Start");
             
             var allowedStates = new[] {ServiceState.Halted, ServiceState.Restarting};
             if (! allowedStates.Any(x => x == _state))
@@ -245,7 +245,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _state = ServiceState.Running;
             Initialize(serviceConfig);
 
-            LogState("Stop");
+            LogState("Start");
         }
             
 
@@ -255,6 +255,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// <param name="serviceConfig"></param>
         public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
         {
+            LogState("ReStart");
             SetConfig(serviceConfig);
             _state = ServiceState.Restarting;
             Stop();
