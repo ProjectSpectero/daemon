@@ -309,7 +309,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 // Wait for the monitoring interval.
                 Thread.Sleep(commandHolder.Options.MonitoringInterval * 1000);
             }
-            _logger.LogDebug($"TH-{Thread.CurrentThread.ManagedThreadId}: Command is no longer tracked, terminating...");
+            _logger.LogDebug($"Monitor Thread {Thread.CurrentThread.ManagedThreadId}: Command ({commandHolder.Options.Executable}) is no longer tracked, terminating...");
         }
 
         /// <summary>
