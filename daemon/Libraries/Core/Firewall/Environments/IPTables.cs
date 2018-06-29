@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Command = Medallion.Shell.Command;
 
 namespace Spectero.daemon.Libraries.Core.Firewall.Environments
@@ -12,7 +13,10 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
     public class IPTables : IFirewallEnvironment
     {
         // Parent class
-        private Firewall _firewallHandler;
+        private readonly Firewall _parent;
+
+        private readonly IProcessRunner _processRunner;
+        private readonly ILogger<object> _logger;
 
         // List of active firewall commands.
         private List<NetworkRule> _rules;
@@ -24,7 +28,10 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public IPTables(Firewall parent)
         {
             // Store the reference to the parrent
-            _firewallHandler = parent;
+            _parent = parent;
+
+            _processRunner = _processRunner;
+            _logger = _logger;
             
             // Initialize the rule list
             _rules = new List<NetworkRule>();
@@ -50,7 +57,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 case NetworkRuleType.Masquerade:
                     processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.MASQUERADE,
                                                     networkRule, interfaceInformation)).Split(" ");
-                    _firewallHandler.GetLogger().LogInformation("Created MASQUERADE rule for {0}", networkRule.Network);
+                    _logger.LogInformation("Created MASQUERADE rule for {0}", networkRule.Network);
                     break;
 
                 // SNAT
@@ -58,17 +65,17 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                     processOptions.Arguments =
                         ("-A " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.SNAT, networkRule,
                              interfaceInformation)).Split(" ");
-                    _firewallHandler.GetLogger().LogInformation("Created SNAT rule for {0}", networkRule.Network);
+                    _logger.LogInformation("Created SNAT rule for {0}", networkRule.Network);
                     break;
 
                 // Unhandled Exception
                 default:
-                    _firewallHandler.GetLogger().LogError("Firewall environment was provided undefined rule type.");
+                    _logger.LogError("Firewall environment was provided undefined rule type.");
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
 
             //TODO: Ask paul for help here. Not sure what we should do.
-            _firewallHandler.GetProcessRunner().RunSingle(processOptions);
+            _processRunner.RunSingle(processOptions);
 
             // Track the rule.
             _rules.Add(networkRule);
@@ -103,12 +110,12 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 
                 // Unhandled Exception
                 default:
-                    _firewallHandler.GetLogger().LogError("Firewall environment was provided undefined rule type.");
+                    _logger.LogError("Firewall environment was provided undefined rule type.");
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
 
             //TODO: Ask paul for help here. Not sure what we should do.
-            _firewallHandler.GetProcessRunner().Run(processOptions, null);
+            _processRunner.Run(processOptions, null);
 
             // Forget the rule.
             _rules.Remove(networkRule);
@@ -127,7 +134,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 rule.Type = NetworkRuleType.Masquerade;
             else
             {
-                _firewallHandler.GetLogger().LogWarning("OpenVZ Detected - Favoring SNAT rule over MASQUERADE.");
+                _logger.LogWarning("OpenVZ Detected - Favoring SNAT rule over MASQUERADE.");
                 rule.Type = NetworkRuleType.SourceNetworkAddressTranslation;
             }
             
@@ -176,7 +183,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             DeleteRule(networkRule);
         }
 
-        public string GetIPCommandPath()
+        private string GetIPCommandPath()
         {
             var cmd = Command.Run("which", "ip");
             cmd.Wait();

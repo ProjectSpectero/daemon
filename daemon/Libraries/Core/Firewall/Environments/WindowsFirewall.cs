@@ -8,11 +8,11 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 {
     public class WindowsFirewall : IFirewallEnvironment
     {
-        private Firewall _firewallHandler;
+        private Firewall _parent;
 
         public WindowsFirewall(Firewall parent)
         {
-            _firewallHandler = parent;
+            _parent = parent;
         }
 
         public NetworkRule Masquerade(string network, string networkInterface)

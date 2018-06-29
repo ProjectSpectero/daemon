@@ -11,7 +11,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         NetworkRule SourceNetworkAddressTranslation(string network, string networkInterface);
         void DisableSourceNetworkAddressTranslation(NetworkRule networkRule);
 
-        // Rule adding funct ions
+        // Rule adding functions
         void AddRule(NetworkRule networkRule);
         void DeleteRule(NetworkRule networkRule);
 
