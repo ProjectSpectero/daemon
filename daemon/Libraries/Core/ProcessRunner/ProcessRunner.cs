@@ -309,6 +309,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 // Wait for the monitoring interval.
                 Thread.Sleep(commandHolder.Options.MonitoringInterval * 1000);
             }
+            _logger.LogDebug($"TH-{Thread.CurrentThread.ManagedThreadId}: Command is no longer tracked, terminating...");
         }
 
         /// <summary>
@@ -379,7 +380,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             foreach (var commandHolder in _runningCommands)
             {
                 commandHolder.Command.Process.Close();
-                AbortThread(commandHolder.MonitoringThread);
             }
                 
         }
@@ -402,19 +402,12 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 else
                     holder.Command?.Process?.Close();
                 
-                // Kill the monitoring thread, if one exists.
-                AbortThread(holder?.MonitoringThread);
                 
                 // Finally, remove it from the list of running commands.
                 _runningCommands.Remove(holder);
             }
         }
 
-        private void AbortThread(Thread thread)
-        {
-            if (thread != null && thread.IsAlive)
-                thread.Abort();
-        }
 
         /// <summary>
         /// Terminate all tracked processes forcefully.
@@ -424,8 +417,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             _logger.LogDebug($"Terminating {_runningCommands.Count} tracked commands");
             foreach (var commandHolder in _runningCommands)
             {
-                // Kill the monitoring thread, if one exists.
-                AbortThread(commandHolder?.MonitoringThread);
                 commandHolder.Command.Kill();
             }
                 
