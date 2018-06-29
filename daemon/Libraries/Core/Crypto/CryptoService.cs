@@ -21,7 +21,6 @@ using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
-using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Models;
 using X509Certificate = Org.BouncyCastle.X509.X509Certificate;
 

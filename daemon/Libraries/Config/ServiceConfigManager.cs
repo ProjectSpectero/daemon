@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using RazorLight;
 using ServiceStack;
 using ServiceStack.OrmLite;
-using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Identity;

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.IO;
-using System.Reflection;
 using Hangfire;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -15,7 +14,6 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using NLog;
 using NLog.Extensions.Logging;
 using NLog.Web;
 using RazorLight;

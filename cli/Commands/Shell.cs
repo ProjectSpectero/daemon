@@ -1,5 +1,4 @@
-﻿using System;
-using NClap.Metadata;
+﻿using NClap.Metadata;
 using NClap.Repl;
 
 namespace Spectero.daemon.CLI.Commands

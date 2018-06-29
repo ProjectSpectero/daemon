@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Libraries.Services.OpenVPN.Elements

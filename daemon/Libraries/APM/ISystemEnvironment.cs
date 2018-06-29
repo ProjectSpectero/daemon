@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Spectero.daemon.Libraries.APM
+﻿namespace Spectero.daemon.Libraries.APM
 {
     /// <summary>
     /// Interface of System Environemnts

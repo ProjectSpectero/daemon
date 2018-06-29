@@ -1,5 +1,4 @@
 ﻿using System;
-using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner

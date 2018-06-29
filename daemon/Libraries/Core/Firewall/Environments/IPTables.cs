@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
-using Spectero.daemon.Libraries.Core.ProcessRunner;
-using Spectero.daemon.Libraries.Services;
 using Command = Medallion.Shell.Command;
 
 namespace Spectero.daemon.Libraries.Core.Firewall.Environments

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Reflection;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using Spectero.daemon.Models;
 

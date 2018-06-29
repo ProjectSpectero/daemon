@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ServiceStack.DataAnnotations;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Services;
 

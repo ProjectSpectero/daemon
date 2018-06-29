@@ -5,7 +5,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RazorLight;
-using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 
