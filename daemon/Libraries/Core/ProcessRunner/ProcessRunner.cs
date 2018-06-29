@@ -106,7 +106,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     // LINUX/MACOS =====
 
                     // Build the argument array.
-                    List<string> arguments = new List<string>();
+                    var arguments = new List<string>();
                     arguments.Add(processOptions.Executable);
                     for (var i = 0; i != processOptions.Arguments.Length; i++)
                         arguments.Add(processOptions.Arguments[i] ?? "");
@@ -143,7 +143,11 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
             // Check if we should monitor.
             if (commandHolder.Options.Monitor)
-                new Thread(() => Monitor(commandHolder, caller)).Start();
+            {
+                var monitoringThread = new Thread(() => Monitor(commandHolder, caller));
+                commandHolder.MonitoringThread = monitoringThread;
+                monitoringThread.Start();
+            }
 
             // Keep track of the object.
             Track(commandHolder);
@@ -207,7 +211,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 else if (AppConfig.isUnix)
                 {
                     // Build the argument array.
-                    List<string> arguments = new List<string>();
+                    var arguments = new List<string>();
                     arguments.Add(processOptions.Executable);
                     for (var i = 0; i != processOptions.Arguments.Length; i++)
                         arguments.Add(processOptions.Arguments[i] ?? "");
@@ -376,7 +380,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 commandHolder.Command.Process.Close();
         }
 
-        public void CloseAllBelongingToService(IService service)
+        public void CloseAllBelongingToService(IService service, bool force = false)
         {
             // This is a particularly bad (and heavy) implementation. We should probably keep a Map<IService, CommandHolder> to make this easier.
             // Not bothering with it right now, however.
@@ -388,10 +392,16 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             {
                 if (holder.Caller == null || holder.Caller.GetType() != service.GetType()) continue;
                 
-                // If we have a match, kill the process and remove the element from the running commands list.
-                // TODO: Explicitly kill the associated thread here as well.
+                // If we have a match, (gently, or harshly ┐(´∀｀)┌ﾔﾚﾔﾚ) close the process and remove the element from the running commands list.
+                if (force)
+                    holder.Command?.Process?.Kill();
+                else
+                    holder.Command?.Process?.Close();
                 
-                holder.Command.Process.Close();
+                // Kill the monitoring thread, if one exists.
+                holder.MonitoringThread?.Abort();
+                
+                // Finally, remove it from the list of running commands.
                 _runningCommands.Remove(holder);
             }
         }
