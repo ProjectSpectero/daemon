@@ -377,7 +377,11 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         public void CloseAllTrackedCommands()
         {
             foreach (var commandHolder in _runningCommands)
+            {
                 commandHolder.Command.Process.Close();
+                AbortThread(commandHolder.MonitoringThread);
+            }
+                
         }
 
         public void CloseAllBelongingToService(IService service, bool force = false)
@@ -399,11 +403,17 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     holder.Command?.Process?.Close();
                 
                 // Kill the monitoring thread, if one exists.
-                holder.MonitoringThread?.Abort();
+                AbortThread(holder?.MonitoringThread);
                 
                 // Finally, remove it from the list of running commands.
                 _runningCommands.Remove(holder);
             }
+        }
+
+        private void AbortThread(Thread thread)
+        {
+            if (thread != null && thread.IsAlive)
+                thread.Abort();
         }
 
         /// <summary>
@@ -412,7 +422,12 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         public void TerminateAllTrackedCommands()
         {
             foreach (var commandHolder in _runningCommands)
+            {
+                // Kill the monitoring thread, if one exists.
+                AbortThread(commandHolder?.MonitoringThread);
                 commandHolder.Command.Kill();
+            }
+                
         }
 
         /// <summary>
