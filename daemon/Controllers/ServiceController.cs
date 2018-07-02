@@ -116,7 +116,7 @@ namespace Spectero.daemon.Controllers
 
                 foreach (var network in networksAlreadySeen)
                 {
-                    Logger.LogDebug($"Checking if {network} overlaps with any already defined networks: {networksAlreadySeen}");
+                    Logger.LogDebug($"Checking if {network} overlaps with any already defined networks: {networksAlreadySeen.ToJson()}");
                     // Uh oh, we got an overlap. No bueno.
                     if (! network.Contains(parsedNetwork) && ! network.Equals(parsedNetwork)) continue;;
 			        
