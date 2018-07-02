@@ -47,7 +47,7 @@ namespace Spectero.daemon.CLI.Commands
             var request = new AuthenticationRequest(ServiceProvider);
             var body = new Dictionary<string, object>
             {
-                {"username", pluckedUsername},
+                {"authKey", pluckedUsername},
                 {"password", pluckedPassword},
                 {"serviceScope", Scope}
             };
