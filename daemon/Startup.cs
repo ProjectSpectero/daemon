@@ -188,16 +188,7 @@ namespace Spectero.daemon
             app.UseHangfireServer(option);
             app.UseHangfireDashboard($"/jobs");
 
-            app.UseMvc(routes =>
-            {
-                if (appConfig.SpaMode)
-                {
-                    routes.MapSpaFallbackRoute(
-                        name: "spa-fallback",
-                        defaults: new {controller = "Spa", action = "Index"}
-                    );
-                }
-            });
+            app.UseMvc();
 
             // Initialize Nlog
             loggerFactory.AddNLog();
