@@ -6,7 +6,7 @@ using Spectero.daemon.CLI.Requests;
 
 namespace Spectero.daemon.CLI.Commands
 {
-    public class OpenVPNInlineFileAuthentication : BaseJob
+    public class InlineFileAuth : BaseJob
     {
         [PositionalArgument(
             ArgumentFlags.Required,

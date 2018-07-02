@@ -31,7 +31,7 @@ namespace Spectero.daemon.CLI.Commands
         [Command(typeof(Version), Description = "Shows the Spectero CLI and Linked Daemon Versions")]
         version,
         
-        [Command(typeof(Shell), Description = "Service specific authentication helper, meant for invocation by 3rd party binary: OpenVPN")]
+        [Command(typeof(InlineFileAuth), Description = "Service specific authentication helper, meant for invocation by 3rd party binary: OpenVPN")]
         fileauth,
     }
 }
