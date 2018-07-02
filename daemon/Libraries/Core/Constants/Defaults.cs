@@ -48,7 +48,7 @@ namespace Spectero.daemon.Libraries.Core.Constants
             new OpenVPNListener
             {
                 IPAddress = "0.0.0.0",
-                Protocol = TransportProtocols.TCP,
+                Protocol = TransportProtocol.TCP,
                 Port = 1194,
                 ManagementPort = 35100, // TODO: Define a formal "Port Management" service to allocate (and additionally forward through NAT) these.
                 Network = "172.16.224.0/24"
@@ -56,7 +56,7 @@ namespace Spectero.daemon.Libraries.Core.Constants
             new OpenVPNListener
             {
                 IPAddress = "0.0.0.0",
-                Protocol = TransportProtocols.UDP,
+                Protocol = TransportProtocol.UDP,
                 Port = 1194,
                 ManagementPort = 35101, // TODO: Define a formal "Port Management" service to allocate (and additionally forward through NAT) these.
                 Network = "172.16.225.0/24"

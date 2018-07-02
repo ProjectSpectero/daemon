@@ -18,14 +18,14 @@
         string protocolType;
         switch (listener.Protocol)
         {
-            case TransportProtocols.TCP:
+            case TransportProtocol.TCP:
                 protocolType = "tcp-client";
                 break;
             default:
                 protocolType = "udp";
                 break;
         }
-        convertedListeners.Add(new Tuple<string, int, string>(listener.IPAddress, listener.Port, protocolType));
+        convertedListeners.Add(new Tuple<string, int, string>(listener.IPAddress, listener.Port.GetValueOrDefault(), protocolType));
     }
 }
 # Automatically generated OpenVPN client config file by Spectero Daemon

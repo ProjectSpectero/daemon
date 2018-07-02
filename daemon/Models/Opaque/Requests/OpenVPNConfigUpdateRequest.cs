@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Net;
+using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Valit;
+using IPAddress = System.Net.IPAddress;
 
 namespace Spectero.daemon.Models.Opaque.Requests
 {
@@ -37,69 +41,81 @@ namespace Spectero.daemon.Models.Opaque.Requests
 
     public class OpenVPNConfigUpdateRequest : OpaqueBase
     {
-        public bool AllowMultipleConnectionsFromSameClient;
-        public bool ClientToClient;
-        public List<Tuple<DhcpOptions, string>> DhcpOptions;
-        public int MaxClients;
-        public List<string> PushedNetworks;
-        public List<RedirectGatewayOptions> RedirectGateway;
-        public List<OpenVPNListener> Listeners;
+        public bool? AllowMultipleConnectionsFromSameClient;
+        public bool? ClientToClient;
+	    public int? MaxClients;
+	    
+        public IEnumerable<Tuple<DhcpOptions, string>> DhcpOptions;
+        public IEnumerable<string> PushedNetworks;
+        public IEnumerable<RedirectGatewayOptions> RedirectGateway;
+        public IEnumerable<OpenVPNListener> Listeners;
 
         public bool Validate(out ImmutableArray<string> errors, CRUDOperation operation = CRUDOperation.Create)
         {
-            // TODO: @Andrew - validate the required properties for each property accordingly here.
-            // I assume these are requests.
 
-            ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
+            var builder = ImmutableArray.CreateBuilder<string>();
 
-            IValitResult result = ValitRules<OpenVPNConfigUpdateRequest>
+            var result = ValitRules<OpenVPNConfigUpdateRequest>
                 .Create()
                 // Ensure the listeners array exists in the request.
                 .Ensure(m => m.Listeners, _ => _
                     .Required()
-                    .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "listeners")))
+						.WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "listeners"))
+					.MinItems(1)
+						.WithMessage(FormatValidationError(Errors.FIELD_MINLENGTH, "1")))
+	            // IPAddress / IPNetwork validation, after this, no further "TryParse" is required.
+	            .EnsureFor(m => m.Listeners, OpenVPNListener.validator)
+	            .Ensure(m => m.AllowMultipleConnectionsFromSameClient, _ => _
+					.Required()
+						.WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "allowMultipleConnectionsFromSameClient")))
+	            .Ensure(m => m.ClientToClient, _ => _
+		            .Required()
+						.WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "clientToClient")))
+	            .Ensure(m => m.MaxClients, _ => _
+					.Required()
+						.WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "maxClients"))
+					.IsGreaterThanOrEqualTo(512)
+						.WithMessage(FormatValidationError(Errors.FIELD_MINLENGTH, "512"))
+		            .IsLessThanOrEqualTo(2048)
+						.WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "2048")))
+				.Ensure(m => m.DhcpOptions, _ => _
+					.Required()
+						.WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "dhcpOptions")))
+	            .Ensure(m => m.PushedNetworks, _ => _
+					.Required()
+						.WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "pushedNetworks")))
+	            .EnsureFor(m => m.PushedNetworks, _ => _
+					.Satisfies(x => IPNetwork.TryParse(x, out var _))
+						.WithMessage(FormatValidationError(Errors.FIELD_INVALID, "pushedNetworks")))
+	            .Ensure(m => m.RedirectGateway, _ => _
+		            .Required()
+						.WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "redirectGateway")))
                 .For(this)
                 .Validate();
 
-            /*
-             * Non-Standard Form Validaton
-             *
-             * Anything beyond this point has been implemented due to a problem with the .Required()
-             * Attribute above.
-             *
-             * Commit all errors to the builder to produce an easy ImmutableArray<string>.
-             * Return afterwards to reduce CPU cycles.
-             */
-
-            // Add the result's errors to the compiled builder array.
-            foreach (var seedErrorMessage in result.ErrorMessages)
-                builder.Add(seedErrorMessage);
-
-            // Check if there's an error, if so return
-            if (builder.Count != 0)
-            {
-                errors = builder.ToImmutable();
-                return result.Succeeded;
-            }
-
-            // Check if the multiple connections from same address attribute is undefined.
-            if (AllowMultipleConnectionsFromSameClient == null)
-            {
-                builder.Add(FormatValidationError(Errors.FIELD_REQUIRED, "commons.allowMultipleConnectionsFromSameClient"));
-                errors = builder.ToImmutable();
-                return result.Succeeded;
-            }
-
-
-            // Check if the client to client attribute is undefined.
-            if (ClientToClient == null)
-            {
-                //TODO: Revisit and get a better understanding, find a way to properly start the array with value.
-                builder.Add(FormatValidationError(Errors.FIELD_REQUIRED, "commons.commons.clientToClient"));
-                errors = builder.ToImmutable();
-                return result.Succeeded;
-            }
-
+	        // Fail fast if there are issues.
+	        if (!result.Succeeded)
+	        {
+		        errors = result.ErrorMessages;
+		        return false;
+	        }
+		        
+	        // OK bob, the basic schema is valid. Let's do some semantics checks now.
+	        // There is also no need to coppy result.ErrorMessages out into our buffer this time. If we're here, that means it all passed already.
+	        
+	        // Let's check the listeners.
+	        var networksAlreadySeen = new ArrayList();
+	        var ipAndPortPairsAlreadySeen = new Dictionary<int, Dictionary<string, TransportProtocol>>();
+	        
+	        var errorEncountered = false;
+	        
+	        foreach (var listener in Listeners)
+	        {
+		        if (IPAddress.TryParse(listener.IPAddress, out var parsedAddress))
+		        {
+			        
+		        };
+	        }
             errors = builder.ToImmutable();
             return result.Succeeded;
         }
