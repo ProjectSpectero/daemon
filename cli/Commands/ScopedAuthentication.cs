@@ -29,7 +29,6 @@ namespace Spectero.daemon.CLI.Commands
             };
 
             return HandleRequest(null, request, body);
-            throw new NotImplementedException();
         }
     }
 }
