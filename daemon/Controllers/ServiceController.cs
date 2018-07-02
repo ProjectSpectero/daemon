@@ -193,10 +193,15 @@ namespace Spectero.daemon.Controllers
             await ConfigUtils.CreateOrUpdateConfig(Db, ConfigKeys.OpenVPNListeners, JsonConvert.SerializeObject(allListeners));
             
             // Now, we need to figure out if service restart will be needed.
-            // However, since this a 3rd party daemon -- our work is any. We can't make ANY changes at runtime.
+            // However, since this is a 3rd party daemon -- our work is way easier. We can't make ANY changes at runtime.
+            // TODO: Do a config diff before doing this, but that's skipped for now.
+            
             var targetServiceType = typeof(OpenVPN);
 
             var service = _serviceManager.GetService(targetServiceType);
+            
+            // Let's get the parsed config out of the DB, and update svc state if needed.
+            var reconciledConfig = _serviceConfigManager.Generate(targetServiceType);
             
             if (service.GetState() == ServiceState.Running)
             {
@@ -204,8 +209,6 @@ namespace Spectero.daemon.Controllers
                 _response.Message = Messages.SERVICE_RESTART_NEEDED;
             }
             
-            // Let's get the parsed config out of the DB, and update svc state.
-            var reconciledConfig = _serviceConfigManager.Generate(targetServiceType);
             service.SetConfig(reconciledConfig);
            
             _response.Result = reconciledConfig;
