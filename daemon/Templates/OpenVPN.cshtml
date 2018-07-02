@@ -13,6 +13,12 @@
     var pkcs12Header = Model.PKCS12Certificate.Substring(0, 64);
     var pkcs12Remainder = Model.PKCS12Certificate.Substring(64);
 
+    var parsedNetworks = new List<IPNetwork>();
+    foreach (var network in Model.PushedNetworks)
+    {
+        parsedNetworks.Add(IPNetwork.Parse(network));
+    }
+
     var listenerString = "";
 
     switch (Model.Listener.Protocol)
@@ -108,7 +114,7 @@ ifconfig-pool-persist ipp.txt
 # address pool (10.8.0.0/255.255.255.0)
 # back to the OpenVPN server.
 # Example: ;push "route 192.168.10.0 255.255.255.0"
-@foreach (var network in Model.PushedNetworks)
+@foreach (var network in parsedNetworks)
 {
     @:push "route @network.Network @network.Netmask"
 }

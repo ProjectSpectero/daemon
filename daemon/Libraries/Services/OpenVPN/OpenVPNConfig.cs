@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -12,28 +11,29 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
     public class OpenVPNConfig : IServiceConfig
     {
+        [JsonIgnore]
         private readonly IRazorLightEngine _engine;
+        
+        [JsonIgnore]
         public readonly IIdentityProvider Identity;
-        public bool AllowMultipleConnectionsFromSameClient;
 
-        [JsonIgnore] public X509Certificate2 CACert;
-        [JsonIgnore] public X509Certificate2 ServerCert;
+        [JsonIgnore]
+        public X509Certificate2 CACert;
+        
+        [JsonIgnore]
+        public X509Certificate2 ServerCert;
+        
+        [JsonIgnore]
         public string PKCS12Certificate;
-
-        /*
-         * string = IP address
-         * int = port
-         * Transportproto = tcp/udp server
-         * string = Local subnet (IPNetwork)
-         */
-
+        
         public OpenVPNListener Listener;
+        
+        public bool AllowMultipleConnectionsFromSameClient;
         public bool ClientToClient;
         public List<Tuple<DhcpOptions, string>> DhcpOptions;
         public int MaxClients;
-        public List<IPNetwork> PushedNetworks;
+        public List<string> PushedNetworks;
         public List<RedirectGatewayOptions> RedirectGateway;
-        public int ManagementPort;
 
 
         /// <summary>

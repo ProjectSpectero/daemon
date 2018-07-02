@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Net;
-using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Valit;
-using IPAddress = System.Net.IPAddress;
 
 namespace Spectero.daemon.Models.Opaque.Requests
 {
@@ -93,31 +90,11 @@ namespace Spectero.daemon.Models.Opaque.Requests
                 .For(this)
                 .Validate();
 
-	        // Fail fast if there are issues.
-	        if (!result.Succeeded)
-	        {
-		        errors = result.ErrorMessages;
-		        return false;
-	        }
-		        
-	        // OK bob, the basic schema is valid. Let's do some semantics checks now.
-	        // There is also no need to coppy result.ErrorMessages out into our buffer this time. If we're here, that means it all passed already.
 	        
-	        // Let's check the listeners.
-	        var networksAlreadySeen = new ArrayList();
-	        var ipAndPortPairsAlreadySeen = new Dictionary<int, Dictionary<string, TransportProtocol>>();
-	        
-	        var errorEncountered = false;
-	        
-	        foreach (var listener in Listeners)
-	        {
-		        if (IPAddress.TryParse(listener.IPAddress, out var parsedAddress))
-		        {
-			        
-		        };
-	        }
-            errors = builder.ToImmutable();
-            return result.Succeeded;
+	        errors = result.ErrorMessages;
+
+	        return result.Succeeded;
+	       
         }
     }
 }
