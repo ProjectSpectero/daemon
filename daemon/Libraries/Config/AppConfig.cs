@@ -28,7 +28,6 @@ namespace Spectero.daemon.Libraries.Config
 
         public bool RespectEndpointToOutgoingMapping { get; set; }
         public bool BindToUnbound { get; set; }
-        public string WebRoot { get; set; }
         public string LoggingConfig { get; set; }
         public string DefaultOutgoingIPResolver { get; set; }
 
