@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using Spectero.daemon.Libraries.Core;
+using Spectero.daemon.Libraries.Extensions;
 using Valit;
 
 namespace Spectero.daemon.Libraries.Services.OpenVPN.Elements

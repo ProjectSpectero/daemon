@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Errors;
+using Spectero.daemon.Libraries.Extensions;
 using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 

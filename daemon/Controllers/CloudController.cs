@@ -22,9 +22,10 @@ using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
+using Spectero.daemon.Libraries.Extensions;
 using Spectero.daemon.Models;
-using Spectero.daemon.Models.Requests;
-using Spectero.daemon.Models.Responses;
+using Spectero.daemon.Models.Opaque.Requests;
+using Spectero.daemon.Models.Opaque.Responses;
 using IRestClient = RestSharp.IRestClient;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 

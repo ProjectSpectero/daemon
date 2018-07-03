@@ -1,6 +1,4 @@
-﻿using Spectero.daemon.Models.Opaque;
-
-namespace Spectero.daemon.Models.Responses
+﻿namespace Spectero.daemon.Models.Opaque.Responses
 {
     public class AuthResponse
     {

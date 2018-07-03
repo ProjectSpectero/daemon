@@ -16,8 +16,8 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
-using Spectero.daemon.Models;   
-using Spectero.daemon.Models.Responses;
+using Spectero.daemon.Models;
+using Spectero.daemon.Models.Opaque.Responses;
 using IRestClient = RestSharp.IRestClient;
 
 namespace Spectero.daemon.Jobs

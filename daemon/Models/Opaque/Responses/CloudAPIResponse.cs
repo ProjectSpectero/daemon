@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Spectero.daemon.Models.Responses
+namespace Spectero.daemon.Models.Opaque.Responses
 {
     public class CloudAPIResponse<T>
     {
