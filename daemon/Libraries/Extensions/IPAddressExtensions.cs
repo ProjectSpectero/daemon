@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 
-namespace Spectero.daemon.Libraries
+namespace Spectero.daemon.Libraries.Extensions
 {
     public static class IPAddressExtensions
     {

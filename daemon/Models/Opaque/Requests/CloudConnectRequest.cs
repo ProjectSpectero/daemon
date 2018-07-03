@@ -1,4 +1,4 @@
-﻿namespace Spectero.daemon.Models.Requests
+﻿namespace Spectero.daemon.Models.Opaque.Requests
 {
     public class CloudConnectRequest
     {

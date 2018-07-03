@@ -2,6 +2,7 @@
 @using ServiceStack
 @using RazorLight
 @using Spectero.daemon.Libraries.Core
+@using Spectero.daemon.Libraries.Extensions
 @model Spectero.daemon.Libraries.Services.OpenVPN.OpenVPNConfig
 @inherits TemplatePage<Spectero.daemon.Libraries.Services.OpenVPN.OpenVPNConfig>
 @{
@@ -9,6 +10,8 @@
 
     var localNetwork = IPNetwork.Parse(Model.Listener.Network);
     var localNetMask = localNetwork.Netmask;
+
+    var pkcs12Chunks = Model.PKCS12Certificate.Chunk(64);
 
     var pkcs12Header = Model.PKCS12Certificate.Substring(0, 64);
     var pkcs12Remainder = Model.PKCS12Certificate.Substring(64);
@@ -72,8 +75,10 @@ dev tun
 # (see "pkcs12" directive in man page).
 
 <pkcs12>
-@pkcs12Header
-@pkcs12Remainder
+@foreach (var pkcsChunk in pkcs12Chunks)
+{
+    @pkcsChunk @Environment.NewLine
+}
 </pkcs12>
 
 # Diffie hellman parameters.

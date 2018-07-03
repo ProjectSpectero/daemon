@@ -15,8 +15,8 @@ using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Models.Opaque;
-using Spectero.daemon.Models.Requests;
-using Spectero.daemon.Models.Responses;
+using Spectero.daemon.Models.Opaque.Requests;
+using Spectero.daemon.Models.Opaque.Responses;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
 namespace Spectero.daemon.Controllers

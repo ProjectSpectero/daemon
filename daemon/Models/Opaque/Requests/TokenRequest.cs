@@ -4,7 +4,7 @@ using ServiceStack;
 using Spectero.daemon.Libraries.Core.Constants;
 using Valit;
 
-namespace Spectero.daemon.Models.Requests
+namespace Spectero.daemon.Models.Opaque.Requests
 {
     public class TokenRequest : BaseModel
     {
