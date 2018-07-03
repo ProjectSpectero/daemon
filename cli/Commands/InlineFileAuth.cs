@@ -40,7 +40,8 @@ namespace Spectero.daemon.CLI.Commands
             }
             catch (Exception e)
             {
-                throw InvalidConfigurationFilePath(e.ToString());
+                Console.WriteLine(e.ToString());
+                return CommandResult.RuntimeFailure;
             }
 
             // Build the request
@@ -55,7 +56,5 @@ namespace Spectero.daemon.CLI.Commands
             // Run it.
             return HandleRequest(null, request, body);
         }
-
-        private Exception InvalidConfigurationFilePath(string msg) => new Exception(msg);
     }
 }

@@ -18,21 +18,16 @@
 #############################################
 
 
-# REGEXES
-# Regex will prevent arbitary code execution
-USERNAME_REGEX="/^[a-z0-9 .\-_@]+$/";
-PASSWORD_REGEX="";
-
 # READ ARRAY
 # Will parse the information into the lines variable.
 readarray -t lines < $1;
 
 
 # PARSED CREDENTIALS
-# We can use these to provide login data
-# All variables are filtered through their coresponding regex, and is expected to be sanitized.
-USERNAME=$(echo "${lines[0]}" | grep -q $USERNAME_REGEX);
-PASSWORD=$(echo "${lines[1]}" | grep -q $PASSWORD_REGEX);
+# We can use these to provide login data.
+# All variables will be sanitized by OpenVPN.
+USERNAME=$lines[0];
+PASSWORD=$lines[1];
 
 
 # DETERMINE EXECUTION
