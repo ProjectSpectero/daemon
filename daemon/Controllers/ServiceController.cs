@@ -309,7 +309,8 @@ namespace Spectero.daemon.Controllers
                 var service = _serviceManager.GetService(typeof(HTTPProxy));
                 var restartNeeded = !config.listeners.SequenceEqual(currentConfig.listeners) && service.GetState() == ServiceState.Running;
 
-                service.SetConfig(new List<IServiceConfig> { config }, restartNeeded); //Update the running config, listener config will not apply until a full system restart is made. There's a bug here.
+                //Update the running config, listener config will not apply until a full system restart is made.
+                service.SetConfig(new List<IServiceConfig> { config }, restartNeeded); 
 
                 if (restartNeeded)
                     _response.Message = Messages.SERVICE_RESTART_NEEDED;

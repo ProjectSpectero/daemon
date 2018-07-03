@@ -21,17 +21,10 @@
 # This if condition determines if we're a developer
 # If the user is a developer, it will execute the relative binary over the installation path.
 
-# Print Current Working Directory
-echo $PWD;
+# Print Current Working Directory (Debug only)
+# echo $PWD;
 
-if [ ! -f ../../../cli/bin/Debug/netcoreapp2.1/Spectero.daemon.CLI.dll ]; then
-    # The daemon is likely running this, run it as expected.
-    spectero cli fileauth OpenVPN $1;
-else
-    # The user is likely a developer, run the relative build.
-    dotnet ../../../../../cli/bin/Debug/netcoreapp2.1/Spectero.daemon.CLI.dll fileauth OpenVPN $1;
-fi
-
+spectero cli fileauth OpenVPN $1;
 
 # Return the exit code.
 exit $?;
