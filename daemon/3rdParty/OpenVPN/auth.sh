@@ -17,28 +17,15 @@
 ##
 #############################################
 
-
-# READ ARRAY
-# Will parse the information into the lines variable.
-readarray -t lines < $1;
-
-
-# PARSED CREDENTIALS
-# We can use these to provide login data.
-# All variables will be sanitized by OpenVPN.
-USERNAME=$lines[0];
-PASSWORD=$lines[1];
-
-
 # DETERMINE EXECUTION
 # This if condition determines if we're a developer
 # If the user is a developer, it will execute the relative binary over the installation path.
 if [ ! -f ../../../cli/bin/Debug/netcoreapp2.1/Spectero.daemon.CLI.dll ]; then
     # The daemon is likely running this, run it as expected.
-    spectero cli auth OpenVPN $USERNAME $PASSWORD;
+    spectero cli fileauth OpenVPN $1;
 else
     # The user is likely a developer, run the relative build.
-    dotnet ../../../cli/bin/Debug/netcoreapp2.1/Spectero.daemon.CLI.dll auth OpenVPN $USERNAME $PASSWORD;
+    dotnet ../../../cli/bin/Debug/netcoreapp2.1/Spectero.daemon.CLI.dll fileauth OpenVPN $1;
 fi
 
 
