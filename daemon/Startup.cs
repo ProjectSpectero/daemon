@@ -162,7 +162,6 @@ namespace Spectero.daemon
             ILifetimeHandler lifetimeHandler)
         {
             var appConfig = configMonitor.Value;
-            var webRootPath = Path.Combine(CurrentDirectory, appConfig.WebRoot);
 
             if (env.IsDevelopment())
             {
@@ -172,10 +171,6 @@ namespace Spectero.daemon
             }
 
             app.UseDefaultFiles();
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                FileProvider = new PhysicalFileProvider(webRootPath)
-            });
 
             app.UseAddRequestIdHeader();
 
