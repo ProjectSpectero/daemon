@@ -92,18 +92,32 @@ namespace Spectero.daemon.Controllers
             var status = await GetConfig(ConfigKeys.CloudConnectStatus);
             var identifier = await GetConfig(ConfigKeys.CloudConnectIdentifier);
             var nodeKey = await GetConfig(ConfigKeys.CloudConnectNodeKey);
-
-            var responseDict = new Dictionary<string, object>
+            
+            var responseObject = new Dictionary<string, object>
             {
-                { ConfigKeys.CloudConnectStatus, bool.Parse(status?.Value) },
-                { ConfigKeys.CloudConnectIdentifier, identifier?.Value },
-                { ConfigKeys.CloudConnectNodeKey, nodeKey?.Value },
-                { "app.version", AppConfig.version },
-                { "app.restart.required", _restartNeeded },
-                { "system.data", _apm.GetAllDetails() }
+                { "cloud", new Dictionary<string, object>
+                    {
+                        { "status", bool.Parse(status?.Value) },
+                        { "id", identifier?.Value },
+                        { "nodeKey", nodeKey?.Value }
+                    } 
+                } ,
+                {
+                    "app", new Dictionary<string, object>
+                    {
+                        { "version", AppConfig.version },
+                        { "restartNeeded", _restartNeeded }
+                    }
+                },
+                {
+                    "system", new Dictionary<string, object>
+                    {
+                        { "data", _apm.GetAllDetails() },
+                    }
+                }
             };
 
-            return responseDict;
+            return responseObject;
         }
 
         [HttpGet("remote", Name = "GetCloudConnectStatusRemotely")]

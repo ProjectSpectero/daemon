@@ -1,5 +1,4 @@
-﻿using System;
-using ServiceStack.DataAnnotations;
+﻿using ServiceStack.DataAnnotations;
 using Spectero.daemon.Libraries.Core.Statistics;
 
 namespace Spectero.daemon.Models

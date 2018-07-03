@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Reflection;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
@@ -19,7 +18,7 @@ namespace Spectero.daemon.Libraries.Core.Constants
             {
                 var listeners = new List<Tuple<string, int>>
                 {
-                    Tuple.Create(IPAddress.Any.ToString(), 8800)
+                    Tuple.Create(IPAddress.Any.ToString(), 10240)
                 };
                 return new Lazy<HTTPConfig>(new HTTPConfig(listeners, HTTPProxyModes.Normal));
             }
@@ -33,20 +32,35 @@ namespace Spectero.daemon.Libraries.Core.Constants
                 {
                     AllowMultipleConnectionsFromSameClient = false,
                     ClientToClient = false,
-                    pushedNetworks = new List<IPNetwork>(),
-                    redirectGateway = new List<RedirectGatewayOptions> {RedirectGatewayOptions.Def1},
-                    dhcpOptions = new List<Tuple<DhcpOptions, string>>(),
+                    PushedNetworks = new List<string>(),
+                    RedirectGateway = new List<RedirectGatewayOptions> {RedirectGatewayOptions.Def1},
+                    DhcpOptions = new List<Tuple<DhcpOptions, string>>(),
                     MaxClients = 1024
+
                 };
 
                 return new Lazy<OpenVPNConfig>(config);
             }
         }
 
-        public static List<Tuple<string, int, TransportProtocols, string>> OpenVPNListeners => new List<Tuple<string, int, TransportProtocols, string>>
+        public static List<OpenVPNListener> OpenVPNListeners => new List<OpenVPNListener>
         {
-            {Tuple.Create("0.0.0.0", 1194, TransportProtocols.TCP, "172.16.224.0/24")},
-            {Tuple.Create("0.0.0.0", 1194, TransportProtocols.UDP, "172.16.225.0/24")}
+            new OpenVPNListener
+            {
+                IPAddress = "0.0.0.0",
+                Protocol = TransportProtocol.TCP,
+                Port = 1194,
+                ManagementPort = 35100, // TODO: Define a formal "Port Management" service to allocate (and additionally forward through NAT) these.
+                Network = "172.16.224.0/24"
+            },
+            new OpenVPNListener
+            {
+                IPAddress = "0.0.0.0",
+                Protocol = TransportProtocol.UDP,
+                Port = 1194,
+                ManagementPort = 35101, // TODO: Define a formal "Port Management" service to allocate (and additionally forward through NAT) these.
+                Network = "172.16.225.0/24"
+            }
         };
     }
 }

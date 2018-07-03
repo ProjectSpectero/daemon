@@ -14,6 +14,7 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 
 namespace Spectero.daemon.Libraries.Services
@@ -30,6 +31,7 @@ namespace Spectero.daemon.Libraries.Services
         private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
         private readonly IStatistician _statistician;
         private readonly IMemoryCache _cache;
+        private readonly IProcessRunner _processRunner;
 
         private bool initiated = false;
 
@@ -37,7 +39,7 @@ namespace Spectero.daemon.Libraries.Services
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
             IStatistician statistician, IServiceConfigManager serviceConfigManager,
-            IMemoryCache cache)
+            IMemoryCache cache, IProcessRunner processRunner)
         {
             _appConfig = appConfig.CurrentValue;
             _logger = logger;
@@ -46,6 +48,7 @@ namespace Spectero.daemon.Libraries.Services
             _statistician = statistician;
             _serviceConfigManager = serviceConfigManager;
             _cache = cache;
+            _processRunner = processRunner;
         }
 
 
@@ -168,7 +171,7 @@ namespace Spectero.daemon.Libraries.Services
             {
                 _logger.LogDebug("IS: Processing activation request for " + serviceType);
                 var service = (IService) Activator.CreateInstance(serviceType, _appConfig, _logger, _db, _authenticator,
-                    _localNetworks, _localAddresses, _statistician, _cache);
+                    _localNetworks, _localAddresses, _statistician, _cache, _processRunner);
                 var config = _serviceConfigManager.Generate(serviceType);
                 service.SetConfig(config);
                 _logger.LogDebug("IS: Activation succeeded for " + serviceType);
@@ -177,6 +180,20 @@ namespace Spectero.daemon.Libraries.Services
 
             _logger.LogDebug("IS: Successfully initialized " + _services.Count + " service(s).");
             initiated = true;
+        }
+
+        public void StopServices()
+        {
+            // Nothing to kill bruh.
+            if (! initiated)
+                return;
+
+            // Let's stop it all.
+            foreach (var service in GetServices())
+            {
+                _logger.LogDebug($"Processing stop request for {service.Key}");
+                service.Value.Stop();
+            }
         }
 
         public ConcurrentDictionary<Type, IService> GetServices()

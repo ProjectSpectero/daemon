@@ -1,0 +1,4 @@
+*.ovpn
+auth.sh.debug
+ipp.txt
+openvpn-status.log

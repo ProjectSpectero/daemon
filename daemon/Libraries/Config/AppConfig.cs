@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace Spectero.daemon.Libraries.Config
@@ -21,15 +22,14 @@ namespace Spectero.daemon.Libraries.Config
         public static bool isWindows => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         public static bool isLinux => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
         public static bool isMac => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+
         public static bool isUnix => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
-            System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+                                     System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+
         public bool RespectEndpointToOutgoingMapping { get; set; }
         public bool BindToUnbound { get; set; }
         public string WebRoot { get; set; }
-        public bool SpaMode { get; set; }
         public string LoggingConfig { get; set; }
-        public string SpaFileName { get; set; }
-        public int SpaCacheTime { get; set; }
         public string DefaultOutgoingIPResolver { get; set; }
 
         public bool InMemoryAuth { get; set; }
@@ -60,5 +60,14 @@ namespace Spectero.daemon.Libraries.Config
         public static string CloudConnectDefaultAuthKey => "cloud";
         public static string version => "0.1-alpha";
 
+        /// <summary>
+        /// Simple function to detect the presence of OpenVZ hosts.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static bool IsOpenVZContainer()
+        {
+            return (File.Exists("/proc/user_beancounters") || Directory.Exists("/proc/bc/"));
+        }
     }
 }

@@ -1,13 +1,14 @@
 ﻿@using Spectero.daemon.Libraries.Core
-@using Spectero.daemon.Models
-@inherits RazorLight.TemplatePage<dynamic>
+
+@model Spectero.daemon.Libraries.Services.OpenVPN.Elements.OpenVPNUserConfig
+@inherits RazorLight.TemplatePage<Spectero.daemon.Libraries.Services.OpenVPN.Elements.OpenVPNUserConfig>
 @{
     DisableEncoding = true;
-    User user = Model.User;
-    IEnumerable<Tuple<string, int, TransportProtocols, string>> listeners = Model.listeners;
-    string systemId = Model.identity.ToString();
+    var user = Model.User;
+    var listeners = Model.Listeners;
+    var systemId = Model.Identity;
 
-    List<Tuple<string, int, string>> convertedListeners = new List<Tuple<string, int, string>>();
+    var convertedListeners = new List<Tuple<string, int, string>>();
 
     var pkcs12Header = user.Cert.Substring(0, 64);
     var pkcs12Remainder = user.Cert.Substring(64);
@@ -15,16 +16,16 @@
     foreach (var listener in listeners)
     {
         string protocolType;
-        switch (listener.Item3)
+        switch (listener.Protocol)
         {
-            case TransportProtocols.TCP:
+            case TransportProtocol.TCP:
                 protocolType = "tcp-client";
                 break;
             default:
                 protocolType = "udp";
                 break;
         }
-        convertedListeners.Add(new Tuple<string, int, string>(listener.Item1, listener.Item2, protocolType));
+        convertedListeners.Add(new Tuple<string, int, string>(listener.IPAddress, listener.Port.GetValueOrDefault(), protocolType));
     }
 }
 # Automatically generated OpenVPN client config file by Spectero Daemon
@@ -42,42 +43,30 @@ server-poll-timeout 4
 nobind
 @foreach (var listener in convertedListeners)
 {
-@:remote @listener.Item1 @listener.Item2 @listener.Item3
+    @:remote @listener.Item1 @listener.Item2 @listener.Item3
 }
 
 dev tun
 dev-type tun
-ns-cert-type server
 reneg-sec 604800
 sndbuf 100000
 rcvbuf 100000
 max-routes 2048
 
-# NOTE: LZO commands are pushed by the Access Server at connect time.
-# NOTE: The below line doesn't disable LZO.
-comp-lzo no
+comp-lzo
 verb 3
 setenv PUSH_PEER_INFO
+auth-user-pass
 
 <pkcs12>
-@pkcs12Header
-@pkcs12Remainder
+    @pkcs12Header
+    @pkcs12Remainder
 </pkcs12>
 
-# <ca>
-#     
-# </ca>
-# 
-# <cert>
-#     
-# </cert>
-# 
-# <key>
-#     
-# </key>
 # key-direction 1
 # <tls-auth>
-#     
+#
+#
 # </tls-auth>
 
 # Extra user-defined configuration

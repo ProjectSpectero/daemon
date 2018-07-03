@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -12,6 +10,7 @@ using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
@@ -29,6 +28,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly IEnumerable<IPAddress> _localAddresses;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
+
         private readonly List<string> _cacheKeys;
 
         private IMemoryCache _cache;
@@ -36,13 +36,14 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         private readonly ProxyServer _proxyServer;
         private HTTPConfig _proxyConfig;
         
-        private ServiceState State = ServiceState.Halted;
+        private ServiceState _state = ServiceState.Halted;
         private readonly Uri _blockedRedirectUri;
 
         public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
             IEnumerable<IPNetwork> localNetworks, IEnumerable<IPAddress> localAddresses,
-            IStatistician statistician, IMemoryCache cache)
+            IStatistician statistician, IMemoryCache cache,
+            IProcessRunner processRunner)
         {
             _appConfig = appConfig;
             _logger = logger;
@@ -68,7 +69,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         {
             LogState("Start");
 
-            if (State == ServiceState.Halted)
+            if (_state == ServiceState.Halted)
             {
                 if (serviceConfig != null)
                     SetConfig(serviceConfig);
@@ -77,7 +78,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 // Stop proxy server if it's somehow internally running due to a mismatched state (due to errors on a previous startup)
                 if (_proxyServer.ProxyRunning)
                 {
-                    _logger.LogWarning("HTTPProxy (titanium)'s state and ours do not match. This is not supposed to happen! Attempting to fix...");
+                    _logger.LogWarning("HTTPProxy: Engine's state and ours do not match. This is not supposed to happen! Attempting to fix...");
                     _proxyServer.Stop();
                 }
 
@@ -99,7 +100,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     endpoint.BeforeTunnelConnectResponse += OnTunnelConnectResponse;
 
                     _proxyServer.AddEndPoint(endpoint);
-                    _logger.LogDebug("SS: Now listening on " + listener.Item1 + ":" + listener.Item2);
+                    _logger.LogDebug($"HTTPProxy: Now listening on {listener.Item1}:{listener.Item2}");
                 }
 
                 _proxyServer.ProxyRealm = "Spectero";
@@ -110,8 +111,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
 
                 _proxyServer.Start();
-                State = ServiceState.Running;
-                _logger.LogInformation("SS: now listening on " + _proxyConfig.listeners.Count + " endpoints.");
+                _state = ServiceState.Running;
+                _logger.LogInformation($"HTTPProxy: now listening on {_proxyConfig.listeners.Count} endpoints.");
             }
             LogState("Start");
         }
@@ -127,10 +128,10 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         public void Stop()
         {
             LogState("Stop");
-            if (State == ServiceState.Running)
+            if (_state == ServiceState.Running)
             {
                 _proxyServer.Stop();
-                State = ServiceState.Halted;
+                _state = ServiceState.Halted;
             }
             LogState("Stop");
         }
@@ -138,7 +139,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
         public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
         {
             LogState("ReStart");
-            if (State == ServiceState.Running)
+            if (_state == ServiceState.Running)
             {
                 Stop();
                 Start(serviceConfig);
@@ -153,12 +154,12 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         public void LogState(string caller)
         {
-            _logger.LogDebug("[" + GetType().Name + "][" + caller + "] Current state is " + State);
+            _logger.LogDebug($"[{GetType().Name}][{caller}] Current state is {_state}");
         }
 
         public ServiceState GetState()
         {
-            return State;
+            return _state;
         }
 
         private void CheckProxyMode(string host, ref string failReason)
@@ -195,7 +196,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             if (failReason.IsNullOrEmpty() && _proxyConfig.bannedDomains != null &&
                 GetFromCache(FormatCacheKey(host, "bannedDomains"), out var test))
             {
-                _logger.LogDebug("ESO: Blocked host " + host + " found.");
+                _logger.LogDebug($"ESO: Blocked host {host} found.");
                 failReason = BlockedReasons.BlockedUri;
             }
         }
@@ -213,12 +214,13 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
                     if (matched)
                     {
-                        _logger.LogDebug("ESO-CACHE: Found access attempt to LAN (" + result["address"] + " is in " + result["network"] + ")");
+                        _logger.LogDebug(
+                            $"ESO-CACHE: Found access attempt to LAN ({result["address"]} is in {result["network"]})");
                         failReason = BlockedReasons.LanProtection;
                         blockedAddress = result["address"];
                     }
                     else
-                        _logger.LogDebug("ESO-CACHE: " + host + " verified, LAN protection bypassed.");
+                        _logger.LogDebug($"ESO-CACHE: {host} verified, LAN protection bypassed.");
                 }
                 else
                 {
@@ -228,7 +230,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     var hostAddresses = Dns.GetHostAddresses(host);
                     if (hostAddresses.Length == 0)
                     {
-                        _logger.LogInformation("ESO: Could not resolve " + host + ", LAN protection bypassed.");
+                        _logger.LogInformation($"ESO: Could not resolve {host}, LAN protection bypassed.");
                         return;
                     }
 
@@ -237,7 +239,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                         {
                             if (!IPNetwork.Contains(network, address)) continue;
 
-                            _logger.LogDebug("ESO-LOOP: Found access attempt to LAN (" + address + " is in " + network + ")");
+                            _logger.LogDebug($"ESO-LOOP: Found access attempt to LAN ({address} is in {network})");
                             failReason = BlockedReasons.LanProtection;
                             blockedAddress = address.ToString();
 
@@ -328,15 +330,15 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 
                 if (IPAddress.TryParse(requestedUpstream.Value, out requestedAddress))
                 {
-                    _logger.LogDebug("ES: Proxy request received with upstream request of " + requestedAddress);
+                    _logger.LogDebug($"ES: Proxy request received with upstream request of {requestedAddress}");
 
                     // This lookup is possibly slow, TBD.
                     if (_localAddresses.Contains(requestedAddress))
-                        _logger.LogDebug("ES: Requested address is valid (" + requestedAddress + ")");
+                        _logger.LogDebug($"ES: Requested address is valid ({requestedAddress})");
                       
                     else
                         _logger.LogWarning(
-                            "ES: Requested address is NOT valid for this system (" + requestedAddress + "), silently ignored. Request originated with system default IP.");
+                            $"ES: Requested address is NOT valid for this system ({requestedAddress}), silently ignored. Request originated with system default IP.");
                 }
                 else
                     _logger.LogWarning("ES: Invalid X-SPECTERO-UPSTREAM-IP header.");
@@ -351,8 +353,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 if (Utility.CheckIPFilter(endpoint.IpAddress, Utility.IPComparisonReasons.FOR_PROXY_OUTGOING) && _appConfig.RespectEndpointToOutgoingMapping)
                 {
                     requestedAddress = endpoint.IpAddress;
-                    _logger.LogDebug("ES: No header upstream was requested, using endpoint default of " + requestedAddress + " as it was determined valid" 
-                                     + " and RespectEndpointToOutgoingMapping is enabled.");                
+                    _logger.LogDebug(
+                        $"ES: No header upstream was requested, using endpoint default of {requestedAddress} as it was determined valid and RespectEndpointToOutgoingMapping is enabled.");                
                 }
 
                 if (requestedAddress != null)
@@ -435,7 +437,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
             cacheExpirationOptions.RegisterPostEvictionCallback(callback: (cacheKey, value, reason, state) =>
             {
-                _logger.LogTrace("Log entry " + key + " was evicted from the cache due to " + reason + ".");
+                _logger.LogTrace($"Log entry {key} was evicted from the cache due to {reason}.");
 
                 // Stop leaking cache keys, clean it up as we go.
                 _cacheKeys.Remove(cacheKey as string);
@@ -487,7 +489,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
         private static string FormatCacheKey(string key, string type)
         {
-            return "services.httpproxy." + type + "." + key;
+            return $"services.httpproxy.{type}.{key}";
         }
     }
 }

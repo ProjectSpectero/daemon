@@ -1,8 +1,5 @@
 ﻿using NClap.Metadata;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Spectero.daemon.CLI.Requests;
-using System;
 
 namespace Spectero.daemon.CLI.Commands
 {

@@ -2,17 +2,16 @@ using System;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Spectero.daemon.Libraries.APM;
-using Assert = NUnit.Framework.Assert;
 
 namespace daemon_testcases
 {
     /*
      * Application Performance Management
      * This class is dedicated to testing the serialization of the host's operating system dictionary set.
-     */
+      */
 
     [TestFixture]
-    public class ApmUnitTest
+    public class ApmUnitTest : BaseUnitTest
     {
         [Test]
         public void IsSerializable()

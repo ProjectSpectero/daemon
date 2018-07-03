@@ -18,6 +18,7 @@ using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.X509;
 using ServiceStack;
 using ServiceStack.OrmLite;
+using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Models;
@@ -56,6 +57,17 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             var stringKey = _db.Single<Configuration>(x => x.Key == ConfigKeys.JWTSymmetricSecurityKey).Value;
             jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(stringKey));
             return jwtKey;
+        }
+
+        public X509Certificate2 LoadDatabaseCertificate(string configKey, string passwordKey)
+        {
+            var storedConfig = ConfigUtils.GetConfig(_db, configKey).Result;
+
+            string storedConfigPassword = null;
+            if (passwordKey != null)
+                storedConfigPassword = ConfigUtils.GetConfig(_db, passwordKey).Result.Value;
+
+            return LoadCertificate(Convert.FromBase64String(storedConfig.Value), storedConfigPassword);
         }
 
         public X509Certificate2 LoadCertificate(string issuerFileName, string password = null)
@@ -98,12 +110,12 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             }
 
             if (caBlob.IsEmpty() || caPassword.IsEmpty())
-                return new byte[] { };
+                throw new CryptoException("Could not resolve CA from datastore, please validate your config.");
 
             var caBytes = Convert.FromBase64String(caBlob);
             var ca = LoadCertificate(caBytes, caPassword);
 
-            var subjectName = "CN=" + userAuthKey + ".users." + _identityProvider.GetGuid() + ".instance.spectero.io";
+            var subjectName = "CN=" + userAuthKey;
             
             var userCert = IssueCertificate(subjectName, ca, null, usages, password);
 
@@ -114,6 +126,19 @@ namespace Spectero.daemon.Libraries.Core.Crypto
         {
             var collection = new X509Certificate2Collection {new X509Certificate2(ca.RawData), cert};
             return collection.Export(X509ContentType.Pkcs12, storePassword);
+        }
+
+        public byte[] ExportCertificateChain(X509Certificate2 ca, X509Certificate2[] certificates,
+            string storePassword = null)
+        {
+            var collection = new X509Certificate2Collection
+            {
+                new X509Certificate2(ca.RawData)
+            };
+            collection.AddRange(certificates);
+
+            return collection.Export(X509ContentType.Pkcs12, storePassword);
+
         }
 
 
@@ -240,7 +265,11 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             // The subject's public key goes in the certificate.
             certificateGenerator.SetPublicKey(subjectKeyPair.Public);
 
-            AddAuthorityKeyIdentifier(certificateGenerator, issuerDN, issuerKeyPair, issuerSerialNumber);
+            // This breaks validation due to reversed serial numbers.
+            // See https://security.stackexchange.com/questions/188605/openssl-unable-to-verify-certificate-issued-by-local-ca
+            // TODO: Come back to fix this someday.
+            //AddAuthorityKeyIdentifier(certificateGenerator, issuerDN, issuerKeyPair, issuerSerialNumber);
+            
             AddSubjectKeyIdentifier(certificateGenerator, subjectKeyPair);
             AddBasicConstraints(certificateGenerator, isCertificateAuthority);
 
@@ -249,6 +278,10 @@ namespace Spectero.daemon.Libraries.Core.Crypto
 
             if (subjectAlternativeNames != null && subjectAlternativeNames.Any())
                 AddSubjectAlternativeNames(certificateGenerator, subjectAlternativeNames);
+
+            // This is what makes the subsequent validation pass.
+            if (isCertificateAuthority)
+                AddCAKeyUsages(certificateGenerator, new KeyUsage(KeyUsage.CrlSign | KeyUsage.DigitalSignature | KeyUsage.KeyCertSign | KeyUsage.KeyEncipherment ));
 
             // The certificate is signed with the issuer's private key.
             var certificate = certificateGenerator.Generate(issuerKeyPair.Private, random);
@@ -285,6 +318,8 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             var subjectKeyPair = keyPairGenerator.GenerateKeyPair();
             return subjectKeyPair;
         }
+
+
 
         /// <summary>
         /// Add the Authority Key Identifier. According to http://www.alvestrand.no/objectid/2.5.29.35.html, this
@@ -328,6 +363,14 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             certificateGenerator.AddExtension(
                 X509Extensions.SubjectAlternativeName.Id, false, subjectAlternativeNamesExtension);
         }
+
+
+        /// <summary>
+        /// Add the "Key Usage" extension, specifying (for example) "certificate signing".
+        /// </summary>
+        /// <param name="certificateGenerator"></param>
+        /// <param name="encodedKeyUsage"></param>
+        public void AddCAKeyUsages(X509V3CertificateGenerator certificateGenerator, KeyUsage encodedKeyUsage) => certificateGenerator.AddExtension(X509Extensions.KeyUsage.Id, true, encodedKeyUsage);
 
         /// <summary>
         /// Add the "Extended Key Usage" extension, specifying (for example) "server authentication".
@@ -386,14 +429,16 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             // Add the private key.
             store.SetKeyEntry(friendlyName, new AsymmetricKeyEntry(subjectKeyPair.Private), new[] { certificateEntry });
 
+            var temporaryPassword = password ?? PasswordUtils.GeneratePassword(12, 6);
+
             // Convert it to an X509Certificate2 object by saving/loading it from a MemoryStream.
             // It needs a password. Since we'll remove this later, it doesn't particularly matter what we use.
             var stream = new MemoryStream();
-            store.Save(stream, password.ToCharArray(), random);
+            store.Save(stream, temporaryPassword.ToCharArray(), random);
 
             var convertedCertificate =
                 new X509Certificate2(stream.ToArray(),
-                                     password,
+                                     temporaryPassword,
                                      X509KeyStorageFlags.Exportable);
             return convertedCertificate;
         }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.IO;
-using System.Reflection;
 using Hangfire;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -15,7 +14,6 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using NLog;
 using NLog.Extensions.Logging;
 using NLog.Web;
 using RazorLight;
@@ -28,7 +26,9 @@ using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.HTTP.Middlewares;
 using Spectero.daemon.Libraries.Core.Identity;
+using Spectero.daemon.Libraries.Core.LifetimeHandler;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Migrations;
@@ -135,6 +135,10 @@ namespace Spectero.daemon
 
             services.AddSingleton<Apm, Apm>();
 
+            services.AddSingleton<IProcessRunner, ProcessRunner>();
+
+            services.AddSingleton<ILifetimeHandler, LifetimeHandler>();
+
             services.AddMvc();
 
 
@@ -154,7 +158,8 @@ namespace Spectero.daemon
         public void Configure(IOptionsSnapshot<AppConfig> configMonitor, IApplicationBuilder app,
             IHostingEnvironment env, ILoggerFactory loggerFactory,
             IMigration migration, IAutoStarter autoStarter,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider, IApplicationLifetime applicationLifetime,
+            ILifetimeHandler lifetimeHandler)
         {
             var appConfig = configMonitor.Value;
             var webRootPath = Path.Combine(CurrentDirectory, appConfig.WebRoot);
@@ -183,16 +188,7 @@ namespace Spectero.daemon
             app.UseHangfireServer(option);
             app.UseHangfireDashboard($"/jobs");
 
-            app.UseMvc(routes =>
-            {
-                if (appConfig.SpaMode)
-                {
-                    routes.MapSpaFallbackRoute(
-                        name: "spa-fallback",
-                        defaults: new {controller = "Spa", action = "Index"}
-                    );
-                }
-            });
+            app.UseMvc();
 
             // Initialize Nlog
             loggerFactory.AddNLog();
@@ -211,6 +207,10 @@ namespace Spectero.daemon
                 RecurringJob.AddOrUpdate(implementer.GetType().ToString(), () => implementer.Perform(),
                     implementer.GetSchedule);
             }
+
+            applicationLifetime.ApplicationStarted.Register(lifetimeHandler.OnStarted);
+            applicationLifetime.ApplicationStopping.Register(lifetimeHandler.OnStopping);
+            applicationLifetime.ApplicationStopped.Register(lifetimeHandler.OnStopped);
         }
 
         /// <summary>

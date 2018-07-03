@@ -78,6 +78,9 @@ namespace Spectero.daemon.Models
 
         public string CertKey { get; set; }
 
+        [Ignore]
+        public bool? EncryptCertificate { get; set; }
+
         public long EngagementId { get; set; }
 
         public string FullName { get; set; }
@@ -165,8 +168,11 @@ namespace Spectero.daemon.Models
                     .Required()
                         .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "email"))
                     .Email()
-                        .WithMessage(FormatValidationError(Errors.FIELD_EMAIL, "email"))
-                )
+                        .WithMessage(FormatValidationError(Errors.FIELD_EMAIL, "email")))
+                .Ensure(m => m.EncryptCertificate, _ => _
+                    .Required()
+                        .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "encryptCertificate"))
+                        .When(m => operation.Equals(CRUDOperation.Create)))
                 .For(this)
                 .Validate();
 

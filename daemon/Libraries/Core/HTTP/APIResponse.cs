@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Net;
 
 namespace Spectero.daemon.Libraries.Core.HTTP
 {

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Net;
@@ -16,7 +17,10 @@ using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
+using Spectero.daemon.Libraries.Services.OpenVPN;
+using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Spectero.daemon.Models;
+using Spectero.daemon.Models.Opaque.Requests;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 using Utility = Spectero.daemon.Libraries.Core.Utility;
 
@@ -83,6 +87,133 @@ namespace Spectero.daemon.Controllers
 
             _response.Errors.Add(Errors.INVALID_SERVICE_OR_ACTION_ATTEMPT, "");
             return BadRequest(_response);
+        }
+
+        [HttpPut("OpenVPN/config", Name = "HandleOpenVPNConfigUpdate")]
+        public async Task<IActionResult> HandleOpenVPNConfigUpdate([FromBody] OpenVPNConfigUpdateRequest config)
+        {
+            if (!ModelState.IsValid || !config.Validate(out var errors))
+            {
+                _response.Errors.Add(Errors.VALIDATION_FAILED, errors);
+                return BadRequest(_response);
+            }
+            
+            // OK bob, the basic schema is valid. Let's do some semantics checks now.
+            // There is also no need to coppy result.ErrorMessages out into our buffer this time. If we're here, that means it all passed already.
+	        
+            // Let's check the listeners.
+            var networksAlreadySeen = new List<IPNetwork>();
+            
+            var listenersAlreadySeen = new Dictionary<int,
+                List<OpenVPNListener>>();
+	        
+            var errorEncountered = false;
+	        
+            foreach (var listener in config.Listeners)
+            {
+                var parsedNetwork = IPNetwork.Parse(listener.Network);
+                var parsedAddress = IPAddress.Parse(listener.IPAddress);
+
+                foreach (var network in networksAlreadySeen)
+                {
+                    Logger.LogDebug($"Checking if {network} overlaps with any already defined networks: {networksAlreadySeen.ToJson()}");
+                    // Uh oh, we got an overlap. No bueno.
+                    if (! network.Contains(parsedNetwork) && ! network.Equals(parsedNetwork)) continue;;
+			        
+                    _response.Errors.Add(Errors.FIELD_OVERLAP, $"listeners.network:{network},{parsedNetwork}");
+                    errorEncountered = true;
+                    break;
+                }
+                
+                networksAlreadySeen.Add(parsedNetwork);
+		        
+                // If we got here, that means listeners do not have network overlaps.
+                if (!errorEncountered)
+                {
+                    // Now, let's check for port overlaps / same listener being defined multiple times
+                    listenersAlreadySeen.TryGetValue(listener.Port.Value, out var listOfexistingListenersOnPort);
+
+                    // OK, there are other listeners on this port.
+                    if (listOfexistingListenersOnPort != null)
+                    {
+                        foreach (var abstractedListener in listOfexistingListenersOnPort)
+                        {
+                            if (!abstractedListener.Protocol.Equals(listener.Protocol))
+                            {
+                                Logger.LogDebug("Protocols do not match, continuing search for conflicts.");
+                                continue;
+                            }
+                            
+                            if (abstractedListener.IPAddress.Equals(IPAddress.Any.ToString()))
+                            {
+                                _response.Errors.Add(Errors.PORT_CONFLICT_FOUND, "0.0.0.0");
+                                errorEncountered = true;
+                                break;
+                            }
+
+                            // Duplicate listener found
+                            if (abstractedListener.IPAddress.Equals(listener.IPAddress))
+                            {
+                                _response.Errors.Add(Errors.DUPLICATE_IP_AS_LISTENER_REQUEST, listener.IPAddress);
+                                errorEncountered = true;
+                                break;
+                            }
+                        }
+                        
+                        // If we got here, it was sufficiently unique.
+                        listOfexistingListenersOnPort.Add(listener);
+                    }
+                    else
+                    {
+                        listOfexistingListenersOnPort = new List<OpenVPNListener> {listener};
+                        listenersAlreadySeen.Add(listener.Port.Value, listOfexistingListenersOnPort);
+                    }
+                }
+            }
+
+            if (HasErrors())
+            {
+                return BadRequest(_response);
+            }
+
+            var baseConfig = new OpenVPNConfig (null, null)
+            {
+                AllowMultipleConnectionsFromSameClient = config.AllowMultipleConnectionsFromSameClient.Value,
+                ClientToClient = config.ClientToClient.Value,
+                MaxClients = config.MaxClients.Value,
+                PushedNetworks = config.PushedNetworks as List<string>,
+                RedirectGateway = config.RedirectGateway as List<RedirectGatewayOptions>,
+                DhcpOptions = config.DhcpOptions as List<Tuple<DhcpOptions, string>>, 
+            };
+
+            var allListeners = config.Listeners as List<OpenVPNListener>;
+
+            // Let's commit it all to DB as required.
+            await ConfigUtils.CreateOrUpdateConfig(Db, ConfigKeys.OpenVPNBaseConfig, JsonConvert.SerializeObject(baseConfig));
+            await ConfigUtils.CreateOrUpdateConfig(Db, ConfigKeys.OpenVPNListeners, JsonConvert.SerializeObject(allListeners));
+            
+            // Now, we need to figure out if service restart will be needed.
+            // However, since this is a 3rd party daemon -- our work is way easier. We can't make ANY changes at runtime.
+            // TODO: Do a config diff before doing this, but that's skipped for now.
+            
+            var targetServiceType = typeof(OpenVPN);
+
+            var service = _serviceManager.GetService(targetServiceType);
+            
+            // Let's get the parsed config out of the DB, and update svc state if needed.
+            var reconciledConfig = _serviceConfigManager.Generate(targetServiceType);
+            
+            if (service.GetState() == ServiceState.Running)
+            {
+                // Yep, restart will be needed.
+                _response.Message = Messages.SERVICE_RESTART_NEEDED;
+            }
+            
+            service.SetConfig(reconciledConfig);
+           
+            _response.Result = reconciledConfig;
+            
+            return Ok(_response);
         }
 
         [HttpPut("HTTPProxy/config", Name = "HandleHTTPProxyConfigUpdate")]
@@ -178,7 +309,8 @@ namespace Spectero.daemon.Controllers
                 var service = _serviceManager.GetService(typeof(HTTPProxy));
                 var restartNeeded = !config.listeners.SequenceEqual(currentConfig.listeners) && service.GetState() == ServiceState.Running;
 
-                service.SetConfig(new List<IServiceConfig> { config }, restartNeeded); //Update the running config, listener config will not apply until a full system restart is made. There's a bug here.
+                //Update the running config, listener config will not apply until a full system restart is made.
+                service.SetConfig(new List<IServiceConfig> { config }, restartNeeded); 
 
                 if (restartNeeded)
                     _response.Message = Messages.SERVICE_RESTART_NEEDED;

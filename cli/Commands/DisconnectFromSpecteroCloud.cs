@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using NClap.Metadata;
+﻿using NClap.Metadata;
 using Spectero.daemon.CLI.Requests;
 
 namespace Spectero.daemon.CLI.Commands

@@ -1,10 +1,6 @@
 ﻿using NClap.Metadata;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Spectero.daemon.CLI.Requests;
-using System;
 using System.Collections.Generic;
-using RestSharp;
 
 namespace Spectero.daemon.CLI.Commands
 {

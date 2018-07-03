@@ -4,6 +4,9 @@ namespace Spectero.daemon.CLI.Commands
 {
     public enum Commands
     {
+        [Command(typeof(ScopedAuthentication), Description = "Service specific authentication helper, meant for invocation by 3rd party binaries.")]
+        auth,
+
         [Command(typeof(ConnectToSpecteroCloud), Description = "Automagic connection to the Spectero Cloud")]
         connect,
 
@@ -25,7 +28,10 @@ namespace Spectero.daemon.CLI.Commands
         [Command(typeof(Shell), Description = "Invokes the Spectero Shell")]
         shell,
 
-        [Command(typeof(Version), Description = "Shows the Spectero Installer and Linked Daemon Versions")]
-        version
+        [Command(typeof(Version), Description = "Shows the Spectero CLI and Linked Daemon Versions")]
+        version,
+        
+        [Command(typeof(InlineFileAuth), Description = "Service specific authentication helper, meant for invocation by 3rd party binary: OpenVPN")]
+        fileauth,
     }
 }
