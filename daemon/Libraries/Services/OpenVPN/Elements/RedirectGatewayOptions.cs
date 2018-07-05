@@ -8,6 +8,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN.Elements
     {
         Local,
         Def1,
-        BypassDhcp
+        BypassDhcp,
+        BypassDns
     }
 }
