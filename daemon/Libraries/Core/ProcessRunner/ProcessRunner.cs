@@ -392,7 +392,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <summary>
         /// Function to attach a logging instance to the commandHolder using the classes _logger.
         /// </summary>
-        public void AttachLoggerToCommandHolder(CommandHolder commandHolder)
+        private void AttachLoggerToCommandHolder(CommandHolder commandHolder)
         {
             // Attach command objects
             commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
@@ -408,7 +408,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// </summary>
         /// <param name="workingDirectory"></param>
         /// <returns></returns>
-        private Exception WorkingDirectoryDoesntExistException(string workingDirectory) =>
+        private static Exception WorkingDirectoryDoesntExistException(string workingDirectory) =>
             new Exception($"The WorkingDirectory attribute value provided ({workingDirectory}) did not exist.");
     }
 }
