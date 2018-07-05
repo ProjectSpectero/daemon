@@ -43,7 +43,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // Check the state of the service.
             var currentState = caller?.GetState();
             var allowedStates = new[] {ServiceState.Running, ServiceState.Restarting};
-            if (currentState != null && !allowedStates.All(x => x == currentState))
+            if (currentState != null && !allowedStates.Any(x => x == currentState))
             {
                 _logger.LogInformation("The service state prohibited a proccess from running.");
                 throw new InvalidOperationException($"Service state was {currentState}, invocation can NOT continue.");
