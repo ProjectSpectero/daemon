@@ -35,16 +35,15 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <param name="processOptions"></param>
         /// <param name="caller"></param>
         /// <returns></returns>
-        public CommandHolder Run(ProcessOptions processOptions, IService caller)
+        public CommandHolder Run(ProcessOptions processOptions, IService caller = null)
         {
             // Convert the options into a new command holder.
             CommandHolder commandHolder = null;
 
             // Check the state of the service.
-            var currentState = caller.GetState();
-
+            var currentState = caller?.GetState();
             var allowedStates = new[] {ServiceState.Running, ServiceState.Restarting};
-            if (!allowedStates.Any(x => x == currentState))
+            if (currentState != null && !allowedStates.All(x => x == currentState))
             {
                 _logger.LogInformation("The service state prohibited a proccess from running.");
                 throw new InvalidOperationException($"Service state was {currentState}, invocation can NOT continue.");

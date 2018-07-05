@@ -32,7 +32,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 
             _processRunner = _parent.GetProcessRunner();
             _logger = _parent.GetLogger();
-            
+
             // Initialize the rule list
             _rules = new List<NetworkRule>();
         }
@@ -45,7 +45,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public void AddRule(NetworkRule networkRule)
         {
             // Build standard process options.
-            var processOptions = NetworkBuilder.BuildProcessOptions("iptables", true);
+            var commandOptions = NetworkBuilder.BuildProcessOptions("iptables");
 
             // Get local interface information
             var interfaceInformation = GetDefaultInterface();
@@ -55,16 +55,35 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             {
                 // MASQUERADE
                 case NetworkRuleType.Masquerade:
-                    processOptions.Arguments = ("-A " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.MASQUERADE,
-                                                    networkRule, interfaceInformation)).Split(" ");
+                    // Assign the argument.
+                    commandOptions.Arguments = (
+                            "-A " + NetworkBuilder.BuildTemplate(
+                                NetworkRuleTemplates.MASQUERADE,
+                                networkRule,
+                                interfaceInformation
+                            )
+                        )
+                        // Convert to string array.
+                        .Split(" ");
+
+                    // Tell the console
                     _logger.LogInformation("Created MASQUERADE rule for {0}", networkRule.Network);
                     break;
 
                 // SNAT
                 case NetworkRuleType.SourceNetworkAddressTranslation:
-                    processOptions.Arguments =
-                        ("-A " + NetworkBuilder.BuildTemplate(NetworkRuleTemplates.SNAT, networkRule,
-                             interfaceInformation)).Split(" ");
+                    // Assign the argument
+                    commandOptions.Arguments = (
+                            "-A " + NetworkBuilder.BuildTemplate(
+                                NetworkRuleTemplates.SNAT,
+                                networkRule,
+                                interfaceInformation
+                            )
+                        )
+                        // Convert to string array.
+                        .Split(" ");
+
+                    // Tell the console.
                     _logger.LogInformation("Created SNAT rule for {0}", networkRule.Network);
                     break;
 
@@ -74,8 +93,8 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                     throw FirewallExceptions.UnhandledNetworkRuleException();
             }
 
-            //TODO: Ask paul for help here. Not sure what we should do.
-            _processRunner.RunSingle(processOptions);
+            // Run the process.
+            _processRunner.Run(commandOptions);
 
             // Track the rule.
             _rules.Add(networkRule);
@@ -89,7 +108,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
         public void DeleteRule(NetworkRule networkRule)
         {
             // Build standard process options.
-            var processOptions = NetworkBuilder.BuildProcessOptions("iptables", true);
+            var processOptions = NetworkBuilder.BuildProcessOptions("iptables");
 
             // Get local interface information
             var interfaceInformation = GetDefaultInterface();
@@ -121,6 +140,12 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             _rules.Remove(networkRule);
         }
 
+        /// <summary>
+        /// Enable a MASQ Rule.
+        /// </summary>
+        /// <param name="network"></param>
+        /// <param name="networkInterface"></param>
+        /// <returns></returns>
         public NetworkRule Masquerade(string network, string networkInterface)
         {
             // Define the rule
@@ -137,7 +162,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 _logger.LogWarning("OpenVZ Detected - Favoring SNAT rule over MASQUERADE.");
                 rule.Type = NetworkRuleType.SourceNetworkAddressTranslation;
             }
-            
+
             // Add the rule safely.
             AddRule(rule);
 
@@ -145,6 +170,11 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             return rule;
         }
 
+        /// <summary>
+        /// Disable a MASQ rule.
+        /// </summary>
+        /// <param name="networkRule"></param>
+        /// <exception cref="Exception"></exception>
         public void DisableMasquerade(NetworkRule networkRule)
         {
             // Check if we have the right rule.
@@ -154,7 +184,13 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             // Delete the rule
             DeleteRule(networkRule);
         }
-
+        
+        /// <summary>
+        /// Enable a SNAT rule.
+        /// </summary>
+        /// <param name="network"></param>
+        /// <param name="networkInterface"></param>
+        /// <returns></returns>
         public NetworkRule SourceNetworkAddressTranslation(string network, string networkInterface)
         {
             // Define the rule
@@ -173,6 +209,11 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             return rule;
         }
 
+        /// <summary>
+        /// Disable a SNAT Rule.
+        /// </summary>
+        /// <param name="networkRule"></param>
+        /// <exception cref="Exception"></exception>
         public void DisableSourceNetworkAddressTranslation(NetworkRule networkRule)
         {
             // Check if we have the right rule.
@@ -183,20 +224,60 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             DeleteRule(networkRule);
         }
 
+        /// <summary>
+        /// Gets the absolute path to the IP command.
+        /// </summary>
+        /// <returns></returns>
         private string GetIPCommandPath()
         {
-            var cmd = Command.Run("which", "ip");
-            cmd.Wait();
-            return cmd.StandardOutput.ReadToEnd().Trim();
+            // Build layout of what we want to do.
+            var ipProcessOptions = new ProcessOptions()
+            {
+                InvokeAsSuperuser = true,
+                Monitor = false,
+                DisposeOnExit = true,
+                Executable = "which",
+                Arguments = new[] {"ip"},
+                ThrowOnError = true
+            };
+
+            // Execute the options
+            var commandHolder = _processRunner.Run(ipProcessOptions);
+
+            // Wait for exit.
+            commandHolder.Command.Wait();
+
+            // Return the data wae need.
+            return commandHolder.Command.StandardOutput.ReadToEnd().Trim();
         }
 
+        /// <summary>
+        /// Retuns a new InterfaceInformation object with populated infomration about the system.
+        /// </summary>
+        /// <returns></returns>
         public InterfaceInformation GetDefaultInterface()
         {
-            var shell = new Shell(o => o.ThrowIfNull());
-            var cmd = shell.Run(GetIPCommandPath(), "route", "get", "8.8.8.8");
-            cmd.Wait();
-            var splitShellResponse = cmd.StandardOutput.ReadToEnd().Split(" ");
+            // Build layout of what we want to do.
+            var ipProcessOptions = new ProcessOptions()
+            {
+                InvokeAsSuperuser = true,
+                Monitor = false,
+                DisposeOnExit = true,
+                Executable = GetIPCommandPath(),
+                Arguments = new[] {"route", "get", "8.8.8.8"},
+                ThrowOnError = true
+            };
 
+            // Execute the options
+            var commandHolder = _processRunner.Run(ipProcessOptions);
+
+            // Wait for exit.
+            commandHolder.Command.Wait();
+
+            // Split the data
+            var splitShellResponse = commandHolder.Command.StandardOutput.ReadToEnd().Split(" ");
+
+            // Return the new format.
             return new InterfaceInformation()
             {
                 Name = splitShellResponse[4],

@@ -37,12 +37,13 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Rule
         /// <param name="executable"></param>
         /// <param name="root"></param>
         /// <returns></returns>
-        public static ProcessOptions BuildProcessOptions(string executable, bool root)
+        public static ProcessOptions BuildProcessOptions(string executable)
         {
             return new ProcessOptions()
             {
                 Executable = executable,
-                InvokeAsSuperuser = root
+                InvokeAsSuperuser = true,
+                AttachLogToConsole = false
             };
         }
     }
