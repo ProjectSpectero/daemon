@@ -67,12 +67,12 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     Command = new Shell(
                         e => e.ThrowOnError(processOptions.ThrowOnError)
                     ).Run(
-                            executable: processOptions.Executable,
-                            arguments: processOptions.Arguments,
-                            options: o => o
-                                .DisposeOnExit(processOptions.DisposeOnExit)
-                                .WorkingDirectory(processOptions.WorkingDirectory)
-                        )
+                        executable: processOptions.Executable,
+                        arguments: processOptions.Arguments,
+                        options: o => o
+                            .DisposeOnExit(processOptions.DisposeOnExit)
+                            .WorkingDirectory(processOptions.WorkingDirectory)
+                    )
                 };
             }
             else
@@ -89,16 +89,16 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Command = new Shell(
                             e => e.ThrowOnError(processOptions.ThrowOnError)
                         ).Run(
-                                executable: processOptions.Executable,
-                                arguments: processOptions.Arguments,
-                                options: o => o
-                                    .StartInfo(s => s
-                                            // The runas attribute will run as administrator.
-                                            .Verb = "runas"
-                                    )
-                                    .DisposeOnExit(processOptions.DisposeOnExit)
-                                    .WorkingDirectory(processOptions.WorkingDirectory)
-                            )
+                            executable: processOptions.Executable,
+                            arguments: processOptions.Arguments,
+                            options: o => o
+                                .StartInfo(s => s
+                                        // The runas attribute will run as administrator.
+                                        .Verb = "runas"
+                                )
+                                .DisposeOnExit(processOptions.DisposeOnExit)
+                                .WorkingDirectory(processOptions.WorkingDirectory)
+                        )
                     };
                 }
                 else if (AppConfig.isUnix)
@@ -123,23 +123,18 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Command = new Shell(
                             e => e.ThrowOnError(processOptions.ThrowOnError)
                         ).Run(
-                                executable: Program.GetSudoPath(),
-                                arguments: arguments,
-                                options: o => o
-                                    .DisposeOnExit(processOptions.DisposeOnExit)
-                                    .WorkingDirectory(processOptions.WorkingDirectory)
-                            )
+                            executable: Program.GetSudoPath(),
+                            arguments: arguments,
+                            options: o => o
+                                .DisposeOnExit(processOptions.DisposeOnExit)
+                                .WorkingDirectory(processOptions.WorkingDirectory)
+                        )
                     };
                 }
             }
 
-            // Attach command objects
-            commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
-            commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
-
-            // Log to the console
-            GetStreamProcessor(commandHolder).StandardOutputProcessor(_logger, commandHolder);
-            GetStreamProcessor(commandHolder).ErrorOutputProcessor(_logger, commandHolder);
+            // Attach Loggers
+            AttachLoggerToCommandHolder(commandHolder);
 
             // Check if we should monitor.
             if (commandHolder.Options.Monitor)
@@ -196,16 +191,16 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Command = new Shell(
                             e => e.ThrowOnError(processOptions.ThrowOnError)
                         ).Run(
-                                executable: processOptions.Executable,
-                                arguments: processOptions.Arguments,
-                                options: o => o
-                                    .StartInfo(s => s
-                                            // The runas attribute will run as administrator.
-                                            .Verb = "runas"
-                                    )
-                                    .DisposeOnExit(processOptions.DisposeOnExit)
-                                    .WorkingDirectory(processOptions.WorkingDirectory)
-                            )
+                            executable: processOptions.Executable,
+                            arguments: processOptions.Arguments,
+                            options: o => o
+                                .StartInfo(s => s
+                                        // The runas attribute will run as administrator.
+                                        .Verb = "runas"
+                                )
+                                .DisposeOnExit(processOptions.DisposeOnExit)
+                                .WorkingDirectory(processOptions.WorkingDirectory)
+                        )
                     };
                 }
                 else if (AppConfig.isUnix)
@@ -227,19 +222,15 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Command = new Shell(
                             e => e.ThrowOnError(processOptions.ThrowOnError)
                         ).Run(
-                                executable: Program.GetSudoPath(),
-                                arguments: arguments,
-                                options: o => o
-                                    .DisposeOnExit(processOptions.DisposeOnExit)
-                                    .WorkingDirectory(processOptions.WorkingDirectory)
-                            )
+                            executable: Program.GetSudoPath(),
+                            arguments: arguments,
+                            options: o => o
+                                .DisposeOnExit(processOptions.DisposeOnExit)
+                                .WorkingDirectory(processOptions.WorkingDirectory)
+                        )
                     };
                 }
             }
-
-            // Attach command objects
-            commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
-            commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
 
             // Return
             return commandHolder;
@@ -309,6 +300,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 // Wait for the monitoring interval.
                 Thread.Sleep(commandHolder.Options.MonitoringInterval * 1000);
             }
+
             _logger.LogDebug($"Monitor Thread {Thread.CurrentThread.ManagedThreadId}: Command ({commandHolder.Options.Executable}) is no longer tracked, terminating...");
         }
 
@@ -381,28 +373,27 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             {
                 commandHolder.Command.Process.Close();
             }
-                
         }
 
         public void CloseAllBelongingToService(IService service, bool force = false)
         {
             // This is a particularly bad (and heavy) implementation. We should probably keep a Map<IService, CommandHolder> to make this easier.
             // Not bothering with it right now, however.
-            
+
             // Why this? Because you cannot operate on the same Collection you're iterating.
             var iterator = _runningCommands.ToArray();
-            
+
             foreach (var holder in iterator)
             {
                 if (holder.Caller == null || holder.Caller.GetType() != service.GetType()) continue;
-                
+
                 // If we have a match, (gently, or harshly ┐(´∀｀)┌ﾔﾚﾔﾚ) close the process and remove the element from the running commands list.
                 if (force)
                     holder.Command?.Process?.Kill();
                 else
                     holder.Command?.Process?.Close();
-                
-                
+
+
                 // Finally, remove it from the list of running commands.
                 _runningCommands.Remove(holder);
             }
@@ -419,7 +410,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             {
                 commandHolder.Command.Kill();
             }
-                
         }
 
         /// <summary>
@@ -466,6 +456,20 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         {
             commandHolder.Command = command;
             return commandHolder;
+        }
+
+        /// <summary>
+        /// Function to attach a logging instance to the commandHolder using the classes _logger.
+        /// </summary>
+        public void AttachLoggerToCommandHolder(CommandHolder commandHolder)
+        {
+            // Attach command objects
+            commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
+            commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
+
+            // Log to the console
+            GetStreamProcessor(commandHolder).StandardOutputProcessor(_logger, commandHolder);
+            GetStreamProcessor(commandHolder).ErrorOutputProcessor(_logger, commandHolder);
         }
 
         /// <summary>
