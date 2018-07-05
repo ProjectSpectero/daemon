@@ -133,8 +133,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 }
             }
 
-            // Attach Loggers
-            AttachLoggerToCommandHolder(commandHolder);
+            // Attach Loggers if needed.
+            if (processOptions.AttachLogToConsole) AttachLoggerToCommandHolder(commandHolder);
 
             // Check if we should monitor.
             if (commandHolder.Options.Monitor)
@@ -244,28 +244,38 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // While we should track the process.
             while (_runningCommands.Contains(commandHolder))
             {
-                // Check if we need to restart the command
+                // Check if we should dispose.
                 if (commandHolder.Options.DisposeOnExit)
                 {
+                    // Make sure the service is still running
                     if (service.GetState() == ServiceState.Running)
                     {
+                        // Check to see if the process has exited gracefully
                         if (commandHolder.Command.Process.HasExited)
                         {
                             _logger.LogWarning("A process has exited gracefully.");
+
+                            // Stop tracking the command.
                             _runningCommands.Remove(commandHolder);
                         }
                     }
                     else
                     {
+                        // Check if the command has not exited.
                         if (!commandHolder.Command.Process.HasExited)
                         {
+                            // tell the console
                             _logger.LogWarning(
                                 string.Format(
                                     "The service state has changed, Process ID {0} will be killed.",
                                     commandHolder.Command.Process.Id
                                 )
                             );
+                            
+                            // Gracefully close the process
                             commandHolder.Command.Process.Close();
+                            
+                            // Stop tracking the command.
                             _runningCommands.Remove(commandHolder);
                         }
                     }
@@ -276,10 +286,17 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         if (commandHolder.Command.Process.HasExited)
                         {
+                            // Tell the console.
                             _logger.LogWarning(
                                 "A process has exited unexpectedly, and will be restarted."
                             );
+
+                            // Restart the process.
                             commandHolder.Command.Process.Start();
+                            
+                            // Attach the logger if needed.
+                            if (commandHolder.Options.AttachLogToConsole) 
+                                AttachLoggerToCommandHolder(commandHolder);
                         }
                     }
                     else
