@@ -11,6 +11,5 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         void CloseAllBelongingToService(IService service, bool force = false);
         void TerminateAllTrackedCommands();
         void RestartAllTrackedCommands(bool force);
-        CommandHolder RunSingle(ProcessOptions processOptions);
     }
 }
