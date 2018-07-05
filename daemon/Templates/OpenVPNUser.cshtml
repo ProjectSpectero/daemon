@@ -1,4 +1,5 @@
 ﻿@using Spectero.daemon.Libraries.Core
+@using Spectero.daemon.Libraries.Extensions
 
 @model Spectero.daemon.Libraries.Services.OpenVPN.Elements.OpenVPNUserConfig
 @inherits RazorLight.TemplatePage<Spectero.daemon.Libraries.Services.OpenVPN.Elements.OpenVPNUserConfig>
@@ -10,8 +11,7 @@
 
     var convertedListeners = new List<Tuple<string, int, string>>();
 
-    var pkcs12Header = user.Cert.Substring(0, 64);
-    var pkcs12Remainder = user.Cert.Substring(64);
+    var pkcs12Chunks = user.Cert.Chunk(64);
 
     foreach (var listener in listeners)
     {
@@ -38,7 +38,6 @@
 
 setenv FORWARD_COMPATIBLE 1
 client
-proto udp
 server-poll-timeout 4
 nobind
 @foreach (var listener in convertedListeners)
@@ -59,8 +58,10 @@ setenv PUSH_PEER_INFO
 auth-user-pass
 
 <pkcs12>
-    @pkcs12Header
-    @pkcs12Remainder
+@foreach (var pkcsChunk in pkcs12Chunks)
+{
+    @pkcsChunk @Environment.NewLine
+}
 </pkcs12>
 
 # key-direction 1
