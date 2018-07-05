@@ -124,7 +124,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
                 // At this stage, we have the configs ready and on disk. Let us simply bootstrap the processes.
                 StartDaemon(onDiskName);
- 
+                
+                // Create MASQ rules for each config.
                 _firewall.Rules.Masquerade(configHolder.Key.Listener.Network, defaultNetworkInterface.Name);
             }
         }
@@ -221,6 +222,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                     Monitor = true,
                     DisposeOnExit = false,
                     InvokeAsSuperuser = true,
+                    AttachLogToConsole = true,
                     WorkingDirectory = Path.Combine(Program.GetAssemblyLocation(), "3rdParty/OpenVPN")
                 },
                 // The calling object.

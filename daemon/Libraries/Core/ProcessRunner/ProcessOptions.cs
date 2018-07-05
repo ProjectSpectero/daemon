@@ -45,5 +45,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
         // Should medallion shell throw an error when there's a problem.
         public bool ThrowOnError = true;
+
+        // Should we attach logging instances to it.
+        public bool AttachLogToConsole = false;
     }
 }
