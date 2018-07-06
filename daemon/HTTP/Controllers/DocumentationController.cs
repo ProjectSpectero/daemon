@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
 
-namespace Spectero.daemon.Controllers
+namespace Spectero.daemon.HTTP.Controllers
 {
     [Route("v1/[controller]")]
     public class DocumentationController : BaseController

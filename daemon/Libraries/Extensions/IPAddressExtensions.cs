@@ -31,15 +31,5 @@ namespace Spectero.daemon.Libraries.Extensions
                     return false;
             }
         }
-
-        public static bool IsLoopback(this IPAddress address)
-        {
-            var remoteAddress = address.ToString();
-
-            if (remoteAddress == "127.0.0.1" || remoteAddress == "::1")
-                return true;
-
-            return false;
-        }
     }
 }

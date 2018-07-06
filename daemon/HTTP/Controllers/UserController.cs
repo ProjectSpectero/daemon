@@ -1,6 +1,4 @@
 ﻿using System;
-using RazorLight;
-using ServiceStack;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -12,6 +10,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Org.BouncyCastle.Asn1.X509;
+using RazorLight;
+using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
@@ -27,7 +27,7 @@ using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Spectero.daemon.Models;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
-namespace Spectero.daemon.Controllers
+namespace Spectero.daemon.HTTP.Controllers
 {
     [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
     [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(UserController))]

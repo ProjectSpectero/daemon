@@ -24,7 +24,7 @@ using Spectero.daemon.Models.Opaque.Requests;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 using Utility = Spectero.daemon.Libraries.Core.Utility;
 
-namespace Spectero.daemon.Controllers
+namespace Spectero.daemon.HTTP.Controllers
 {
     [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
     [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(ServiceController))]
