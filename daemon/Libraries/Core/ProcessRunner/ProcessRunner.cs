@@ -136,7 +136,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             if (processOptions.AttachLogToConsole) AttachLoggerToCommandHolder(commandHolder);
 
             // Check if we should monitor.
-            if (commandHolder.Options.Monitor)
+            if (commandHolder.Options.Monitor && caller != null)
             {
                 var monitoringThread = new Thread(() => Monitor(commandHolder, caller));
                 commandHolder.MonitoringThread = monitoringThread;
@@ -185,10 +185,10 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                                     commandHolder.Command.Process.Id
                                 )
                             );
-                            
+
                             // Gracefully close the process
                             commandHolder.Command.Process.Close();
-                            
+
                             // Stop tracking the command.
                             _runningCommands.Remove(commandHolder);
                         }
@@ -207,9 +207,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
                             // Restart the process.
                             commandHolder.Command.Process.Start();
-                            
+
                             // Attach the logger if needed.
-                            if (commandHolder.Options.AttachLogToConsole) 
+                            if (commandHolder.Options.AttachLogToConsole)
                                 AttachLoggerToCommandHolder(commandHolder);
                         }
                     }
