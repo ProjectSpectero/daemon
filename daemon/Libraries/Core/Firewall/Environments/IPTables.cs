@@ -260,7 +260,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             // Build layout of what we want to do.
             var ipProcessOptions = new ProcessOptions()
             {
-                InvokeAsSuperuser = true,
+                InvokeAsSuperuser = false,
                 Monitor = false,
                 DisposeOnExit = true,
                 Executable = GetIPCommandPath(),
