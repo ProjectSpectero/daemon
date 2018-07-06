@@ -77,7 +77,10 @@ namespace Spectero.daemon.Libraries.CloudConnect
             body.Version = AppConfig.version;
 
             // Ok, we got the user created. Everything is ready, let's send off the request.
-            request.AddParameter("application/json; charset=utf-8", JsonConvert.SerializeObject(body), ParameterType.RequestBody);
+            var serializedBody = JsonConvert.SerializeObject(body);
+            _logger.LogDebug($"We will be sending: {serializedBody}");
+            
+            request.AddParameter("application/json; charset=utf-8", serializedBody, ParameterType.RequestBody);
 
             var response = _restClient.Execute(request);
 
@@ -103,7 +106,7 @@ namespace Spectero.daemon.Libraries.CloudConnect
             {
                 // The Cloud Backend fed us bogus stuff, let's bail.
                 _logger.LogError(e, "CC: Connect attempt to the Spectero Cloud failed!");
-                _logger.LogError("Cloud API said: " + response.Content);
+                _logger.LogDebug("Cloud API said: " + response.Content);
                 
                 errors.Add(Core.Constants.Errors.FAILED_TO_CONNECT_TO_SPECTERO_CLOUD, e.Message);
 
@@ -146,7 +149,7 @@ namespace Spectero.daemon.Libraries.CloudConnect
                     errors.Add(Core.Constants.Errors.RESPONSE_CODE, response.StatusCode);
                     errors.Add(Core.Constants.Errors.NODE_PERSIST_FAILED, parsedResponse?.errors);
                     
-                    _logger.LogError("Cloud API said: " + response.Content);
+                    _logger.LogDebug("Cloud API said: " + response.Content);
                     
                     return (false, errors, HttpStatusCode.ServiceUnavailable, parsedResponse);
             }
