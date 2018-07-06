@@ -22,6 +22,7 @@ using ServiceStack.OrmLite;
 using Spectero.daemon.HTTP.Filters;
 using Spectero.daemon.Jobs;
 using Spectero.daemon.Libraries.APM;
+using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Crypto;
@@ -141,6 +142,8 @@ namespace Spectero.daemon
             services.AddSingleton<ILifetimeHandler, LifetimeHandler>();
 
             services.AddScoped<EnforceLocalOnlyAccess>();
+
+            services.AddSingleton<CloudHandler>();
 
             services.AddMvc();
 

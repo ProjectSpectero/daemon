@@ -30,10 +30,12 @@ namespace Spectero.daemon.Jobs
         private readonly ILogger<FetchCloudEngagementsJob> _logger;
         private readonly IMemoryCache _cache;
         private readonly AppConfig _config;
+        private readonly CloudHandler _cloudHandler;
 
         public FetchCloudEngagementsJob(IDbConnection db, IRestClient restClient,
             IIdentityProvider identityProvider, ILogger<FetchCloudEngagementsJob> logger,
-            IMemoryCache cache, IOptionsMonitor<AppConfig> configMonitor)
+            IMemoryCache cache, IOptionsMonitor<AppConfig> configMonitor,
+            CloudHandler cloudHandler)
         {
             _restClient = restClient;
             _db = db;
@@ -41,6 +43,8 @@ namespace Spectero.daemon.Jobs
             _logger = logger;
             _cache = cache;
             _config = configMonitor.CurrentValue;
+            _cloudHandler = cloudHandler;
+            
             logger.LogDebug("FCEJ: init successful, dependencies processed.");
         }
 
@@ -198,7 +202,7 @@ namespace Spectero.daemon.Jobs
 
         public bool IsEnabled()
         {
-            return CloudUtils.IsConnected(_db).Result; // Async sadness :(
+            return _cloudHandler.IsConnected().Result; // Async sadness :(
         }
     }
 }

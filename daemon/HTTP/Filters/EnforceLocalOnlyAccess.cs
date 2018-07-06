@@ -31,7 +31,7 @@ namespace Spectero.daemon.HTTP.Filters
                 
                 if (!ipString.Equals("::ffff:127.0.0.1"))
                 {
-                    _logger.LogDebug($"Blocked access to {httpContext.Request.Path} from {ipString} because it is denoted localhost only.");
+                    _logger.LogWarning($"Blocked access to {httpContext.Request.Path} from {ipString} because it is denoted localhost only.");
                     
                     Response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, ipString);
                     
