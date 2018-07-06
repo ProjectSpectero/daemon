@@ -6,7 +6,7 @@ namespace Spectero.daemon.CLI
 {
     internal static class Program
     {
-        private static void Main(string[] args)
+        private static int Main(string[] args)
         {
             CliArguments cliArguments;
 
@@ -14,18 +14,21 @@ namespace Spectero.daemon.CLI
             {
                 Console.WriteLine();
                 Console.WriteLine("Could not parse the command-line, please check your input and retry.");
-                return;
+                return 127;
             }
 
             try
             {
                 var result = cliArguments.PrimaryCommand.Execute();
+                
+                return 0;
             }
             catch (Exception e)
             {
                 Console.WriteLine("Something went wrong :( " + e);
                 Console.WriteLine("You may wish to consider submitting a bug report if you believe this error to be a bug.");
-                Console.ReadLine();
+                
+                return 127;
             }
             
         }
