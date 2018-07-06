@@ -39,10 +39,10 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
         public static void ClearUserFromCacheIfExists(IMemoryCache cache, string authKey)
         {
             var key = GetCachedUserKey(authKey);
-            if (cache.TryGetValue(key, out User user))
-            {
-                cache.Remove(key);
-            }
+            var passwordKey = GetCachedUserPasswordKey(authKey);
+            
+            cache.Remove(key);
+            cache.Remove(passwordKey);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Data;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RestSharp;
@@ -11,6 +12,7 @@ using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.APM;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
+using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
@@ -28,12 +30,14 @@ namespace Spectero.daemon.Libraries.CloudConnect
         private readonly IOutgoingIPResolver _ipResolver;
         private readonly Apm _apm;
         private readonly IRestClient _restClient;
+        private readonly IMemoryCache _cache;
         
         private readonly string _defaultCloudUserName = AppConfig.CloudConnectDefaultAuthKey ?? "cloud";
         
         public CloudHandler(ILogger<CloudHandler> logger, IDbConnection dbConnection,
                             IIdentityProvider identityProvider, IOutgoingIPResolver ipResolver,
-                            Apm apm, IRestClient restClient)
+                            Apm apm, IRestClient restClient,
+                            IMemoryCache cache)
         {
             _logger = logger;
             _db = dbConnection;
@@ -41,6 +45,7 @@ namespace Spectero.daemon.Libraries.CloudConnect
             _ipResolver = ipResolver;
             _apm = apm;
             _restClient = restClient;
+            _cache = cache;
         }
         
         public async Task<bool> IsConnected ()
@@ -118,6 +123,8 @@ namespace Spectero.daemon.Libraries.CloudConnect
             switch (response.StatusCode)
             {
                 case HttpStatusCode.Created:
+                    // First, we need to remove any cached representation.
+                    AuthUtils.ClearUserFromCacheIfExists(_cache, _defaultCloudUserName);
                     
                     // Check if the cloud connect user exists already.
                     var user = await _db.SingleAsync<User>(x => x.AuthKey == _defaultCloudUserName) ?? new User();
