@@ -20,7 +20,7 @@ using Spectero.daemon.Models.Opaque.Responses;
 
 namespace Spectero.daemon.Libraries.CloudConnect
 {
-    public class CloudHandler
+    public class CloudHandler : ICloudHandler
     {
         private readonly ILogger<CloudHandler> _logger;
         private readonly IDbConnection _db;
@@ -52,7 +52,7 @@ namespace Spectero.daemon.Libraries.CloudConnect
 
         public async Task<(bool success, Dictionary<string, object> errors,
             HttpStatusCode suggestedStatusCode, CloudAPIResponse<Node> cloudResponse)>
-            Connect(HttpContext httpContext, string NodeKey)
+            Connect(HttpContext httpContext, string nodeKey)
         {
             var errors = new Dictionary<string, object>();
             
@@ -69,7 +69,7 @@ namespace Spectero.daemon.Libraries.CloudConnect
 
             body.Protocol = "http"; // TODO: When HTTPs support lands, use -> httpContext.Request.Protocol.ToLower() which returns things like http/1.1 (needs further parsing);
 
-            body.NodeKey = NodeKey;
+            body.NodeKey = nodeKey;
             body.AccessToken = _defaultCloudUserName + ":" + generatedPassword;
 
             // This is data about *THIS* specific system being contributed to the cloud/CRM.
@@ -136,7 +136,7 @@ namespace Spectero.daemon.Libraries.CloudConnect
                     
                     await ConfigUtils.CreateOrUpdateConfig(_db, ConfigKeys.CloudConnectStatus, true.ToString());
                     await ConfigUtils.CreateOrUpdateConfig(_db, ConfigKeys.CloudConnectIdentifier, parsedResponse?.result.id.ToString());
-                    await ConfigUtils.CreateOrUpdateConfig(_db, ConfigKeys.CloudConnectNodeKey, NodeKey);                                         
+                    await ConfigUtils.CreateOrUpdateConfig(_db, ConfigKeys.CloudConnectNodeKey, nodeKey);                                         
 
                     break;
                 

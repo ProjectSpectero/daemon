@@ -39,14 +39,14 @@ namespace Spectero.daemon.HTTP.Controllers
         private readonly IIdentityProvider _identityProvider;
         private readonly Apm _apm;
         private readonly FetchCloudEngagementsJob _backgroundCloudEngagementsJob;
-        private readonly CloudHandler _cloudHandler;
+        private readonly ICloudHandler _cloudHandler;
 
         private bool _restartNeeded;
 
         public CloudController(IOptionsSnapshot<AppConfig> appConfig, ILogger<CloudController> logger,
             IDbConnection db, IIdentityProvider identityProvider,      
             IEnumerable<IJob> jobs, Apm apm,
-            CloudHandler cloudHandler)
+            ICloudHandler cloudHandler)
             : base(appConfig, logger, db)
         {
             _identityProvider = identityProvider;

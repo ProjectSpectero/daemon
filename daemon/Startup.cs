@@ -143,7 +143,7 @@ namespace Spectero.daemon
 
             services.AddScoped<EnforceLocalOnlyAccess>();
 
-            services.AddSingleton<CloudHandler>();
+            services.AddSingleton<ICloudHandler, CloudHandler>();
 
             services.AddMvc();
 

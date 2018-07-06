@@ -30,12 +30,12 @@ namespace Spectero.daemon.Jobs
         private readonly ILogger<FetchCloudEngagementsJob> _logger;
         private readonly IMemoryCache _cache;
         private readonly AppConfig _config;
-        private readonly CloudHandler _cloudHandler;
+        private readonly ICloudHandler _cloudHandler;
 
         public FetchCloudEngagementsJob(IDbConnection db, IRestClient restClient,
             IIdentityProvider identityProvider, ILogger<FetchCloudEngagementsJob> logger,
             IMemoryCache cache, IOptionsMonitor<AppConfig> configMonitor,
-            CloudHandler cloudHandler)
+            ICloudHandler cloudHandler)
         {
             _restClient = restClient;
             _db = db;
