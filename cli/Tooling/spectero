@@ -25,6 +25,7 @@ CLI_BINARY="Spectero.daemon.CLI.dll"
 if [ "$1" == "cli" ]; then
         shift
 	exec $DOTNET_BINARY $CLI_WORKING_DIRECTORY/$CLI_BINARY "$@"
+	exit $?
 else
 	echo "No arguments specified"
 	echo "Available commands: 'cli'"
