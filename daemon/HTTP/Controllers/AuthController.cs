@@ -19,7 +19,7 @@ using Spectero.daemon.Models.Opaque.Requests;
 using Spectero.daemon.Models.Opaque.Responses;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
-namespace Spectero.daemon.Controllers
+namespace Spectero.daemon.HTTP.Controllers
 {
     [Route("v1/[controller]")]
     [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(AuthController))]

@@ -13,8 +13,8 @@ using Newtonsoft.Json;
 using RestSharp;
 using ServiceStack;
 using ServiceStack.OrmLite;
+using Spectero.daemon.HTTP.Filters;
 using Spectero.daemon.Jobs;
-using Spectero.daemon.Libraries;
 using Spectero.daemon.Libraries.APM;
 using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
@@ -29,7 +29,7 @@ using Spectero.daemon.Models.Opaque.Responses;
 using IRestClient = RestSharp.IRestClient;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
-namespace Spectero.daemon.Controllers
+namespace Spectero.daemon.HTTP.Controllers
 {
     [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
     [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(CloudController))]
@@ -130,21 +130,16 @@ namespace Spectero.daemon.Controllers
 
         [HttpGet(Name = "GetCloudConnectStatusLocally")]
         [AllowAnonymous]
+        [ServiceFilter(typeof(EnforceLocalOnlyAccess))]
         public async Task<IActionResult> LocalStatus()
         {
-            // What is DRY? ;V - TODO: fix this once we have global exception handling in the HTTP pipeline working
-            if (!Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
-                _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
-
-            if (HasErrors())
-                return StatusCode(403, _response);
-
             _response.Result = await CompileCloudStatus();
             return Ok(_response);
         }
 
         [HttpPost("manual", Name = "ManuallyConnectToSpecteroCloud")]
         [AllowAnonymous]
+        [ServiceFilter(typeof(EnforceLocalOnlyAccess))]
         public async Task<IActionResult> ManualCloudConnect([FromBody] ManualCloudConnectRequest connectRequest)
         {
             if (await CloudUtils.IsConnected(Db)
@@ -155,13 +150,6 @@ namespace Spectero.daemon.Controllers
                 _response.Errors.Add(Errors.FORCE_PARAMETER_REQUIRED, true);
                 return BadRequest(_response);
             }
-
-            // What is DRY? ;V - TODO: fix this once we have global exception handling in the HTTP pipeline working
-            if (!Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
-                _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
-
-            if (HasErrors())
-                return StatusCode(403, _response);
 
             // Well ok, let's get it over with.
             await CreateOrUpdateConfig(ConfigKeys.CloudConnectStatus, true.ToString());
@@ -175,11 +163,9 @@ namespace Spectero.daemon.Controllers
 
         [HttpPost("disconnect", Name = "DisconnectFromSpecteroCloud")]
         [AllowAnonymous]
+        [ServiceFilter(typeof(EnforceLocalOnlyAccess))]
         public async Task<IActionResult> Disconnect()
         {
-            // What is DRY? ;V - TODO: fix this once we have global exception handling in the HTTP pipeline working
-            if (!Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
-                _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
 
             if (! await CloudUtils.IsConnected(Db))
                 _response.Errors.Add(Errors.CLOUD_NOT_CONNECTED, "");
@@ -199,14 +185,11 @@ namespace Spectero.daemon.Controllers
         // This allows anonymous, but only from the local loopback.
         [HttpPost("connect", Name = "ConnectToSpecteroCloud")]
         [AllowAnonymous]
+        [ServiceFilter(typeof(EnforceLocalOnlyAccess))]
         public async Task<IActionResult> CloudConnect([FromBody] CloudConnectRequest connectRequest)
         {
             if (! ModelState.IsValid || connectRequest.NodeKey.IsNullOrEmpty())
                 _response.Errors.Add(Errors.VALIDATION_FAILED, "FIELD_REQUIRED:NodeKey");
-
-            // What is DRY? ;V
-            if (! Request.HttpContext.Connection.RemoteIpAddress.IsLoopback())
-                _response.Errors.Add(Errors.LOOPBACK_ACCESS_ONLY, "");
 
             if (HasErrors())
                 return StatusCode(403, _response);

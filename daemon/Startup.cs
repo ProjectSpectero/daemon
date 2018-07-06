@@ -19,6 +19,7 @@ using NLog.Web;
 using RazorLight;
 using RestSharp;
 using ServiceStack.OrmLite;
+using Spectero.daemon.HTTP.Filters;
 using Spectero.daemon.Jobs;
 using Spectero.daemon.Libraries.APM;
 using Spectero.daemon.Libraries.Config;
@@ -138,6 +139,8 @@ namespace Spectero.daemon
             services.AddSingleton<IProcessRunner, ProcessRunner>();
 
             services.AddSingleton<ILifetimeHandler, LifetimeHandler>();
+
+            services.AddScoped<EnforceLocalOnlyAccess>();
 
             services.AddMvc();
 

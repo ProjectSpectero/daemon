@@ -13,6 +13,7 @@
     <Compile Remove="Models\Error.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="HTTP\Middlewares" />
     <Folder Include="Libraries\Services\ShadowSOCKS\" />
     <Folder Include="Logs\">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

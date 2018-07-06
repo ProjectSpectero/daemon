@@ -16,7 +16,7 @@ using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Models;
 
-namespace Spectero.daemon.Controllers
+namespace Spectero.daemon.HTTP.Controllers
 {
     [Authorize(AuthenticationSchemes = "Bearer")]
     [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]

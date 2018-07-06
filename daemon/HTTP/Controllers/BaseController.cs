@@ -12,7 +12,7 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.HTTP;
 using Spectero.daemon.Models;
 
-namespace Spectero.daemon.Controllers
+namespace Spectero.daemon.HTTP.Controllers
 {
     public class BaseController : Controller
     {
