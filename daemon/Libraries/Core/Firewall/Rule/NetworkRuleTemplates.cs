@@ -5,7 +5,7 @@
     /// </summary>
     public class NetworkRuleTemplates
     {
-        public const string SNAT = "-t nat POSTROUTING -p TCP -o {interface-name} -J SNAT --to {network}";
+        public const string SNAT = "-t nat POSTROUTING -p TCP -o {interface-name} -J SNAT --to {interface-address}";
         public const string MASQUERADE = "POSTROUTING -S {network} -o {interface-name} -J MASQUERADE";
     }
 }
