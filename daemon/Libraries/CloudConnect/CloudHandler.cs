@@ -86,6 +86,28 @@ namespace Spectero.daemon.Libraries.CloudConnect
             _logger.LogDebug($"We will be sending: {serializedBody}");
             
             request.AddParameter("application/json; charset=utf-8", serializedBody, ParameterType.RequestBody);
+            
+            // We have to ensure this user actually exists before sending off the request.
+            // First, we need to remove any cached representation.
+            AuthUtils.ClearUserFromCacheIfExists(_cache, _defaultCloudUserName);
+                    
+            // Check if the cloud connect user exists already.
+            var user = await _db.SingleAsync<User>(x => x.AuthKey == _defaultCloudUserName) ?? new User();
+
+            user.AuthKey = _defaultCloudUserName;
+            user.PasswordSetter = generatedPassword;
+            user.EmailAddress = _defaultCloudUserName + $"@spectero.com";
+            user.FullName = "Spectero Cloud Management User";
+            user.Roles = new List<User.Role> { Models.User.Role.SuperAdmin };
+            user.Source = Models.User.SourceTypes.SpecteroCloud;
+            user.CreatedDate = DateTime.Now;
+            user.CloudSyncDate = DateTime.Now;
+
+            // Checks if user existed already, or is being newly created.
+            if (user.Id != 0L)
+                await _db.UpdateAsync(user);
+            else
+                await _db.InsertAsync(user);
 
             var response = _restClient.Execute(request);
 
@@ -95,6 +117,8 @@ namespace Spectero.daemon.Libraries.CloudConnect
                 _logger.LogError(response.ErrorException, "CC: Connect attempt to the Spectero Cloud failed!");
                 
                 errors.Add(Core.Constants.Errors.FAILED_TO_CONNECT_TO_SPECTERO_CLOUD, response.ErrorMessage);
+                
+                await DeleteCloudUserIfExists();
                 
                 return (false, errors, HttpStatusCode.ServiceUnavailable, null);
             }
@@ -115,6 +139,8 @@ namespace Spectero.daemon.Libraries.CloudConnect
                 
                 errors.Add(Core.Constants.Errors.FAILED_TO_CONNECT_TO_SPECTERO_CLOUD, e.Message);
 
+                await DeleteCloudUserIfExists();
+
                 return (false, errors, HttpStatusCode.ServiceUnavailable, parsedResponse);
             }
 
@@ -123,27 +149,7 @@ namespace Spectero.daemon.Libraries.CloudConnect
             switch (response.StatusCode)
             {
                 case HttpStatusCode.Created:
-                    // First, we need to remove any cached representation.
-                    AuthUtils.ClearUserFromCacheIfExists(_cache, _defaultCloudUserName);
-                    
-                    // Check if the cloud connect user exists already.
-                    var user = await _db.SingleAsync<User>(x => x.AuthKey == _defaultCloudUserName) ?? new User();
-
-                    user.AuthKey = _defaultCloudUserName;
-                    user.PasswordSetter = generatedPassword;
-                    user.EmailAddress = _defaultCloudUserName + $"@spectero.com";
-                    user.FullName = "Spectero Cloud Management User";
-                    user.Roles = new List<User.Role> { Models.User.Role.SuperAdmin };
-                    user.Source = Models.User.SourceTypes.SpecteroCloud;
-                    user.CreatedDate = DateTime.Now;
-                    user.CloudSyncDate = DateTime.Now;
-
-                    // Checks if user existed already, or is being newly created.
-                    if (user.Id != 0L)
-                        await _db.UpdateAsync(user);
-                    else
-                        await _db.InsertAsync(user);
-                    
+                                       
                     await ConfigUtils.CreateOrUpdateConfig(_db, ConfigKeys.CloudConnectStatus, true.ToString());
                     await ConfigUtils.CreateOrUpdateConfig(_db, ConfigKeys.CloudConnectIdentifier, parsedResponse?.result.id.ToString());
                     await ConfigUtils.CreateOrUpdateConfig(_db, ConfigKeys.CloudConnectNodeKey, nodeKey);                                         
@@ -157,11 +163,26 @@ namespace Spectero.daemon.Libraries.CloudConnect
                     errors.Add(Core.Constants.Errors.NODE_PERSIST_FAILED, parsedResponse?.errors);
                     
                     _logger.LogDebug("Cloud API said: " + response.Content);
+
+                    await DeleteCloudUserIfExists();
                     
                     return (false, errors, HttpStatusCode.ServiceUnavailable, parsedResponse);
             }
 
             return (true, errors, HttpStatusCode.OK, parsedResponse);
+        }
+
+        private async Task<bool> DeleteCloudUserIfExists()
+        {
+            var user = await _db.SingleAsync<User>(x => x.AuthKey == _defaultCloudUserName);
+
+            if (user == null) return false;
+            
+            AuthUtils.ClearUserFromCacheIfExists(_cache, _defaultCloudUserName);
+            await _db.DeleteAsync(user);
+
+            return true;
+
         }
     }
 }
