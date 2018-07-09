@@ -133,7 +133,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             }
 
             // Attach Loggers if needed.
-            if (processOptions.AttachLogToConsole) AttachLoggerToCommandHolder(commandHolder);
+            if (processOptions.AttachLogToConsole) AttachLoggerToCommandHolder(commandHolder, "Start");
 
             // Check if we should monitor.
             if (commandHolder.Options.Monitor && caller != null)
@@ -210,7 +210,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
                             // Attach the logger if needed.
                             if (commandHolder.Options.AttachLogToConsole)
-                                AttachLoggerToCommandHolder(commandHolder);
+                                AttachLoggerToCommandHolder(commandHolder, "Monitor");
                         }
                     }
                     else
@@ -350,7 +350,10 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         private void StartAllTrackedCommands()
         {
             foreach (var commandHolder in _runningCommands)
+            {
                 commandHolder.Command.Process.Start();
+                if (commandHolder.Options.AttachLogToConsole) AttachLoggerToCommandHolder(commandHolder, "StartAllTrackedCommands");
+            }
         }
 
         /// <summary>
@@ -392,8 +395,14 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <summary>
         /// Function to attach a logging instance to the commandHolder using the classes _logger.
         /// </summary>
-        private void AttachLoggerToCommandHolder(CommandHolder commandHolder)
+        private void AttachLoggerToCommandHolder(CommandHolder commandHolder, string parent)
         {
+            _logger.LogDebug(
+                "{0} Object is attaching logger to command: {1}",
+                parent,
+                commandHolder.Options.Executable
+            );
+
             // Attach command objects
             commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
             commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
