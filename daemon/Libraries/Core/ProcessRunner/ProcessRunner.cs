@@ -207,7 +207,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                             );
 
                             // Restart the process.
-                            commandHolder.Command.;
+                            commandHolder.Command.Process.Start();
 
                             // Attach the logger if needed.
                             if (commandHolder.Options.AttachLogToConsole)
