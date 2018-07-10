@@ -133,7 +133,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             }
 
             // Attach Loggers if needed.
-            if (processOptions.AttachLogToConsole) AttachLoggerToCommandHolder(commandHolder);
+            if (processOptions.AttachLogToConsole) AttachLoggerToCommandHolder(commandHolder, "Start");
 
             // Check if we should monitor.
             if (commandHolder.Options.Monitor && caller != null)
@@ -200,9 +200,10 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         if (commandHolder.Command.Process.HasExited)
                         {
+                            // TODO: address DAEM-112
                             // Tell the console.
                             _logger.LogWarning(
-                                "A process has exited unexpectedly, and will be restarted."
+                                "A process has exited unexpectedly, and will be restarted. Command output redirection will cease (DAEM-112)."
                             );
 
                             // Restart the process.
@@ -210,7 +211,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
                             // Attach the logger if needed.
                             if (commandHolder.Options.AttachLogToConsole)
-                                AttachLoggerToCommandHolder(commandHolder);
+                                AttachLoggerToCommandHolder(commandHolder, "Monitor");
                         }
                     }
                     else
@@ -320,7 +321,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
                 // If we have a match, (gently, or harshly ┐(´∀｀)┌ﾔﾚﾔﾚ) close the process and remove the element from the running commands list.
                 if (force)
-                    holder.Command?.Process?.Kill();
+                    holder.Command?.Kill();
                 else
                     holder.Command?.Process?.Close();
 
@@ -350,7 +351,10 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         private void StartAllTrackedCommands()
         {
             foreach (var commandHolder in _runningCommands)
+            {
                 commandHolder.Command.Process.Start();
+                if (commandHolder.Options.AttachLogToConsole) AttachLoggerToCommandHolder(commandHolder, "StartAllTrackedCommands");
+            }
         }
 
         /// <summary>
@@ -392,15 +396,23 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <summary>
         /// Function to attach a logging instance to the commandHolder using the classes _logger.
         /// </summary>
-        private void AttachLoggerToCommandHolder(CommandHolder commandHolder)
+        private void AttachLoggerToCommandHolder(CommandHolder commandHolder, string parent)
         {
-            // Attach command objects
-            commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
-            commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
+            _logger.LogDebug(
+                "{0} Object is attaching logger to command: {1}",
+                parent,
+                commandHolder.Options.Executable
+            );
+            
+            var streamProcessor = GetStreamProcessor(commandHolder);
 
-            // Log to the console
-            GetStreamProcessor(commandHolder).StandardOutputProcessor(_logger, commandHolder);
-            GetStreamProcessor(commandHolder).ErrorOutputProcessor(_logger, commandHolder);
+            // Attach command objects
+            streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
+            streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
+            
+            // Actually begin logging.
+            streamProcessor.StandardOutputProcessor(_logger, commandHolder);
+            streamProcessor.ErrorOutputProcessor(_logger, commandHolder);
         }
 
         /// <summary>

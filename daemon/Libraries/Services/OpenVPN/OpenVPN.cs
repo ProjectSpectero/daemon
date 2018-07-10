@@ -220,6 +220,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                     Arguments = new[] {configPath},
                     Daemonized = true,
                     Monitor = true,
+                    MonitoringInterval = 10,
                     DisposeOnExit = false,
                     InvokeAsSuperuser = true,
                     AttachLogToConsole = true,
