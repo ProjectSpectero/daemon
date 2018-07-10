@@ -403,15 +403,16 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 parent,
                 commandHolder.Options.Executable
             );
+            
+            var streamProcessor = GetStreamProcessor(commandHolder);
 
             // Attach command objects
-            commandHolder.Options.streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
-            commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
-
-            // Log to the console
-            var streamProcessor = GetStreamProcessor(commandHolder);
-            GetStreamProcessor(commandHolder).StandardOutputProcessor(_logger, commandHolder);
-            GetStreamProcessor(commandHolder).ErrorOutputProcessor(_logger, commandHolder);
+            streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
+            streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
+            
+            // Actually begin logging.
+            streamProcessor.StandardOutputProcessor(_logger, commandHolder);
+            streamProcessor.ErrorOutputProcessor(_logger, commandHolder);
         }
 
         /// <summary>
