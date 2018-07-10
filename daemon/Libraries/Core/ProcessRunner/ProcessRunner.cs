@@ -200,13 +200,14 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                     {
                         if (commandHolder.Command.Process.HasExited)
                         {
+                            // TODO: address DAEM-112
                             // Tell the console.
                             _logger.LogWarning(
-                                "A process has exited unexpectedly, and will be restarted."
+                                "A process has exited unexpectedly, and will be restarted. Command output redirection will cease (DAEM-112)."
                             );
 
                             // Restart the process.
-                            commandHolder.Command.Process.Start();
+                            commandHolder.Command.;
 
                             // Attach the logger if needed.
                             if (commandHolder.Options.AttachLogToConsole)
@@ -408,6 +409,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             commandHolder.Options.streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
 
             // Log to the console
+            var streamProcessor = GetStreamProcessor(commandHolder);
             GetStreamProcessor(commandHolder).StandardOutputProcessor(_logger, commandHolder);
             GetStreamProcessor(commandHolder).ErrorOutputProcessor(_logger, commandHolder);
         }

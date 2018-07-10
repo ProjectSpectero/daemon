@@ -118,12 +118,10 @@ namespace Spectero.daemon.Libraries.Services
                         errorBuilder.AppendLine(customErrorMessage.ToString());
                     }
 
-                    _logger.LogError(e, errorBuilder.ToString());
                     error = errorBuilder.ToString();
+                    _logger.LogError(e, error);
                     alreadyLogged = true;
-
-                    // To ensure consistency, FORCE a stop
-                    service.Stop();
+                   
                 }
 
                 message = Messages.ACTION_FAILED;
@@ -133,6 +131,10 @@ namespace Spectero.daemon.Libraries.Services
                     _logger.LogError(e, message);
                     error = e.Message;
                 }
+                
+                // To ensure consistency, FORCE a stop
+                _logger.LogWarning($"Forcing service ({name}) to stop as startup failed unexpectedly.");
+                service.Stop();
             }
 
             return message;

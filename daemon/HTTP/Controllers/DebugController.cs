@@ -12,6 +12,7 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Identity;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Models;
@@ -30,33 +31,44 @@ namespace Spectero.daemon.HTTP.Controllers
         private readonly IStatistician _statistician;
         private readonly IRazorLightEngine _engine;
         private readonly IIdentityProvider _identity;
+        private readonly IProcessRunner _processRunner;
 
         public DebugController(IOptionsSnapshot<AppConfig> appConfig, ILogger<DebugController> logger,
             IDbConnection db, IServiceManager serviceManager,
             IServiceConfigManager serviceConfigManager, IStatistician statistician,
-            IIdentityProvider identityProvider, IRazorLightEngine engine)
+            IIdentityProvider identityProvider, IRazorLightEngine engine,
+            IProcessRunner processRunner)
             : base(appConfig, logger, db)
         {
             _engine = engine;
             _identity = identityProvider;
             _serviceConfigManager = serviceConfigManager;
+            _processRunner = processRunner;
 
         }
-        // GET
-        [HttpGet("", Name = "DebugTest")]
+        
+        
+        [HttpGet("process", Name = "LongInvocationAutoRestartWithPersistentLogging")]
         public async Task<IActionResult> Index()
         {
-            var type = Utility.GetServiceType("OpenVPN");
-            var config = _serviceConfigManager.Generate(type).First();
+            _processRunner.Run(
+                // Instructions
+                new ProcessOptions()
+                {
+                    Executable = "cmd.exe",
+                    Arguments = null,
+                    Daemonized = true,
+                    Monitor = true,
+                    MonitoringInterval = 10,
+                    DisposeOnExit = false,
+                    InvokeAsSuperuser = true,
+                    AttachLogToConsole = true,
+                    WorkingDirectory = Program.GetAssemblyLocation()
+                },
+                // The calling object.
+                null
+            );
 
-            return Ok(await config.GetStringConfig());
-        }
-
-        [HttpPost("testUser")]
-        public IActionResult TestUserValidation([FromBody] User user)
-        {
-            user.Validate(out var errors);
-            _response.Result = errors;
             return Ok(_response);
         }
     }
