@@ -321,7 +321,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
                 // If we have a match, (gently, or harshly ┐(´∀｀)┌ﾔﾚﾔﾚ) close the process and remove the element from the running commands list.
                 if (force)
-                    holder.Command?.Process?.Kill();
+                    holder.Command?.Kill();
                 else
                     holder.Command?.Process?.Close();
 
