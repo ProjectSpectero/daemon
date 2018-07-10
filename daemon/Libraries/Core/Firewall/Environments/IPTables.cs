@@ -152,7 +152,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             var rule = new NetworkRule()
             {
                 Network = network,
-                Interface = network
+                Interface = networkInterface
             };
 
             if (!AppConfig.IsOpenVZContainer())
@@ -184,7 +184,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             // Delete the rule
             DeleteRule(networkRule);
         }
-        
+
         /// <summary>
         /// Enable a SNAT rule.
         /// </summary>
@@ -198,7 +198,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             {
                 Type = NetworkRuleType.Masquerade,
                 Network = network,
-                Interface = network,
+                Interface = networkInterface,
                 Protocol = NetworkRuleProtocol.Tcp
             };
 
@@ -277,11 +277,21 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             // Split the data
             var splitShellResponse = commandHolder.Command.StandardOutput.ReadToEnd().Split(" ");
 
+            // Determine the source address.
+            var sourceAddress = "0.0.0.0";
+            for (var i = 0; i < splitShellResponse.Length; i++)
+            {
+                if (splitShellResponse[i] != "src") continue;
+                sourceAddress = splitShellResponse[i + 1];
+                break;
+            }
+
+
             // Return the new format.
             return new InterfaceInformation()
             {
                 Name = splitShellResponse[4],
-                Address = splitShellResponse[6]
+                Address = sourceAddress
             };
         }
 
