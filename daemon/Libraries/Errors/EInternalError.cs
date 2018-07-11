@@ -2,7 +2,7 @@
 {
     public class EInternalError : BaseError
     {
-        public EInternalError() : base(500, "Internal Server Error")
+        public EInternalError(string why = "Internal Server Error") : base(500, why)
         {
         }
     }

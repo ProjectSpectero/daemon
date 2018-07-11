@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Security.Claims;
@@ -7,9 +8,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.HTTP;
+using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Models;
 
 namespace Spectero.daemon.HTTP.Controllers
@@ -54,13 +57,14 @@ namespace Spectero.daemon.HTTP.Controllers
 
             var userData = GetClaim(ClaimTypes.UserData)?.Value;
             var user = JsonConvert.DeserializeObject<User>(userData);
+            user.LastLoginDate = DateTime.UtcNow;
 
-            if (user == null || user.Id == 0) return null;
+            if (user == null || user.AuthKey.IsNullOrEmpty())
+                throw new EInternalError("JWT token did NOT contain a valid user object!");
 
-            // Some caching would be good here, but this really doesn't service enough requests to justify it.
-            _currentUser = Db.SingleById<User>(user.Id);
+            _currentUser = user;
+            
             return _currentUser;
-
         }
 
         protected async Task<Configuration> CreateOrUpdateConfig(string key, string value)
