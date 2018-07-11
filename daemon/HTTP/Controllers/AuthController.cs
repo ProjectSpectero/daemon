@@ -14,6 +14,7 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
+using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Models.Opaque;
 using Spectero.daemon.Models.Opaque.Requests;
 using Spectero.daemon.Models.Opaque.Responses;
@@ -27,14 +28,16 @@ namespace Spectero.daemon.HTTP.Controllers
     {
         private readonly ICryptoService _cryptoService;
         private readonly IAuthenticator _authenticator;
+        private readonly IIdentityProvider _identityProvider;
 
         public AuthController(IOptionsSnapshot<AppConfig> appConfig, ILogger<AuthController> logger,
             IDbConnection db, ICryptoService cryptoService,
-            IAuthenticator authenticator)
+            IAuthenticator authenticator, IIdentityProvider identityProvider)
             : base(appConfig, logger, db)
         {
             _authenticator = authenticator;
             _cryptoService = cryptoService;
+            _identityProvider = identityProvider;
         }
 
         private async Task<IActionResult> ScopeAwareAuthentication(string username, string password, Models.User.Action scope)
@@ -69,7 +72,7 @@ namespace Spectero.daemon.HTTP.Controllers
                     };
 
                     var key = _cryptoService.GetJWTSigningKey();
-                    var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Hardcoded alg for now, perhaps allow changing later
+                    var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512); // Hardcoded alg for now, perhaps allow changing later
 
                     var accessExpires =
                         DateTime.Now.AddMinutes(AppConfig.JWTTokenExpiryInMinutes > 0
@@ -82,7 +85,8 @@ namespace Spectero.daemon.HTTP.Controllers
                         // This is not a typical webapp with static `Host`
                         claims: claims,
                         expires: accessExpires,
-                        signingCredentials: credentials
+                        signingCredentials: credentials,
+                        issuer: _identityProvider.GetFQDN()
                     );
 
                     var accessToken = new Token

@@ -25,5 +25,11 @@ namespace Spectero.daemon.Libraries.Core.Identity
 
             throw new EInternalError();
         }
+
+        public string GetFQDN()
+        {
+            var id = GetGuid();
+            return $"{id}.instances.spectero.io";
+        }
     }
 }
