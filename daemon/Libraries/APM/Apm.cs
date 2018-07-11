@@ -87,7 +87,20 @@ namespace Spectero.daemon.Libraries.APM
             {
                 {"Hostname", Environment.MachineName},
                 {"OS Version", Environment.OSVersion},
-                {"64-Bits", Is64Bits()}
+                {"64-Bits", Is64Bits()},
+                {"Virtualization", GetVirtualization()}
+            };
+        }
+
+        /// <summary>
+        /// Provide the type of virtualization environment we are in.
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<string, bool> GetVirtualization()
+        {
+            return new Dictionary<string, bool>()
+            {
+                {"OpenVZ", AppConfig.IsOpenVZContainer()},
             };
         }
 
@@ -136,7 +149,8 @@ namespace Spectero.daemon.Libraries.APM
         /// <returns></returns>
         public double GetTotalProcessUtilization()
         {
-            return Process.GetProcesses().Sum(currentProcess => (currentProcess.TotalProcessorTime.TotalMilliseconds * 100) / (DateTime.Now - currentProcess.StartTime).TotalMilliseconds);
+            return Process.GetProcesses().Sum(currentProcess =>
+                (currentProcess.TotalProcessorTime.TotalMilliseconds * 100) / (DateTime.Now - currentProcess.StartTime).TotalMilliseconds);
         }
 
         /// <summary>
