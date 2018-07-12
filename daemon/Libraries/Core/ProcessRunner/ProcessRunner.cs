@@ -122,7 +122,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                         Command = new Shell(
                             e => e.ThrowOnError(processOptions.ThrowOnError)
                         ).Run(
-                            executable: Program.GetSudoPath(),
+                            executable: GetSudoPath(),
                             arguments: arguments,
                             options: o => o
                                 .DisposeOnExit(processOptions.DisposeOnExit)
@@ -422,5 +422,19 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <returns></returns>
         private static Exception WorkingDirectoryDoesntExistException(string workingDirectory) =>
             new Exception($"The WorkingDirectory attribute value provided ({workingDirectory}) did not exist.");
+        
+        private static string _sudoPath;
+        public static string GetSudoPath()
+        {
+            // If the path hasn't previously been called, find it.
+            if (_sudoPath == null)
+            {
+                var cmd = Command.Run("which", "sudo");
+                _sudoPath = cmd.StandardOutput.ReadToEnd().Trim();
+            }
+
+            // Return the path to the sudo binary.
+            return _sudoPath;
+        }
     }
 }
