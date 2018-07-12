@@ -22,14 +22,14 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public string GetCpuName() =>
-            ReadProcCpuinfo()["model name"];
+            ReadProcCpuinfo().GetValueOrDefault("model name", "Unknown Processor");
 
         /// <summary>
         /// Returns the number of physical cores excluding threads.
         /// </summary>
         /// <returns></returns>
         public int GetCpuCoreCount() =>
-            int.Parse(ReadProcCpuinfo()["cpu cores"]);
+            int.Parse(ReadProcCpuinfo().GetValueOrDefault("cpu cores", "1"));
 
         /// <summary>
         /// Returns the number of threads.
@@ -43,7 +43,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public object GetCpuCacheSize() =>
-            ReadProcCpuinfo()["cache size"];
+            ReadProcCpuinfo().GetValueOrDefault("cache size", "Unknown");
 
         /// <summary>
         /// It should be worth noting according to linux, that free memory is marked as "used" due to buffers and caches.
@@ -51,19 +51,18 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryFree() =>
-            (ReadProcCpuinfo().ContainsKey("MemAvailable")) ?
-                // Kernel 3.14+ 
-                ReadProcMeminfo()["MemAvailable"] :
-
-                // Kernel 3.14 and lower
-                ReadProcMeminfo()["MemFree"] + ReadProcMeminfo()["Cached"]; 
+            ReadProcMeminfo().GetValueOrDefault(
+                "MemAvailable",
+                ReadProcMeminfo().GetValueOrDefault("MemFree", 0) +
+                ReadProcMeminfo().GetValueOrDefault("Cached", 0)
+            );
 
         /// <summary>
         /// Gets the total amount of physical memory in the system.
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryTotal() =>
-            ReadProcMeminfo()["MemTotal"];
+            ReadProcMeminfo().GetValueOrDefault("MemTotal", 0);
 
         /// <summary>
         /// Get Physical Memory used
@@ -119,7 +118,7 @@ namespace Spectero.daemon.Libraries.APM
                     if (unregexedValue.Contains(" kB"))
                     {
                         // Variable where conversion to bytes happens.
-                        long valueToAppend = long.Parse(regexedValue) * 1024; 
+                        long valueToAppend = long.Parse(regexedValue) * 1024;
 
                         // Add to dictionary.
                         procInfo.Add(key, valueToAppend);
