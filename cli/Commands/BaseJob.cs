@@ -38,7 +38,7 @@ namespace Spectero.daemon.CLI.Commands
 
         private static void DisplayResult(APIResponse response)
         {
-            if (response.Errors.Count != 0)
+            if (response.Errors != null && response.Errors?.Count != 0)
             {
                 Console.WriteLine("Something went wrong :(:");
                 foreach (var error in response.Errors)

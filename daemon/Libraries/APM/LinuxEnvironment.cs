@@ -21,8 +21,7 @@ namespace Spectero.daemon.Libraries.APM
         /// Returns the Processor Manufacturer, Model and the Frequency.
         /// </summary>
         /// <returns></returns>
-        public string GetCpuName() =>
-            ReadProcCpuinfo()["model name"];
+        public string GetCpuName() => _cachedProcCpuinfo.GetValueOrDefault("model name", "Unknown Processor");
 
         /// <summary>
         /// Returns the number of physical cores excluding threads.
