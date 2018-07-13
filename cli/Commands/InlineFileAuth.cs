@@ -56,7 +56,7 @@ namespace Spectero.daemon.CLI.Commands
             };
 
             // Run it.
-            return HandleRequest(null, request, body);
+            return HandleRequest(null, request, body, caller: this);
         }
     }
 }

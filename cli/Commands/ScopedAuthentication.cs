@@ -28,7 +28,7 @@ namespace Spectero.daemon.CLI.Commands
                 {"serviceScope", Scope }
             };
 
-            return HandleRequest(null, request, body);
+            return HandleRequest(null, request, body, caller: this);
         }
         
         public override bool IsDataCommand() => true;

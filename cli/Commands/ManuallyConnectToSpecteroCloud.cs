@@ -26,7 +26,7 @@ namespace Spectero.daemon.CLI.Commands
                 {"nodeKey", NodeKey }
             };
 
-            return HandleRequest(null, request, body);
+            return HandleRequest(null, request, body, caller: this);
         }
         
         public override bool IsDataCommand() => true;
