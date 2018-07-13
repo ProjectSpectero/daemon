@@ -12,14 +12,16 @@ namespace Spectero.daemon.CLI.Commands
     {
         protected readonly IServiceProvider ServiceProvider 
             = Startup.GetServiceProvider();
+        
+        public abstract bool IsDataCommand();
 
         protected static CommandResult HandleRequest(Action<APIResponse> action, IRequest request,
-            Dictionary<string, object> requestBody = null)
+            Dictionary<string, object> requestBody = null, BaseJob caller = null)
         {
             try
             {
                 var response = request.Perform(requestBody);
-                DisplayResult(response);
+                DisplayResult(response, caller);
 
                 action?.Invoke(response);
 
@@ -27,20 +29,21 @@ namespace Spectero.daemon.CLI.Commands
             }
             catch (Exception e)
             {
-                if (! AppConfig.Debug)
-                    Console.WriteLine("Failed :(: " + e.Message);
-                else
-                    Console.WriteLine(e);
+                var message = AppConfig.Debug ? e.ToString() : e.Message;
+                
+                Console.WriteLine($"Failed! {message}");
 
                 return CommandResult.RuntimeFailure;
             }
         }
 
-        private static void DisplayResult(APIResponse response)
+        private static void DisplayResult(APIResponse response, BaseJob caller = null)
         {
+            string output = null;
+            
             if (response.Errors != null && response.Errors?.Count != 0)
             {
-                Console.WriteLine("Something went wrong :(:");
+                Console.WriteLine("Failed!");
                 foreach (var error in response.Errors)
                 {
                     Console.WriteLine(error.Key + ":" + error.Value);
@@ -49,10 +52,22 @@ namespace Spectero.daemon.CLI.Commands
             else
             {
                 var json = JsonConvert.SerializeObject(response.Result);
-                var jsonFormatted = JToken.Parse(json).ToString(Formatting.Indented);
-
-                Console.WriteLine(jsonFormatted);
+                var formattedJson = JToken.Parse(json).ToString(Formatting.Indented);
+                
+                if (caller != null && caller.IsDataCommand())
+                {
+                    // OK, dump the data.
+                    output = formattedJson;
+                }
+                else
+                {
+                    // Just say that whatever was attempted actually succeeded.
+                    output = AppConfig.Debug || AppConfig.OutputJson ? formattedJson : $"Success! Your requested task has completed as expected.";
+                }
+                
             }
+            
+            Console.WriteLine(output);
         }
     }
 }

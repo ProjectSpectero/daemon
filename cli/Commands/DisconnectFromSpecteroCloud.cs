@@ -10,5 +10,7 @@ namespace Spectero.daemon.CLI.Commands
             var request = new DisconnectFromSpecteroCloudRequest(ServiceProvider);
             return HandleRequest(null, request);
         }
+        
+        public override bool IsDataCommand() => true;
     }
 }

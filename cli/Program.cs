@@ -30,7 +30,7 @@ namespace Spectero.daemon.CLI
             }
             catch (Exception e)
             {
-                Console.WriteLine("Something went wrong :( " + e);
+                Console.WriteLine($"Failed! ${e}");
                 Console.WriteLine("You may wish to consider submitting a bug report if you believe this error to be a bug.");
                 
                 return commandErrorCode;

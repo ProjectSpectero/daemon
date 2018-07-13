@@ -19,5 +19,7 @@ namespace Spectero.daemon.CLI.Commands
 
             return HandleRequest(null, request, body);
         }
+
+        public override bool IsDataCommand() => false;
     }
 }

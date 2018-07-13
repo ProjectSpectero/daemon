@@ -12,5 +12,7 @@ namespace Spectero.daemon.CLI.Commands
 
             return CommandResult.Success;
         }
+        
+        public override bool IsDataCommand() => true;
     }
 }

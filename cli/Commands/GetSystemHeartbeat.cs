@@ -10,5 +10,7 @@ namespace Spectero.daemon.CLI.Commands
             var request = new GetSystemHeartbeatRequest(ServiceProvider);
             return HandleRequest(null, request);
         }
+        
+        public override bool IsDataCommand() => true;
     }
 }

@@ -21,6 +21,8 @@ namespace Spectero.daemon.CLI.Commands
             Description = "The name of the file with authentication data."
         )]
         private string Filename { get; set; }
+        
+        public override bool IsDataCommand() => true;
 
         public override CommandResult Execute()
         {

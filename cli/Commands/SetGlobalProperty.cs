@@ -18,6 +18,10 @@ namespace Spectero.daemon.CLI.Commands
                 case "debug":
                     AppConfig.Debug = bool.Parse(Value);
                     break;
+                
+                case "json":
+                    AppConfig.OutputJson = bool.Parse((Value));
+                    break;
                     
                 default:
                     Console.WriteLine("Unrecognized property " + Property + " given, ignoring...");
@@ -27,5 +31,7 @@ namespace Spectero.daemon.CLI.Commands
             Console.WriteLine("Property " + Property + " was set to " + Value);
             return CommandResult.Success;
         }
+        
+        public override bool IsDataCommand() => true;
     }
 }
