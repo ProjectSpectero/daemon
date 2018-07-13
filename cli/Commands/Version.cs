@@ -7,10 +7,12 @@ namespace Spectero.daemon.CLI.Commands
     {
         public override CommandResult Execute()
         {
-            Console.WriteLine("Spectero Console v{0} with Spectero Daemon v{1}", AppConfig.version, Libraries.Config.AppConfig.version);
+            Console.WriteLine("Spectero Console v{0} with Spectero Daemon v{1}", AppConfig.version, daemon.Libraries.Config.AppConfig.version);
             Console.WriteLine("Copyright (c) 2017 - {0}, Spectero, Inc.", DateTime.Now.Year);
 
             return CommandResult.Success;
         }
+        
+        public override bool IsDataCommand() => true;
     }
 }

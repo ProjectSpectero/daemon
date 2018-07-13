@@ -103,8 +103,8 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                     _logger.LogDebug($"HTTPProxy: Now listening on {listener.Item1}:{listener.Item2}");
                 }
 
-                _proxyServer.ProxyRealm = "Spectero";
-                _proxyServer.AuthenticateUserFunc += _authenticator.AuthenticateHttpProxy;
+                _proxyServer.ProxyAuthenticationRealm = "Spectero";
+                _proxyServer.ProxyBasicAuthenticateFunc += _authenticator.AuthenticateHttpProxy;
                 _proxyServer.BeforeRequest += OnRequest;
                 _proxyServer.BeforeResponse += OnResponse;
                 _proxyServer.ExceptionFunc = HandleInternalProxyError;

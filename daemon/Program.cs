@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using Medallion.Shell;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -9,10 +10,8 @@ namespace Spectero.daemon
 {
     public class Program
     {
-        private static string _sudoPath = null;
-
         public static void Main(string[] args)
-        {
+        {            
             BuildWebHost(args).Run();
         }
 
@@ -33,19 +32,6 @@ namespace Spectero.daemon
             return Path.GetDirectoryName(
                 Uri.UnescapeDataString(new UriBuilder(Assembly.GetExecutingAssembly().CodeBase).Path)
             );
-        }
-
-        public static string GetSudoPath()
-        {
-            // If the path hasn't previously been called, find it.
-            if (_sudoPath == null)
-            {
-                var cmd = Command.Run("which", "sudo");
-                _sudoPath = cmd.StandardOutput.ReadToEnd().Trim();
-            }
-
-            // Return the path to the sudo binary.
-            return _sudoPath;
         }
     }
 }

@@ -12,47 +12,58 @@ namespace Spectero.daemon.CLI.Commands
     {
         protected readonly IServiceProvider ServiceProvider 
             = Startup.GetServiceProvider();
+                
+        public abstract bool IsDataCommand();
 
         protected static CommandResult HandleRequest(Action<APIResponse> action, IRequest request,
-            Dictionary<string, object> requestBody = null)
+            Dictionary<string, object> requestBody = null, BaseJob caller = null,
+            bool throwsException = false)
         {
             try
             {
                 var response = request.Perform(requestBody);
-                DisplayResult(response);
+                DisplayResult(response, caller, throwsException);
 
                 action?.Invoke(response);
 
                 return CommandResult.Success;
             }
             catch (Exception e)
-            {
-                if (! AppConfig.Debug)
-                    Console.WriteLine("Failed :(: " + e.Message);
-                else
-                    Console.WriteLine(e);
+            {                
+                var message = AppConfig.Debug ? e.ToString() : e.Message;
+                
+                Console.WriteLine($"Failed HR! {message}");
+                
+                if (throwsException)
+                    throw;
 
                 return CommandResult.RuntimeFailure;
             }
         }
 
-        private static void DisplayResult(APIResponse response)
-        {
+        private static void DisplayResult(APIResponse response, BaseJob caller = null, bool throwException = false)
+        {            
             if (response.Errors != null && response.Errors?.Count != 0)
             {
-                Console.WriteLine("Something went wrong :(:");
+                Console.WriteLine("Failed DR!");
                 foreach (var error in response.Errors)
                 {
                     Console.WriteLine(error.Key + ":" + error.Value);
                 }
+                
+                if (throwException)
+                    throw new Exception("Spectero Cloud rejected the request, errors array was NOT empty!");
             }
             else
             {
                 var json = JsonConvert.SerializeObject(response.Result);
-                var jsonFormatted = JToken.Parse(json).ToString(Formatting.Indented);
-
-                Console.WriteLine(jsonFormatted);
+                var formattedJson = JToken.Parse(json).ToString(Formatting.Indented);
+                
+                var output = (caller != null && caller.IsDataCommand()) || AppConfig.OutputJson || AppConfig.Debug ? formattedJson : $"Success! Your requested task has completed as expected.";
+               
+                Console.WriteLine(output);                
             }
+            
         }
     }
 }

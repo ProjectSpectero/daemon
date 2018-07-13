@@ -9,7 +9,7 @@ namespace Spectero.daemon.Libraries.APM
         // Cache Vars - will hold old data until explicitly refreshed.
         private Dictionary<string, string> _cachedProcCpuinfo;
         private Dictionary<string, long> _cachedProcMeminfo;
-        private int _threadCount;
+        private int _threadCount = 0;
 
         public LinuxEnvironment()
         {
