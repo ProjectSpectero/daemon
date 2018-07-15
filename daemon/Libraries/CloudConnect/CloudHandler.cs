@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.X509;
 using RestSharp;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.APM;
@@ -14,6 +15,7 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
+using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Models;
@@ -31,13 +33,14 @@ namespace Spectero.daemon.Libraries.CloudConnect
         private readonly Apm _apm;
         private readonly IRestClient _restClient;
         private readonly IMemoryCache _cache;
+        private readonly ICryptoService _cryptoService;
         
         private readonly string _defaultCloudUserName = AppConfig.CloudConnectDefaultAuthKey ?? "cloud";
         
         public CloudHandler(ILogger<CloudHandler> logger, IDbConnection dbConnection,
                             IIdentityProvider identityProvider, IOutgoingIPResolver ipResolver,
                             Apm apm, IRestClient restClient,
-                            IMemoryCache cache)
+                            IMemoryCache cache, ICryptoService cryptoService)
         {
             _logger = logger;
             _db = dbConnection;
@@ -46,6 +49,7 @@ namespace Spectero.daemon.Libraries.CloudConnect
             _apm = apm;
             _restClient = restClient;
             _cache = cache;
+            _cryptoService = cryptoService;
         }
         
         public async Task<bool> IsConnected ()
@@ -102,6 +106,11 @@ namespace Spectero.daemon.Libraries.CloudConnect
             user.Source = Models.User.SourceTypes.SpecteroCloud;
             user.CreatedDate = DateTime.Now;
             user.CloudSyncDate = DateTime.Now;
+            user.CertKey = PasswordUtils.GeneratePassword(48, 6);
+            
+            var userCertBytes = _cryptoService.IssueUserChain(user.AuthKey, new[] {KeyPurposeID.IdKPClientAuth}, user.CertKey);
+
+            user.Cert = Convert.ToBase64String(userCertBytes);
 
             // Checks if user existed already, or is being newly created.
             if (user.Id != 0L)
