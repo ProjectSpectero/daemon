@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using NClap.Metadata;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Spectero.daemon.CLI.Libraries.I18N;
 using Spectero.daemon.CLI.Requests;
 using Spectero.daemon.Libraries.Core.HTTP;
+using Microsoft.Extensions.DependencyInjection;
+using ServiceStack;
 
 namespace Spectero.daemon.CLI.Commands
 {
@@ -15,7 +19,7 @@ namespace Spectero.daemon.CLI.Commands
                 
         public abstract bool IsDataCommand();
 
-        protected static CommandResult HandleRequest(Action<APIResponse> action, IRequest request,
+        protected CommandResult HandleRequest(Action<APIResponse> action, IRequest request,
             Dictionary<string, object> requestBody = null, BaseJob caller = null,
             bool throwsException = false)
         {
@@ -41,14 +45,24 @@ namespace Spectero.daemon.CLI.Commands
             }
         }
 
-        private static void DisplayResult(APIResponse response, BaseJob caller = null, bool throwException = false)
-        {            
+        private void DisplayResult(APIResponse response, BaseJob caller = null, bool throwException = false)
+        {
+            var i18n = ServiceProvider.GetService<I18NHandler>();
+            
             if (response.Errors != null && response.Errors?.Count != 0)
             {
                 Console.WriteLine("Failed DR!");
                 foreach (var error in response.Errors)
                 {
-                    Console.WriteLine(error.Key + ":" + error.Value);
+                    var builder = new StringBuilder();
+                    
+                    if (!error.Key.IsNullOrEmpty())
+                        builder.Append(i18n.get(error.Key) + " ");
+                    
+                    if (!error.Value.ToString().IsNullOrEmpty())
+                       builder.Append(i18n.get(error.Value.ToString()));
+                    
+                    Console.WriteLine(builder);
                 }
                 
                 if (throwException)
