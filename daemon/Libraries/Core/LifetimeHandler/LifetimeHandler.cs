@@ -25,7 +25,12 @@ namespace Spectero.daemon.Libraries.Core.LifetimeHandler
         public void OnStarted()
         {
             _logger.LogDebug("Processing events that are registered for ApplicationStarted");
-            // Do nothing, at least for now
+            
+            // Remove the filesystem marker that signifies ongoing startup
+            if(! Utility.ManageStartupMarker(true))
+                _logger.LogWarning($"An attempt was made to remove the startup marker ({Utility.GetCurrentStartupMarker()}), but it could not be found.");
+            else
+                _logger.LogDebug($"Startup marker ({Utility.GetCurrentStartupMarker()}) has been de-activated successfully.");
         }
 
         public void OnStopping()
