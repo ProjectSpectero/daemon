@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using RestSharp;
 using Spectero.daemon.Libraries.Core.HTTP;
+using Utility = Spectero.daemon.Libraries.Core.Utility;
 
 namespace Spectero.daemon.CLI.Requests
 {
@@ -26,6 +29,8 @@ namespace Spectero.daemon.CLI.Requests
 
         protected APIResponse ActualPerform(string endpoint, Method method, Dictionary<string, object> requestBody = null)
         {
+            ValidateDaemonStartup();
+            
             var request = new RestRequest(endpoint, method) { RequestFormat = DataFormat.Json };
 
             if (requestBody != null)
@@ -42,6 +47,14 @@ namespace Spectero.daemon.CLI.Requests
                 throw response.ErrorException;
 
             return JsonConvert.DeserializeObject<T>(response.Content);
+        }
+
+        private static void ValidateDaemonStartup()
+        {
+            var marker = Utility.GetCurrentStartupMarker();
+            
+            if (File.Exists(marker))
+                throw new Exception($"Spectero Daemon currently seems to be starting up, and is not ready to service requests yet (marker: {marker}). Please try again later.");
         }
     }
 }
