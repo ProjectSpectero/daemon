@@ -104,7 +104,6 @@ namespace Spectero.daemon.Libraries.CloudConnect
             user.FullName = "Spectero Cloud Management User";
             user.Roles = new List<User.Role> { Models.User.Role.SuperAdmin };
             user.Source = Models.User.SourceTypes.SpecteroCloud;
-            user.CreatedDate = DateTime.Now;
             user.CloudSyncDate = DateTime.Now;
             user.CertKey = PasswordUtils.GeneratePassword(48, 6);
             
@@ -116,7 +115,10 @@ namespace Spectero.daemon.Libraries.CloudConnect
             if (user.Id != 0L)
                 await _db.UpdateAsync(user);
             else
+            {
+                user.CreatedDate = DateTime.Now;
                 await _db.InsertAsync(user);
+            }
 
             var response = _restClient.Execute(request);
 
@@ -181,6 +183,17 @@ namespace Spectero.daemon.Libraries.CloudConnect
             return (true, errors, HttpStatusCode.OK, parsedResponse);
         }
 
+        public async Task<bool> Disconnect()
+        {
+            await ConfigUtils.DeleteConfigIfExists(_db, ConfigKeys.CloudConnectStatus);
+            await ConfigUtils.DeleteConfigIfExists(_db, ConfigKeys.CloudConnectIdentifier);
+            await ConfigUtils.DeleteConfigIfExists(_db, ConfigKeys.CloudConnectNodeKey);
+
+            await DeleteCloudUserIfExists();
+
+            return true;
+        }
+        
         private async Task<bool> DeleteCloudUserIfExists()
         {
             var user = await _db.SingleAsync<User>(x => x.AuthKey == _defaultCloudUserName);
