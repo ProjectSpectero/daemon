@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -140,5 +141,34 @@ namespace Spectero.daemon.Libraries.Core
             }
             return ret;
         }
+
+        public static string GetCurrentStartupMarker()
+        {
+            var currentTIme = DateTime.UtcNow;
+            var minuteMarker = currentTIme.Minute.ToString()[0];
+
+            return Path.Combine(Path.GetTempPath(),
+                $"spectero-startup-{currentTIme.Year}-{currentTIme.Month}-{currentTIme.Day}-{minuteMarker}");
+        }
+
+        public static bool ManageStartupMarker(bool delete = false)
+        {
+            var marker = GetCurrentStartupMarker();
+
+            if (delete)
+            {
+                if (File.Exists(marker))
+                    File.Delete(marker);
+                else
+                    return false;
+            }
+            else
+            {
+                File.Create(marker).Dispose();
+            }
+
+            return true;
+        }
+
     }
 }

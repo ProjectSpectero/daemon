@@ -24,8 +24,8 @@
     <None Update="Tooling\spectero.bat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Resource\Locale" />
+    <None Update="Resource\Locale\EN.lang">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

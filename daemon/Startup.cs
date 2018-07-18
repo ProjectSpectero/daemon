@@ -36,6 +36,7 @@ using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Migrations;
 using Spectero.daemon.Models;
 using JobActivator = Spectero.daemon.Jobs.JobActivator;
+using Utility = Spectero.daemon.Libraries.Core.Utility;
 
 namespace Spectero.daemon
 {
@@ -167,6 +168,10 @@ namespace Spectero.daemon
             IServiceProvider serviceProvider, IApplicationLifetime applicationLifetime,
             ILifetimeHandler lifetimeHandler)
         {
+            // Create the filesystem marker that says Startup is now underway.
+            // This is removed in LifetimeHandler once init finishes.
+            Utility.ManageStartupMarker();
+            
             var appConfig = configMonitor.Value;
 
             if (env.IsDevelopment())

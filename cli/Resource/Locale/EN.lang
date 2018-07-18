@@ -1,0 +1,7 @@
+FAILED_TO_CONNECT_TO_SPECTERO_CLOUD=We're sorry, but we could not (successfully) connect to the Spectero Cloud.
+RESPONSE_CODE=It responded by
+400=saying that a bad request was sent to it.
+500=saying that it was incapable of servicing this request right now. Please try again later. If the error persists, please contact Spectero support.
+CLOUD_ALREADY_CONNECTED=This system is already connected to Spectero Cloud. Please visit https://app.spectero.com/nodes to locate it, or please use the "spectero cli manual" (or "spectero cli disconnect") command to update local details (if needed, see https://spectero.atlassian.net/wiki/spaces/docs/pages/196673/Command+Line+Helper for documentation).
+NODE_PERSIST_FAILED=Spectero Cloud was unable to store a reference to this node.
+INVALID_NODE_KEY=The node (account) key you provided was unfortunately invalid.
