@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Spectero.daemon.Libraries.Extensions;
 
 namespace Spectero.daemon.CLI.Libraries.I18N
@@ -14,7 +15,7 @@ namespace Spectero.daemon.CLI.Libraries.I18N
         {
             linguisticsMultiplexer = new Dictionary<Locale, IDictionary<string, string>>();
             
-            var localePath = Path.Combine("Resource", "Locale");
+            var localePath = Path.Combine(Assembly.GetExecutingAssembly().GetDirectoryPath(), "Resource", "Locale");
             var files = Directory.GetFiles(localePath);
 
             foreach (var fileName in files)

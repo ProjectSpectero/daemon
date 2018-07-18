@@ -26,7 +26,7 @@ namespace Spectero.daemon.CLI
             {
                 var result = cliArguments.PrimaryCommand.Execute();
                 
-                return successReturnCode;
+                return (int) result;
             }
             catch (Exception e)
             {
