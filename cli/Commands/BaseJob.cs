@@ -52,7 +52,7 @@ namespace Spectero.daemon.CLI.Commands
             var isTranslationDisabled =
                 (caller != null && caller.IsDataCommand()) || AppConfig.OutputJson || AppConfig.Debug;
             
-            if (response.Errors != null && response.Errors?.Count != 0)
+            if (response?.Errors != null && response.Errors?.Count != 0)
             {
                 Console.WriteLine("Failed DR!");
                 foreach (var error in response.Errors)
@@ -78,7 +78,7 @@ namespace Spectero.daemon.CLI.Commands
             }
             else
             {
-                var json = JsonConvert.SerializeObject(response.Result);
+                var json = JsonConvert.SerializeObject(response?.Result);
                 var formattedJson = JToken.Parse(json).ToString(Formatting.Indented);
                 
                 var output = isTranslationDisabled ? formattedJson : $"Success! Your requested task has completed as expected.";
