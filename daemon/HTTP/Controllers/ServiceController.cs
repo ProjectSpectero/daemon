@@ -116,7 +116,7 @@ namespace Spectero.daemon.HTTP.Controllers
 
                 foreach (var network in networksAlreadySeen)
                 {
-                    Logger.LogDebug($"Checking if {network} overlaps with any already defined networks: {networksAlreadySeen.ToJson()}");
+                    Logger.LogDebug($"Checking if {network} overlaps with any already defined networks: {networksAlreadySeen.Count} already seen.");
                     // Uh oh, we got an overlap. No bueno.
                     if (! network.Contains(parsedNetwork) && ! network.Equals(parsedNetwork)) continue;;
 			        
@@ -211,7 +211,7 @@ namespace Spectero.daemon.HTTP.Controllers
             
             service.SetConfig(reconciledConfig);
            
-            _response.Result = reconciledConfig;
+            _response.Result = config;
             
             return Ok(_response);
         }

@@ -21,14 +21,14 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public string GetCpuName() =>
-            GetWmiProcessorManagementObject()["Name"];
+            GetWmiProcessorManagementObject().GetValueOrDefault("Name", "Unknown Processor");
 
         /// <summary>
         /// Get the number of cores from WMI.
         /// </summary>
         /// <returns></returns>
         public int GetCpuCoreCount() =>
-            int.Parse(GetWmiProcessorManagementObject()["NumberOfCores"]);
+            int.Parse(GetWmiProcessorManagementObject().GetValueOrDefault("NumberOfCores", "1"));
 
         /// <summary>
         /// Get the number of threads.
@@ -37,7 +37,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public int GetCpuThreadCount() =>
-            int.Parse(GetWmiProcessorManagementObject()["NumberOfLogicalProcessors"]);
+            int.Parse(GetWmiProcessorManagementObject().GetValueOrDefault("NumberOfLogicalProcessors", "1"));
 
         /// <summary>
         /// Get L2 Cache Size in Kilobytes.
@@ -46,7 +46,7 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public object GetCpuCacheSize() =>
-            UInt32.Parse(GetWmiProcessorManagementObject()["L2CacheSize"]);
+            uint.Parse(GetWmiProcessorManagementObject().GetValueOrDefault("L2CacheSize", "0"));
 
         /// <summary>
         /// Get the physical amount of memory used in bytes.
@@ -60,14 +60,14 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryFree() =>
-            long.Parse(GetWmiOperatingSystemManagementObject()["FreePhysicalMemory"]) * 1024;
+            long.Parse(GetWmiOperatingSystemManagementObject().GetValueOrDefault("FreePhysicalMemory", "0")) * 1024;
 
         /// <summary>
         /// Get the total amount of physical memory in bytes.
         /// </summary>
         /// <returns></returns>
         public long GetPhysicalMemoryTotal() =>
-            long.Parse(GetWmiOperatingSystemManagementObject()["TotalVisibleMemorySize"]) * 1024;
+            long.Parse(GetWmiOperatingSystemManagementObject().GetValueOrDefault("TotalVisibleMemorySize", "0")) * 1024;
 
         /// <summary>
         /// Get the amount of virtual memory used in bytes.
@@ -81,14 +81,14 @@ namespace Spectero.daemon.Libraries.APM
         /// </summary>
         /// <returns></returns>
         public long GetVirtualMemoryFree() =>
-            long.Parse(GetWmiOperatingSystemManagementObject()["FreeVirtualMemory"]) * 1024;
+            long.Parse(GetWmiOperatingSystemManagementObject().GetValueOrDefault("FreeVirtualMemory", "0")) * 1024;
 
         /// <summary>
         /// Get the total amount of virtual memory in bytes.
         /// </summary>
         /// <returns></returns>
         public long GetVirtualMemoryTotal() =>
-            long.Parse(GetWmiOperatingSystemManagementObject()["TotalVirtualMemorySize"]) * 1024;
+            long.Parse(GetWmiOperatingSystemManagementObject().GetValueOrDefault("TotalVirtualMemorySize", "0")) * 1024;
 
         /// <summary>
         /// Delete all cached objects.
@@ -110,11 +110,11 @@ namespace Spectero.daemon.Libraries.APM
                 var query = new SelectQuery(@"SELECT * FROM Win32_OperatingSystem");
 
                 // Search
-                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
+                using (var searcher = new ManagementObjectSearcher(query))
                 {
                     // Execute and iterate, then append to dictionary.
-                    foreach (ManagementBaseObject currentManagementObject in searcher.Get())
-                    foreach (PropertyData prop in currentManagementObject.Properties)
+                    foreach (var currentManagementObject in searcher.Get())
+                    foreach (var prop in currentManagementObject.Properties)
                     {
                         try
                         {
@@ -146,11 +146,11 @@ namespace Spectero.daemon.Libraries.APM
                 var query = new SelectQuery(@"SELECT * FROM Win32_Processor");
 
                 // Search
-                using (ManagementObjectSearcher searcher = new ManagementObjectSearcher(query))
+                using (var searcher = new ManagementObjectSearcher(query))
                 {
                     // Execute and iterate, then append to dictionary.
-                    foreach (ManagementBaseObject currentManagementObject in searcher.Get())
-                    foreach (PropertyData prop in currentManagementObject.Properties)
+                    foreach (var currentManagementObject in searcher.Get())
+                    foreach (var prop in currentManagementObject.Properties)
                     {
                         try
                         {

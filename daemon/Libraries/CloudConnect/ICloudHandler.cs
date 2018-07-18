@@ -13,5 +13,7 @@ namespace Spectero.daemon.Libraries.CloudConnect
         Task<(bool success, Dictionary<string, object> errors,
                 HttpStatusCode suggestedStatusCode, CloudAPIResponse<Node> cloudResponse)>
             Connect(HttpContext httpContext, string nodeKey);
+
+        Task<bool> Disconnect();
     }
 }

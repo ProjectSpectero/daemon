@@ -29,7 +29,10 @@ echo Dotnet Core 2.0 Framework is not installed.
 exit /b
 
 :cli
-"%_DNRT%" %~dp0/../Spectero.daemon.CLI.dll %2
+set _all=%*
+call set _tail=%%_all:*%2=%%
+set _tail=%2%_tail%
+"%_DNRT%" %~dp0/../Spectero.daemon.CLI.dll %_tail%
 exit /b
 
 :dotnet

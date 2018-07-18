@@ -170,9 +170,7 @@ namespace Spectero.daemon.HTTP.Controllers
             if (HasErrors())
                 return StatusCode(403, _response);
 
-            await DeleteConfigIfExists(ConfigKeys.CloudConnectNodeKey);
-            await DeleteConfigIfExists(ConfigKeys.CloudConnectIdentifier);
-            await CreateOrUpdateConfig(ConfigKeys.CloudConnectStatus, false.ToString());
+            await _cloudHandler.Disconnect();
 
             ManageBackgroundJob("disconnect");
 
