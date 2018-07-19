@@ -49,6 +49,7 @@ namespace Spectero.daemon.Libraries.Config
                     case "local":
                         return $"http://homestead.marketplace/v1/";
                     case "development":
+                    case "staging":
                         return $"https://dev.spectero.com/v1/";
                     default:
                         return $"https://api.spectero.com/v1/";
