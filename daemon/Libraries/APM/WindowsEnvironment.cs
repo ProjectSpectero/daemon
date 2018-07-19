@@ -109,22 +109,29 @@ namespace Spectero.daemon.Libraries.APM
                 // Prepare the query.
                 var query = new SelectQuery(@"SELECT * FROM Win32_OperatingSystem");
 
-                // Search
-                using (var searcher = new ManagementObjectSearcher(query))
+                try
                 {
-                    // Execute and iterate, then append to dictionary.
-                    foreach (var currentManagementObject in searcher.Get())
-                    foreach (var prop in currentManagementObject.Properties)
+                    // Search
+                    using (var searcher = new ManagementObjectSearcher(query))
                     {
-                        try
+                        // Execute and iterate, then append to dictionary.
+                        foreach (var currentManagementObject in searcher.Get())
+                        foreach (var prop in currentManagementObject.Properties)
                         {
-                            localDictionary.Add(prop.Name.Trim(), prop.Value.ToString().Trim());
-                        }
-                        catch (Exception exception)
-                        {
-                            // Pass, there's nothing that needs to be done.
+                            try
+                            {
+                                localDictionary.Add(prop.Name.Trim(), prop.Value.ToString().Trim());
+                            }
+                            catch (Exception exception)
+                            {
+                                // Pass, there's nothing that needs to be done.
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    // WMI is not ready, return 
                 }
 
                 // Assign to cache.
@@ -145,22 +152,29 @@ namespace Spectero.daemon.Libraries.APM
                 // Prepare the query.
                 var query = new SelectQuery(@"SELECT * FROM Win32_Processor");
 
-                // Search
-                using (var searcher = new ManagementObjectSearcher(query))
+                try
                 {
-                    // Execute and iterate, then append to dictionary.
-                    foreach (var currentManagementObject in searcher.Get())
-                    foreach (var prop in currentManagementObject.Properties)
+                    // Search
+                    using (var searcher = new ManagementObjectSearcher(query))
                     {
-                        try
+                        // Execute and iterate, then append to dictionary.
+                        foreach (var currentManagementObject in searcher.Get())
+                        foreach (var prop in currentManagementObject.Properties)
                         {
-                            localDictionary.Add(prop.Name.Trim(), prop.Value.ToString().Trim());
-                        }
-                        catch (Exception exception)
-                        {
-                            // Pass, there's nothing that needs to be done.
+                            try
+                            {
+                                localDictionary.Add(prop.Name.Trim(), prop.Value.ToString().Trim());
+                            }
+                            catch (Exception exception)
+                            {
+                                // Pass, there's nothing that needs to be done.
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    // WMI is not ready, return 
                 }
 
                 // Assign to cache.
