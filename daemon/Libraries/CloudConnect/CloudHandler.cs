@@ -185,7 +185,10 @@ namespace Spectero.daemon.Libraries.CloudConnect
 
         public async Task<bool> Disconnect()
         {
-            await ConfigUtils.DeleteConfigIfExists(_db, ConfigKeys.CloudConnectStatus);
+            // This key can NOT be deleted without causing in CloudController#CompileCloudStatus, toggle its state instead.
+            await ConfigUtils.CreateOrUpdateConfig(_db, ConfigKeys.CloudConnectStatus, false.ToString());
+            
+            // These are fair game to delete.
             await ConfigUtils.DeleteConfigIfExists(_db, ConfigKeys.CloudConnectIdentifier);
             await ConfigUtils.DeleteConfigIfExists(_db, ConfigKeys.CloudConnectNodeKey);
 

@@ -45,6 +45,9 @@ namespace Spectero.daemon.CLI.Requests
         {
             if (response.ErrorException != null)
                 throw response.ErrorException;
+            
+            if (! response.IsSuccessful)
+                throw new Exception("The request to the Spectero Daemon was NOT successful (non-OK status code). Please review its logs to find out why.");
 
             return JsonConvert.DeserializeObject<T>(response.Content);
         }
