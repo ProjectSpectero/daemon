@@ -80,6 +80,10 @@ namespace Spectero.daemon.HTTP.Controllers
         [HttpGet("heartbeat", Name = "GetLocalSystemHeartbeat")]
         public IActionResult GetHeartbeat()
         {
+            var res = new Dictionary<string, object> {{"status", "OK"}};
+
+            _response.Result = res;
+            
             return Ok(_response);
         }
 
