@@ -102,8 +102,8 @@ namespace Spectero.daemon.Libraries.CloudConnect
             user.PasswordSetter = generatedPassword;
             user.EmailAddress = _defaultCloudUserName + $"@spectero.com";
             user.FullName = "Spectero Cloud Management User";
-            user.Roles = new List<User.Role> { Models.User.Role.SuperAdmin };
-            user.Source = Models.User.SourceTypes.SpecteroCloud;
+            user.Roles = new List<User.Role> { User.Role.SuperAdmin };
+            user.Source = User.SourceTypes.SpecteroCloud;
             user.CloudSyncDate = DateTime.Now;
             user.CertKey = PasswordUtils.GeneratePassword(48, 6);
             
