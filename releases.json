@@ -1,0 +1,1 @@
+{ "installer.revision": 1, "channels":{"stable":"v0.1-alpha","alpha":null,"beta":null},"versions":{"v0.1-alpha":{"download":"https:\/\/c.spectero.com\/v0.1-alpha.zip","altDownload":null,"changelog":"https:\/\/spectero.atlassian.net\/wiki\/spaces\/docs\/pages\/4325380\/0.1-alpha", "requiredDotnetCoreVersion": "2.1.2"}}}
