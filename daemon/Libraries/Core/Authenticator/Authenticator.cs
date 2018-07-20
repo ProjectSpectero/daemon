@@ -39,6 +39,12 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                 _logger.LogDebug("UPA: Cache-miss for username -> " + username + ", doing SQL lookup.");
                 var dbQuery = await _db.SelectAsync<User>(x => x.AuthKey == username);
                 user = dbQuery.FirstOrDefault();
+                
+                // Cache user object so we don't hit SQLite too much. This kills direct DB manipulations for `AuthCacheMinutes`, be aware!
+                // All the local user alter routines are equipped with additional support for clearing cached data, so internally, this is fine.
+                if (user != null)
+                    _cache.Set(AuthUtils.GetCachedUserKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
+
             }
 
             if (user != null)
@@ -61,14 +67,10 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                 {
                     passwordVerified = BCrypt.Net.BCrypt.Verify(password, user.Password);
 
-                    if (passwordVerified)
+                    if (passwordVerified && _appConfig.InMemoryAuth)
                     {
-                        // Cache user object so we don't hit SQLite too much.
-                        _cache.Set(AuthUtils.GetCachedUserKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
-                        
                         // Only put the user's password in the cache if In-memory auth data caching is enabled and PW was verified
-                        if (_appConfig.InMemoryAuth)
-                            _cache.Set(AuthUtils.GetCachedUserPasswordKey(username), password, TimeSpan.FromMinutes(_appConfig.InMemoryAuthCacheMinutes));
+                        _cache.Set(AuthUtils.GetCachedUserPasswordKey(username), password, TimeSpan.FromMinutes(_appConfig.InMemoryAuthCacheMinutes));
                     }
                 }
                     
