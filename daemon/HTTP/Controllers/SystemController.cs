@@ -9,7 +9,7 @@ using Spectero.daemon.Libraries.Core.Constants;
 
 namespace Spectero.daemon.HTTP.Controllers
 {
-    [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
+    [Route("v1/[controller]")]
     [ApiExplorerSettings(IgnoreApi = false, GroupName = nameof(ServiceController))]
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class SystemController : BaseController

@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Microsoft.AspNetCore.WebSockets.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using RestSharp;
+using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.HTTP;
 using Utility = Spectero.daemon.Libraries.Core.Utility;
 
@@ -45,9 +48,11 @@ namespace Spectero.daemon.CLI.Requests
         {
             if (response.ErrorException != null)
                 throw response.ErrorException;
-            
-            if (! response.IsSuccessful)
-                throw new Exception("The request to the Spectero Daemon was NOT successful (non-OK status code). Please review its logs to find out why.");
+
+            var upstreamError = response.Headers.FirstOrDefault(x => x.Name.Equals(Headers.EUpstreamError));
+                        
+            if (! response.IsSuccessful && upstreamError == null)
+                throw new Exception($"The local request to the Spectero Daemon was NOT successful (non-OK status code - {response.StatusCode}). Please review its logs to find out why.");
 
             return JsonConvert.DeserializeObject<T>(response.Content);
         }

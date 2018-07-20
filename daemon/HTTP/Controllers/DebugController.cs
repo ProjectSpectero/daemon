@@ -20,7 +20,7 @@ using Spectero.daemon.Models;
 namespace Spectero.daemon.HTTP.Controllers
 {
     [Authorize(AuthenticationSchemes = "Bearer")]
-    [Microsoft.AspNetCore.Mvc.Route("v1/[controller]")]
+    [Route("v1/[controller]")]
     public class DebugController : BaseController
     {
 

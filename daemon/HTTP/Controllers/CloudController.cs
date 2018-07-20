@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebSockets.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -207,6 +208,8 @@ namespace Spectero.daemon.HTTP.Controllers
             {
                 _response.Errors = connection.errors;
 
+                Request.HttpContext.Response.Headers.Add(Headers.EUpstreamError, true.ToString());
+                
                 return StatusCode((int) connection.suggestedStatusCode, _response);
             }
             
