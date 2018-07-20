@@ -39,8 +39,6 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                 _logger.LogDebug("UPA: Cache-miss for username -> " + username + ", doing SQL lookup.");
                 var dbQuery = await _db.SelectAsync<User>(x => x.AuthKey == username);
                 user = dbQuery.FirstOrDefault();
-                if (user != null)
-                    _cache.Set(AuthUtils.GetCachedUserKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
             }
 
             if (user != null)
@@ -49,7 +47,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
                 // This verification is a reason for performance problems on rapid fire services like the proxy,
                 // where requests are authenticated on every request
-                bool passwordVerified = false;
+                var passwordVerified = false;
 
                 if (_appConfig.InMemoryAuth && _cache.TryGetValue(AuthUtils.GetCachedUserPasswordKey(username), out var cachedPassword))
                 {
@@ -63,9 +61,15 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                 {
                     passwordVerified = BCrypt.Net.BCrypt.Verify(password, user.Password);
 
-                    // Only put the user in the cache if In-memory auth data caching is enabled and PW was verified
-                    if (_appConfig.InMemoryAuth && passwordVerified)
-                        _cache.Set(AuthUtils.GetCachedUserPasswordKey(username), password, TimeSpan.FromMinutes(_appConfig.InMemoryAuthCacheMinutes));
+                    if (passwordVerified)
+                    {
+                        // Cache user object so we don't hit SQLite too much.
+                        _cache.Set(AuthUtils.GetCachedUserKey(username), user, TimeSpan.FromMinutes(_appConfig.AuthCacheMinutes));
+                        
+                        // Only put the user's password in the cache if In-memory auth data caching is enabled and PW was verified
+                        if (_appConfig.InMemoryAuth)
+                            _cache.Set(AuthUtils.GetCachedUserPasswordKey(username), password, TimeSpan.FromMinutes(_appConfig.InMemoryAuthCacheMinutes));
+                    }
                 }
                     
 
