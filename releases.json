@@ -1,7 +1,7 @@
 {
   "channels": {
     "stable": "0.1-stable",
-    "alpha": "0.1-stable",
+    "alpha": "0.1-alpha",
     "beta": null
   },
   "versions": {
