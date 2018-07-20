@@ -1,1 +1,23 @@
-{ "installer.revision": 1, "channels":{"stable":"v0.1-alpha","alpha":null,"beta":null},"versions":{"v0.1-alpha":{"download":"https:\/\/c.spectero.com\/v0.1-alpha.zip","altDownload":null,"changelog":"https:\/\/spectero.atlassian.net\/wiki\/spaces\/docs\/pages\/4325380\/0.1-alpha", "requiredDotnetCoreVersion": "2.1.2"}}}
+{
+  "channels": {
+    "stable": "0.1-stable",
+    "alpha": "0.1-alpha",
+    "beta": null
+  },
+  "versions": {
+    "0.1-stable": {
+      "download": "https://c.spectero.com/master/0.1-alpha.zip",
+      "altDownload": null,
+      "changelog": "https://spectero.atlassian.net/wiki/spaces/docs/pages/4325380/0.1-alpha",
+      "requiredDotnetCoreVersion": "2.1.2",
+      "requiredInstallerRevision": 1
+    },
+    "0.1-alpha": {
+      "download": "https://c.spectero.com/staging/0.1-alpha.zip",
+      "altDownload": null,
+      "changelog": "https://spectero.atlassian.net/wiki/spaces/docs/pages/4325380/0.1-alpha",
+      "requiredDotnetCoreVersion": "2.1.2",
+      "requiredInstallerRevision": 1
+    }
+  }
+}
