@@ -118,7 +118,7 @@ namespace Spectero.daemon.Migrations
                 
                 var serverCertificate = _cryptoService.IssueCertificate($"CN={instanceId}.instance.spectero.io", ca, null, 
                     new[] { KeyPurposeID.AnyExtendedKeyUsage, KeyPurposeID.IdKPServerAuth }, serverPassword,
-                    new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyAgreement | KeyUsage.KeyEncipherment ));
+                    new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment ));
 
                 specteroCertKey = PasswordUtils.GeneratePassword(48, 8);
                 specteroCertificate = _cryptoService.IssueCertificate(
