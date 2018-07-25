@@ -112,15 +112,18 @@ namespace Spectero.daemon.Migrations
                 // Ought to be good enough for everyone. -- The IPv4 working group, 1996
                 var caPassword = PasswordUtils.GeneratePassword(48, 8);
                 var serverPassword = PasswordUtils.GeneratePassword(48, 8);
+                
                 ca = _cryptoService.CreateCertificateAuthorityCertificate($"CN={instanceId}.ca.instance.spectero.io",
                     null, null, caPassword);
+                
                 var serverCertificate = _cryptoService.IssueCertificate($"CN={instanceId}.instance.spectero.io",
-                    ca, null, new[] { KeyPurposeID.AnyExtendedKeyUsage, KeyPurposeID.IdKPServerAuth, KeyPurposeID.IdKPClientAuth }, serverPassword);
+                    ca, null, new[] { KeyPurposeID.AnyExtendedKeyUsage, KeyPurposeID.IdKPServerAuth }, serverPassword);
 
                 specteroCertKey = PasswordUtils.GeneratePassword(48, 8);
                 specteroCertificate = _cryptoService.IssueCertificate(
-                    "CN=" + "spectero",
-                    ca, null, new[] { KeyPurposeID.IdKPClientAuth }, specteroCertKey);
+                    "CN=" + "spectero", ca, null, 
+                    new[] { KeyPurposeID.IdKPClientAuth }, specteroCertKey,
+                    new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyAgreement | KeyUsage.KeyEncipherment ));
 
                 _db.Insert(new Configuration
                 {

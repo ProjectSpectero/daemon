@@ -22,13 +22,13 @@ namespace Spectero.daemon.Libraries.Core.Crypto
         X509Certificate2 LoadCertificate(byte[] certBytes, string password = "password");
         byte[] GetCertificateBytes(X509Certificate2 certificate, string password = "password");
         void WriteCertificate(X509Certificate2 certificate, string outputFileName, string password = "password");
-        X509Certificate2 IssueCertificate(string subjectName, X509Certificate2 issuerCertificate, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null);
+        X509Certificate2 IssueCertificate(string subjectName, X509Certificate2 issuerCertificate, string[] subjectAlternativeNames, KeyPurposeID[] extendedKeyUsages, string password = null, KeyUsage usage = null);
 
         byte[] CreateCertificateAuthority(string subjectName, string[] alternativeNames,
             KeyPurposeID[] usages, string password = null);
 
-        X509Certificate2 CreateCertificateAuthorityCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null);
-        X509Certificate2 CreateSelfSignedCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null);
+        X509Certificate2 CreateCertificateAuthorityCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] extendedKeyUsages, string password = null);
+        X509Certificate2 CreateSelfSignedCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] extendedKeyUsages, string password = null);
         SecureRandom GetSecureRandom();
 
         X509Certificate GenerateCertificate(SecureRandom random,
@@ -40,7 +40,8 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             AsymmetricCipherKeyPair issuerKeyPair,
             BigInteger issuerSerialNumber,
             bool isCertificateAuthority,
-            KeyPurposeID[] usages);
+            KeyPurposeID[] extendedUsages,
+            KeyUsage usage = null);
 
         /// <summary>
         /// The certificate needs a serial number. This is used for revocation,
