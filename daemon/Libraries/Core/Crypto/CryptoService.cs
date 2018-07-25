@@ -142,7 +142,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
         }
 
 
-        public X509Certificate2 IssueCertificate(string subjectName, X509Certificate2 issuerCertificate, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null)
+        public X509Certificate2 IssueCertificate(string subjectName, X509Certificate2 issuerCertificate, string[] subjectAlternativeNames, KeyPurposeID[] extendedKeyUsages, string password = null, KeyUsage usage = null)
         {
             // It's self-signed, so these are the same.
             var issuerName = issuerCertificate.Subject;
@@ -156,10 +156,12 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             var issuerSerialNumber = new BigInteger(issuerCertificate.GetSerialNumber());
 
             const bool isCertificateAuthority = false;
+            
             var certificate = GenerateCertificate(random, subjectName, subjectKeyPair, serialNumber,
                                                   subjectAlternativeNames, issuerName, issuerKeyPair,
                                                   issuerSerialNumber, isCertificateAuthority,
-                                                  usages);
+                                                  extendedKeyUsages, usage);
+            
             return ConvertCertificate(certificate, subjectKeyPair, random, password);
         }
 
@@ -173,7 +175,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
                 password);
         }
 
-        public X509Certificate2 CreateCertificateAuthorityCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null)
+        public X509Certificate2 CreateCertificateAuthorityCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] extendedKeyUsages, string password = null)
         {
             // It's self-signed, so these are the same.
             var issuerName = subjectName;
@@ -191,11 +193,11 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             var certificate = GenerateCertificate(random, subjectName, subjectKeyPair, serialNumber,
                                                   subjectAlternativeNames, issuerName, issuerKeyPair,
                                                   issuerSerialNumber, isCertificateAuthority,
-                                                  usages);
+                                                  extendedKeyUsages);
             return ConvertCertificate(certificate, subjectKeyPair, random, password);
         }
 
-        public X509Certificate2 CreateSelfSignedCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] usages, string password = null)
+        public X509Certificate2 CreateSelfSignedCertificate(string subjectName, string[] subjectAlternativeNames, KeyPurposeID[] extendedKeyUsages, string password = null)
         {
             // It's self-signed, so these are the same.
             var issuerName = subjectName;
@@ -213,7 +215,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             var certificate = GenerateCertificate(random, subjectName, subjectKeyPair, serialNumber,
                                                   subjectAlternativeNames, issuerName, issuerKeyPair,
                                                   issuerSerialNumber, isCertificateAuthority,
-                                                  usages);
+                                                  extendedKeyUsages);
             return ConvertCertificate(certificate, subjectKeyPair, random, password);
         }
 
@@ -237,7 +239,8 @@ namespace Spectero.daemon.Libraries.Core.Crypto
                                                            AsymmetricCipherKeyPair issuerKeyPair,
                                                            BigInteger issuerSerialNumber,
                                                            bool isCertificateAuthority,
-                                                           KeyPurposeID[] usages)
+                                                           KeyPurposeID[] extendedUsages,
+                                                           KeyUsage usage = null)
         {
             var certificateGenerator = new X509V3CertificateGenerator();
 
@@ -273,15 +276,17 @@ namespace Spectero.daemon.Libraries.Core.Crypto
             AddSubjectKeyIdentifier(certificateGenerator, subjectKeyPair);
             AddBasicConstraints(certificateGenerator, isCertificateAuthority);
 
-            if (usages != null && usages.Any())
-                AddExtendedKeyUsage(certificateGenerator, usages);
+            if (extendedUsages != null && extendedUsages.Any())
+                AddExtendedKeyUsage(certificateGenerator, extendedUsages);
 
             if (subjectAlternativeNames != null && subjectAlternativeNames.Any())
                 AddSubjectAlternativeNames(certificateGenerator, subjectAlternativeNames);
 
             // This is what makes the subsequent validation pass.
             if (isCertificateAuthority)
-                AddCAKeyUsages(certificateGenerator, new KeyUsage(KeyUsage.CrlSign | KeyUsage.DigitalSignature | KeyUsage.KeyCertSign | KeyUsage.KeyEncipherment ));
+                AddKeyUsages(certificateGenerator, new KeyUsage(KeyUsage.CrlSign | KeyUsage.DigitalSignature | KeyUsage.KeyCertSign | KeyUsage.KeyEncipherment ));
+            else if (usage != null)
+                AddKeyUsages(certificateGenerator, usage);
 
             // The certificate is signed with the issuer's private key.
             var certificate = certificateGenerator.Generate(issuerKeyPair.Private, random);
@@ -370,7 +375,7 @@ namespace Spectero.daemon.Libraries.Core.Crypto
         /// </summary>
         /// <param name="certificateGenerator"></param>
         /// <param name="encodedKeyUsage"></param>
-        public void AddCAKeyUsages(X509V3CertificateGenerator certificateGenerator, KeyUsage encodedKeyUsage) => certificateGenerator.AddExtension(X509Extensions.KeyUsage.Id, true, encodedKeyUsage);
+        public static void AddKeyUsages(X509V3CertificateGenerator certificateGenerator, KeyUsage encodedKeyUsage) => certificateGenerator.AddExtension(X509Extensions.KeyUsage.Id, true, encodedKeyUsage);
 
         /// <summary>
         /// Add the "Extended Key Usage" extension, specifying (for example) "server authentication".

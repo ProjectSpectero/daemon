@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RazorLight;
+using Spectero.daemon.HTTP.Filters;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
@@ -20,6 +21,7 @@ using Spectero.daemon.Models;
 namespace Spectero.daemon.HTTP.Controllers
 {
     [Authorize(AuthenticationSchemes = "Bearer")]
+    [ServiceFilter(typeof(EnforceLocalOnlyAccess))]
     [Route("v1/[controller]")]
     public class DebugController : BaseController
     {
@@ -48,27 +50,9 @@ namespace Spectero.daemon.HTTP.Controllers
         }
         
         
-        [HttpGet("process", Name = "LongInvocationAutoRestartWithPersistentLogging")]
+        [HttpGet("", Name = "Index")]
         public async Task<IActionResult> Index()
         {
-            _processRunner.Run(
-                // Instructions
-                new ProcessOptions()
-                {
-                    Executable = "cmd.exe",
-                    Arguments = null,
-                    Daemonized = true,
-                    Monitor = true,
-                    MonitoringInterval = 10,
-                    DisposeOnExit = false,
-                    InvokeAsSuperuser = true,
-                    AttachLogToConsole = true,
-                    WorkingDirectory = Program.GetAssemblyLocation()
-                },
-                // The calling object.
-                null
-            );
-
             return Ok(_response);
         }
     }
