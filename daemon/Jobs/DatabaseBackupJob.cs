@@ -78,7 +78,7 @@ namespace Spectero.daemon.Jobs
                 return;
             }
             
-            // Validate that the existing foldders exist.
+            // Validate that the backup folders exist.
             if (!RootBackupDirectoryExists()) CreateRootBackupDirectory();
             if (!DatedBackupDirectoryExists()) CreateDatedBackupDirectory();
             
@@ -102,23 +102,23 @@ namespace Spectero.daemon.Jobs
         /// <summary>
         /// Utility function to create the root backup directory.
         /// </summary>
-        public void CreateRootBackupDirectory() => Directory.CreateDirectory(RootBackupDirectory);
+        private void CreateRootBackupDirectory() => Directory.CreateDirectory(RootBackupDirectory);
 
         /// <summary>
         /// Utility function to check if the root backup directory exists.
         /// </summary>
         /// <returns></returns>
-        public bool RootBackupDirectoryExists() => Directory.Exists(RootBackupDirectory);
+        private bool RootBackupDirectoryExists() => Directory.Exists(RootBackupDirectory);
         
         /// <summary>
         /// Utility function to create the Dated backup directory.
         /// </summary>
-        public void CreateDatedBackupDirectory() => Directory.CreateDirectory(DatedBackupDirectory);
+        private void CreateDatedBackupDirectory() => Directory.CreateDirectory(DatedBackupDirectory);
 
         /// <summary>
         /// Utility function to check if the Dated backup directory exists.
         /// </summary>
         /// <returns></returns>
-        public bool DatedBackupDirectoryExists() => Directory.Exists(DatedBackupDirectory);
+        private bool DatedBackupDirectoryExists() => Directory.Exists(DatedBackupDirectory);
     }
 }
