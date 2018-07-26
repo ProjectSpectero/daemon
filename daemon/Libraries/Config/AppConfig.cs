@@ -58,6 +58,7 @@ namespace Spectero.daemon.Libraries.Config
         }
 
         public static string CloudConnectDefaultAuthKey => "cloud";
+        
         public static string version => "0.1-alpha";
 
         /// <summary>
