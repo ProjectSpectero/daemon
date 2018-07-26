@@ -16,7 +16,7 @@ namespace Spectero.daemon.Libraries.Errors
         public ValidationError() : base((int) HttpStatusCode.UnprocessableEntity,
             Core.Constants.Errors.VALIDATION_FAILED)
         {
-            
+            this.Errors = ImmutableArray<string>.Empty;
         }
     }
 }

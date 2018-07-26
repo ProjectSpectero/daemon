@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -181,7 +180,7 @@ namespace Spectero.daemon
                 app.UseInterceptOptions(); // Return 200/OK with correct CORS to allow preflight requests, giant hack.
             }
 
-            app.UseDefaultFiles();
+            app.UseSpecteroErrorHandler();
 
             app.UseAddRequestIdHeader();
 

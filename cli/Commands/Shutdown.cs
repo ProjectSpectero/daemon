@@ -1,8 +1,4 @@
-﻿using Medallion.Shell;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Spectero.daemon.CLI.Requests;
+﻿using Spectero.daemon.CLI.Requests;
 using CommandResult = NClap.Metadata.CommandResult;
 
 namespace Spectero.daemon.CLI.Commands

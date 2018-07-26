@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using RestSharp;
 using Spectero.daemon.Libraries.Core.HTTP;
 

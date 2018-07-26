@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using ServiceStack;
-using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.HTTP;
 using Spectero.daemon.Libraries.Errors;

@@ -4,15 +4,11 @@ namespace Spectero.daemon.Libraries.Errors
 {
     public class BaseError : Exception
     {
-        public BaseError(int code, string message)
-        {
-        }
+        public int Code { get; set; }
 
-        internal int code { get; set; }
-
-        public int getCode()
+        protected BaseError(int code, string message) : base(message)
         {
-            return code;
+            this.Code = code;
         }
     }
 }

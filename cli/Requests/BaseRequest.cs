@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.AspNetCore.WebSockets.Internal;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using RestSharp;
 using Spectero.daemon.Libraries.Core.Constants;

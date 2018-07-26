@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
-using Medallion.Shell;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Extensions;

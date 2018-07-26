@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -15,8 +14,8 @@ using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
+using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
-using Spectero.daemon.Models;
 
 namespace Spectero.daemon.HTTP.Controllers
 {
@@ -55,5 +54,24 @@ namespace Spectero.daemon.HTTP.Controllers
         {
             return Ok(_response);
         }
+        
+        [HttpGet("errors/{type}", Name = "DebugErrorMarshaling")]
+        public async Task<IActionResult> DebugErrors(string type)
+        {
+            switch (type)
+            {
+                    case "internal":
+                        throw new InternalError("Testing internal errors...");
+                    
+                    case "disclosable":
+                        throw new DisclosableError();
+                    
+                    case "validation":
+                        throw new ValidationError();
+                    
+                    default:
+                        throw new DisclosableError();
+            }    
+       }
     }
 }
