@@ -132,22 +132,6 @@ namespace Spectero.daemon.HTTP.Controllers
             return Created(Url.RouteUrl("GetUserById", new {id = userId}), _response);
         }
 
-        private async Task<int> EnsureRoleCount(User.Role role, int count)
-        {
-            // Counter placeholder variable.
-            Int16 superAdmins = 0;
-
-            // Iterate over each user and count where superadmin.
-            foreach (var user in await Db.SelectAsync<User>())
-                if (user.HasRole(role))
-                    superAdmins += 1;
-
-            // Check if there is enough superadmins.
-            if (superAdmins <= count)
-                throw new Exception(string.Format("There must be at least {0} users of {1} role.", count, role.ToString()));
-            return count;
-        }
-
         [HttpGet("self", Name = "GetCurrentUserByAuthToken")]
         public IActionResult GetCurrentUserByAuthToken()
         {
@@ -176,47 +160,27 @@ namespace Spectero.daemon.HTTP.Controllers
             return Ok(_response);
         }
 
-        [HttpDelete("{id}", Name = "DeleteUser")]
-        public async Task<IActionResult> DeleteUser(long id)
+        // This method "ensures" that there are at least n users left of a specific role.
+        // It's invoked to enforce certain constraints like "there must always be at least one SuperAdmin defined."
+        private async Task<int> EnsureRoleCount(User.Role role, int count)
         {
-            // Placeholder
-            User user = null;
+            // Counter placeholder variable.
+            var superAdmins = 0;
 
-            // Try to get the user from the database.
-            user = await Db.SingleByIdAsync<User>(id);
+            // Iterate over each user and count where superadmin.
+            foreach (var user in await Db.SelectAsync<User>())
+                if (user.HasRole(role))
+                    superAdmins++;
 
-            // Check if successful
-            if (user != null)
-            {
-                // Prevent deletion of cloud users
-                if (user.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
-                    _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED, "");
-
-                // Prevent deletion of SuperAdmins if you aren't one
-                if (user.HasRole(Models.User.Role.SuperAdmin) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
-                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
-
-                // Prevent deletion of WebApi users if you aren't a SuperAdmin
-                if (user.HasRole(Models.User.Role.WebApi) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
-                    _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
-
-                // Prevent removing own account
-                if (user.AuthKey.Equals(CurrentUser().AuthKey))
-                    _response.Errors.Add(Errors.USER_CANNOT_REMOVE_SELF, "");
-
-                if (HasErrors())
-                    return StatusCode(403, _response);
-
-                ClearUserFromCacheIfExists(user.AuthKey);
-                await EnsureRoleCount(Models.User.Role.SuperAdmin, 1);
-                await Db.DeleteByIdAsync<User>(user.Id);
-                return NoContent();
-            }
-
-            // Failed to get the user.
-            return NotFound(_response);
+            // Check if there is enough superadmins.
+            Logger.LogDebug($"There must be at least {count} users with the {role} role, found: {superAdmins}");
+            
+            if (superAdmins < count)
+                throw new Exception(string.Format("There must be at least {0} users of {1} role.", count, role));
+            
+            return count;
         }
-
+        
         [HttpPut("{id}", Name = "UpdateUser")]
         public async Task<IActionResult> UpdateUser(long id, [FromBody] User user)
         {
@@ -283,6 +247,8 @@ namespace Spectero.daemon.HTTP.Controllers
             if (!user.Password.IsNullOrEmpty()) fetchedUser.Password = user.Password;
             if (!user.FullName.IsNullOrEmpty()) fetchedUser.FullName = user.FullName;
             if (!user.EmailAddress.IsNullOrEmpty()) fetchedUser.EmailAddress = user.EmailAddress;
+            
+            // The List<Role> is not equal between the two objects, i.e: changes have been proposed.
             if (!user.Roles.SequenceEqual(fetchedUser.Roles))
             {
                 // No need to care about roles unless they're changing
@@ -297,9 +263,11 @@ namespace Spectero.daemon.HTTP.Controllers
                 if (HasErrors())
                     return StatusCode(403, _response);
 
-                // Assign the new role.
+                // This means that the old (fetched) user was a SuperAdmin, but the newly proposed (user) is not one.
+                // Effectively, it means that a SuperAdmin is being removed. To be able to do so, we need n -1 = 1, thus n = 2
                 if (!user.HasRole(Models.User.Role.SuperAdmin) && fetchedUser.HasRole(Models.User.Role.SuperAdmin))
-                    await EnsureRoleCount(Models.User.Role.SuperAdmin, 1);
+                    await EnsureRoleCount(Models.User.Role.SuperAdmin, 2);
+                
                 fetchedUser.Roles = user.Roles;
             }
 
@@ -328,6 +296,50 @@ namespace Spectero.daemon.HTTP.Controllers
 
             // Return a healthy response.
             return Ok(_response);
+        }
+        
+        [HttpDelete("{id}", Name = "DeleteUser")]
+        public async Task<IActionResult> DeleteUser(long id)
+        {
+            // Placeholder
+            User user = null;
+
+            // Try to get the user from the database.
+            user = await Db.SingleByIdAsync<User>(id);
+
+            // Check if successful, 404 if not found.
+            if (user == null) return NotFound(_response);
+            
+            // Prevent deletion of cloud users
+            if (user.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
+                _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED, "");
+
+            // Prevent deletion of SuperAdmins if you aren't one
+            if (user.HasRole(Models.User.Role.SuperAdmin) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
+
+            // Prevent deletion of WebApi users if you aren't a SuperAdmin
+            if (user.HasRole(Models.User.Role.WebApi) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
+
+            // Prevent removing own account
+            if (user.AuthKey.Equals(CurrentUser().AuthKey))
+                _response.Errors.Add(Errors.USER_CANNOT_REMOVE_SELF, "");
+
+            if (HasErrors())
+                return StatusCode(403, _response);
+
+            // Is this user a SuperAdmin? Removing him should thus require that at least one OTHER SuperAdmin is defined.
+            // i.e: 1+1 = 2 should be the minimal limit
+            if (user.HasRole(Models.User.Role.SuperAdmin))
+                await EnsureRoleCount(Models.User.Role.SuperAdmin, 2);
+            
+            // Actually remove references
+            ClearUserFromCacheIfExists(user.AuthKey);
+            await Db.DeleteByIdAsync<User>(user.Id);
+            
+            return NoContent();
+
         }
 
         // Used to invalidate a cached user if they are deleted / updated

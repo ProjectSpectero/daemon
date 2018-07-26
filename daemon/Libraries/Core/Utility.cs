@@ -137,7 +137,7 @@ namespace Spectero.daemon.Libraries.Core
                     ret = null;
                     break;
                 default:
-                    throw new EInvalidArguments();
+                    throw new ValidationError();
             }
             return ret;
         }

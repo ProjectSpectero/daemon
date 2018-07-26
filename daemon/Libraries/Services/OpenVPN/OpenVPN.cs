@@ -200,7 +200,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 );
 
                 // TODO: Dress this up properly to make disclosing just what the hell went wrong easier.
-                throw new EInternalError();
+                throw new InternalError();
             }
         }
 

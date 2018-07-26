@@ -60,7 +60,7 @@ namespace Spectero.daemon.HTTP.Controllers
             user.LastLoginDate = DateTime.UtcNow;
 
             if (user == null || user.AuthKey.IsNullOrEmpty())
-                throw new EInternalError("JWT token did NOT contain a valid user object!");
+                throw new InternalError("JWT token did NOT contain a valid user object!");
 
             _currentUser = user;
             

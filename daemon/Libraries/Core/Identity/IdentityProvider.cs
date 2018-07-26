@@ -23,7 +23,7 @@ namespace Spectero.daemon.Libraries.Core.Identity
             if (Guid.TryParse(identityKey.Value, out var result))
                 return result;
 
-            throw new EInternalError();
+            throw new InternalError();
         }
 
         public string GetFQDN()
