@@ -57,7 +57,7 @@ namespace Spectero.daemon.HTTP.Controllers
         }
 
         [HttpPost("", Name = "CreateUser")]
-        public async Task<IActionResult> Create ([FromBody] User user)
+        public async Task<IActionResult> Create([FromBody] User user)
         {
             if (ModelState.IsValid)
             {
@@ -67,7 +67,7 @@ namespace Spectero.daemon.HTTP.Controllers
 
                 if (user.AuthKey.Equals(AppConfig.CloudConnectDefaultAuthKey))
                     _response.Errors.Add(Errors.RESOURCE_RESERVED, "");
-            }           
+            }
             else
                 _response.Errors.Add(Errors.MISSING_BODY, "");
 
@@ -75,7 +75,7 @@ namespace Spectero.daemon.HTTP.Controllers
                 return BadRequest(_response);
 
             if ((user.HasRole(Models.User.Role.SuperAdmin) ||
-                 user.HasRole(Models.User.Role.WebApi)) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                 user.HasRole(Models.User.Role.WebApi)) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
             {
                 // Privilege escalation attempt, shut it down.
                 _response.Errors.Add(Errors.ROLE_ESCALATION_FAILED, "");
@@ -129,8 +129,23 @@ namespace Spectero.daemon.HTTP.Controllers
             user.Id = userId;
             _response.Result = user;
 
-            return Created(Url.RouteUrl("GetUserById", new { id = userId }), _response);
+            return Created(Url.RouteUrl("GetUserById", new {id = userId}), _response);
+        }
 
+        private async Task<int> EnsureRoleCount(User.Role role, int count)
+        {
+            // Counter placeholder variable.
+            Int16 superAdmins = 0;
+
+            // Iterate over each user and count where superadmin.
+            foreach (var user in await Db.SelectAsync<User>())
+                if (user.HasRole(role))
+                    superAdmins += 1;
+
+            // Check if there is enough superadmins.
+            if (superAdmins <= count)
+                throw new Exception(string.Format("There must be at least {0} users of {1} role.", count, role.ToString()));
+            return count;
         }
 
         [HttpGet("self", Name = "GetCurrentUserByAuthToken")]
@@ -164,7 +179,13 @@ namespace Spectero.daemon.HTTP.Controllers
         [HttpDelete("{id}", Name = "DeleteUser")]
         public async Task<IActionResult> DeleteUser(long id)
         {
-            var user = await Db.SingleByIdAsync<User>(id);
+            // Placeholder
+            User user = null;
+
+            // Try to get the user from the database.
+            user = await Db.SingleByIdAsync<User>(id);
+
+            // Check if successful
             if (user != null)
             {
                 // Prevent deletion of cloud users
@@ -172,11 +193,11 @@ namespace Spectero.daemon.HTTP.Controllers
                     _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED, "");
 
                 // Prevent deletion of SuperAdmins if you aren't one
-                if (user.HasRole(Models.User.Role.SuperAdmin) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                if (user.HasRole(Models.User.Role.SuperAdmin) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
                     _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
 
                 // Prevent deletion of WebApi users if you aren't a SuperAdmin
-                if (user.HasRole(Models.User.Role.WebApi) && ! CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+                if (user.HasRole(Models.User.Role.WebApi) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
                     _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
 
                 // Prevent removing own account
@@ -187,40 +208,51 @@ namespace Spectero.daemon.HTTP.Controllers
                     return StatusCode(403, _response);
 
                 ClearUserFromCacheIfExists(user.AuthKey);
+                await EnsureRoleCount(Models.User.Role.SuperAdmin, 1);
                 await Db.DeleteByIdAsync<User>(user.Id);
                 return NoContent();
             }
 
+            // Failed to get the user.
             return NotFound(_response);
         }
 
         [HttpPut("{id}", Name = "UpdateUser")]
         public async Task<IActionResult> UpdateUser(long id, [FromBody] User user)
         {
+            User fetchedUser = null;
+
+            // Check to see if the model state is valid.
             if (ModelState.IsValid)
             {
                 if (!user.Validate(out var validationErrors, CRUDOperation.Update))
                     _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
 
+                // Check if unprohibited auth key.
                 if (user.AuthKey.Equals(AppConfig.CloudConnectDefaultAuthKey))
                     _response.Errors.Add(Errors.RESOURCE_RESERVED, "");
             }
             else
+            {
+                // Received no body.
                 _response.Errors.Add(Errors.MISSING_BODY, "");
+            }
 
-            if (HasErrors())
-                return BadRequest(_response);
+            // Check to see for pre-existing errors.
+            if (HasErrors()) return BadRequest(_response);
 
-            User fetchedUser = null;
-
+            // Get the provided user.
             fetchedUser = await Db.SingleByIdAsync<User>(id);
 
+            // Check to see if we were able to get the provided user.
             if (fetchedUser == null)
             {
+                // User was not found.
                 _response.Errors.Add(Errors.USER_NOT_FOUND, "");
                 return StatusCode(404, _response);
             }
 
+            // Check to see if the user can alter.
             if (fetchedUser.Source.Equals(Models.User.SourceTypes.SpecteroCloud))
             {
                 _response.Errors.Add(Errors.CLOUD_USER_ALTER_NOT_ALLOWED, "");
@@ -228,13 +260,13 @@ namespace Spectero.daemon.HTTP.Controllers
             }
 
             // Not allowed to edit an existing superadmin if you aren't one
-            if (fetchedUser.HasRole(Models.User.Role.SuperAdmin) &&
-                !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
+            if (fetchedUser.HasRole(Models.User.Role.SuperAdmin) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
             {
                 _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
                 return StatusCode(403, _response);
             }
 
+            // Make sure the authkey isn't undefined.
             if (!user.AuthKey.IsNullOrEmpty() && !fetchedUser.AuthKey.Equals(user.AuthKey))
             {
                 if (!user.AuthKey.ToLower().Equals(user.AuthKey))
@@ -242,55 +274,59 @@ namespace Spectero.daemon.HTTP.Controllers
                     user.AuthKey = user.AuthKey.ToLower();
                     _response.Message = Messages.USER_AUTHKEY_FLATTENED;
                 }
+
+                // Update the AuthKey.
                 fetchedUser.AuthKey = user.AuthKey;
             }
-                
-            if (!user.Password.IsNullOrEmpty())
-                fetchedUser.Password = user.Password;
 
-            if (!user.FullName.IsNullOrEmpty())
-                fetchedUser.FullName = user.FullName;
-
-            if (!user.EmailAddress.IsNullOrEmpty())
-                fetchedUser.EmailAddress = user.EmailAddress;
-
+            // Quick Validaation
+            if (!user.Password.IsNullOrEmpty()) fetchedUser.Password = user.Password;
+            if (!user.FullName.IsNullOrEmpty()) fetchedUser.FullName = user.FullName;
+            if (!user.EmailAddress.IsNullOrEmpty()) fetchedUser.EmailAddress = user.EmailAddress;
             if (!user.Roles.SequenceEqual(fetchedUser.Roles))
             {
                 // No need to care about roles unless they're changing
                 Logger.LogDebug("UU: Datastore roles and requested roles are different.");
 
-                if (user.HasRole(Models.User.Role.WebApi) && (!fetchedUser.HasRole(Models.User.Role.WebApi) &&
-                                                              !CurrentUser().HasRole(Models.User.Role.SuperAdmin)))
+                if (user.HasRole(Models.User.Role.WebApi) && (!fetchedUser.HasRole(Models.User.Role.WebApi) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin)))
                     _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
 
-                if (user.HasRole(Models.User.Role.SuperAdmin) &&
-                    (!fetchedUser.HasRole(Models.User.Role.SuperAdmin) &&
-                     !CurrentUser().HasRole(Models.User.Role.SuperAdmin)))
+                if (user.HasRole(Models.User.Role.SuperAdmin) && (!fetchedUser.HasRole(Models.User.Role.SuperAdmin) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin)))
                     _response.Errors.Add(Errors.ROLE_VALIDATION_FAILED, "");
 
                 if (HasErrors())
                     return StatusCode(403, _response);
 
-                // After verifying, assign the new roles for DB commit
+                // Assign the new role.
+                if (!user.HasRole(Models.User.Role.SuperAdmin) && fetchedUser.HasRole(Models.User.Role.SuperAdmin))
+                    await EnsureRoleCount(Models.User.Role.SuperAdmin, 1);
                 fetchedUser.Roles = user.Roles;
             }
 
+            // Try to asynchronously update the database, in a synchronous manner to wait for the thread.
             try
             {
                 await Db.UpdateAsync(fetchedUser);
             }
             catch (DbException e)
             {
+                // Log the error to the console.
                 Logger.LogError(e.Message);
-                _response.Errors.Add(Errors.VALIDATION_FAILED, e.Message); // Poor man's fluent validation, fix later. Here's to hoping DB validation actually works.
-            }
-            
-            if (HasErrors())
-                return BadRequest(_response);
 
+                // Poor man's fluent validation, fix later. Here's to hoping DB validation actually works.
+                _response.Errors.Add(Errors.VALIDATION_FAILED, e.Message);
+            }
+
+            // Make sure there are no database users.
+            if (HasErrors()) return BadRequest(_response);
+
+            // Store the response result.
             _response.Result = fetchedUser;
 
+            // Purge the cache and remove the authkey from memory.
             ClearUserFromCacheIfExists(fetchedUser.AuthKey);
+
+            // Return a healthy response.
             return Ok(_response);
         }
 
@@ -321,6 +357,7 @@ namespace Spectero.daemon.HTTP.Controllers
                         // Or there is no NAT involved.
                         proxies.Add(await _ipResolver.Translate(listener.Item1) + ":" + listener.Item2);
                     }
+
                     serviceReference.AccessReference = proxies;
                     serviceReference.AccessCredentials = Messages.SPECTERO_USERNAME_PASSWORD;
                     break;
@@ -349,7 +386,6 @@ namespace Spectero.daemon.HTTP.Controllers
 
                     if (!allListeners.IsNullOrEmpty())
                     {
-                    
                         serviceReference.AccessConfig = await _razorLightEngine.CompileRenderAsync("OpenVPNUser", new OpenVPNUserConfig
                         {
                             Listeners = allListeners,
@@ -399,11 +435,11 @@ namespace Spectero.daemon.HTTP.Controllers
                             var configs = _serviceConfigManager.Generate(type);
                             resultDictionary.Add(serviceName,
                                 await GenerateUserServiceResource(user, type, configs));
-                        }                  
+                        }
                     }
 
                     _response.Result = resultDictionary;
-                }                 
+                }
             }
 
             if (_response.Result != null)
