@@ -1,9 +1,12 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
+using System.IO;
 using Hangfire;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RestSharp;
+using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Identity;
@@ -74,6 +77,48 @@ namespace Spectero.daemon.Jobs
                 _logger.LogError("FCEJ: Job enabled, but matching criterion does not match. This should not happen, silently going back to sleep.");
                 return;
             }
+            
+            // Validate that the existing foldders exist.
+            if (!RootBackupDirectoryExists()) CreateRootBackupDirectory();
+            if (!DatedBackupDirectoryExists()) CreateDatedBackupDirectory();
+            
+            // Save the database into the dated directory.
+            // TODO: implement this.
+            
         }
+
+        /// <summary>
+        /// Pointer to the root directory that backups should occur in.
+        /// In the event that we write something else inside the daemon that needs easy access to find the path, we can call this static function.
+        /// </summary>
+        public static string RootBackupDirectory => Path.Combine(Program.GetAssemblyLocation(), "Backups");
+        
+        /// <summary>
+        /// Pointer to the directory that today's backup should be saved to.
+        /// In the event that we write something else inside the daemon that needs easy access to find the path, we can call this static function.
+        /// </summary>
+        public static string DatedBackupDirectory => Path.Combine(RootBackupDirectory, DateTime.Now.ToString("yyyy-MM-dd"));
+
+        /// <summary>
+        /// Utility function to create the root backup directory.
+        /// </summary>
+        public void CreateRootBackupDirectory() => Directory.CreateDirectory(RootBackupDirectory);
+
+        /// <summary>
+        /// Utility function to check if the root backup directory exists.
+        /// </summary>
+        /// <returns></returns>
+        public bool RootBackupDirectoryExists() => Directory.Exists(RootBackupDirectory);
+        
+        /// <summary>
+        /// Utility function to create the Dated backup directory.
+        /// </summary>
+        public void CreateDatedBackupDirectory() => Directory.CreateDirectory(DatedBackupDirectory);
+
+        /// <summary>
+        /// Utility function to check if the Dated backup directory exists.
+        /// </summary>
+        /// <returns></returns>
+        public bool DatedBackupDirectoryExists() => Directory.Exists(DatedBackupDirectory);
     }
 }
