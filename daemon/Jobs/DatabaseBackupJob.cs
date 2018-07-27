@@ -13,7 +13,7 @@ using Spectero.daemon.Libraries.Core.Identity;
 
 namespace Spectero.daemon.Jobs
 {
-    public class DatabaseBackupJob
+    public class DatabaseBackupJob : IJob
     {
         // Class Dependencies
         private readonly IRestClient _restClient;
@@ -77,27 +77,25 @@ namespace Spectero.daemon.Jobs
                 _logger.LogError("FCEJ: Job enabled, but matching criterion does not match. This should not happen, silently going back to sleep.");
                 return;
             }
-            
+
             // Validate that the backup folders exist.
             if (!RootBackupDirectoryExists()) CreateRootBackupDirectory();
-            if (!DatedBackupDirectoryExists()) CreateDatedBackupDirectory();
-            
+         
             // Save the database into the dated directory.
-            // TODO: implement this.
-            
+            var destination = Path.Combine(RootBackupDirectory, "database.sql");
+            _logger.LogInformation("Beginning to make daily backup of database...");
+            File.Copy(_config.DatabaseFile, destination);
+            _logger.LogInformation("Database backup successful.\nDatabase has been saved to {0}", destination);
         }
 
         /// <summary>
         /// Pointer to the root directory that backups should occur in.
         /// In the event that we write something else inside the daemon that needs easy access to find the path, we can call this static function.
         /// </summary>
-        public static string RootBackupDirectory => Path.Combine(Program.GetAssemblyLocation(), "Backups");
-        
-        /// <summary>
-        /// Pointer to the directory that today's backup should be saved to.
-        /// In the event that we write something else inside the daemon that needs easy access to find the path, we can call this static function.
-        /// </summary>
-        public static string DatedBackupDirectory => Path.Combine(RootBackupDirectory, DateTime.Now.ToString("yyyy-MM-dd"));
+        public static string RootBackupDirectory => Path.Combine(
+            Path.Combine(Program.GetAssemblyLocation(), "Database"),
+            "Backups"
+        );
 
         /// <summary>
         /// Utility function to create the root backup directory.
@@ -109,16 +107,5 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         /// <returns></returns>
         private bool RootBackupDirectoryExists() => Directory.Exists(RootBackupDirectory);
-        
-        /// <summary>
-        /// Utility function to create the Dated backup directory.
-        /// </summary>
-        private void CreateDatedBackupDirectory() => Directory.CreateDirectory(DatedBackupDirectory);
-
-        /// <summary>
-        /// Utility function to check if the Dated backup directory exists.
-        /// </summary>
-        /// <returns></returns>
-        private bool DatedBackupDirectoryExists() => Directory.Exists(DatedBackupDirectory);
     }
 }
