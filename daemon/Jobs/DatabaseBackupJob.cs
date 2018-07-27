@@ -82,7 +82,7 @@ namespace Spectero.daemon.Jobs
             if (!RootBackupDirectoryExists()) CreateRootBackupDirectory();
          
             // Save the database into the dated directory.
-            var destination = Path.Combine(RootBackupDirectory, "database.sql");
+            var destination = Path.Combine(RootBackupDirectory, string.Format("db.{0}.sqlite", DateTime.UtcNow));
             _logger.LogInformation("Beginning to make daily backup of database...");
             File.Copy(_config.DatabaseFile, destination);
             _logger.LogInformation("Database backup successful.\nDatabase has been saved to {0}", destination);
