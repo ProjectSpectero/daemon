@@ -13,6 +13,16 @@ using Spectero.daemon.Libraries.Core.Identity;
 
 namespace Spectero.daemon.Jobs
 {
+    /// <summary>
+    /// Configuration class that will handle properties for the database backup job.
+    /// </summary>
+    public class BackupConfiguration
+    {
+        public int maintainAtATime = 30;
+        public bool enabled = true;
+        public string crontab = "0 0 * * *";
+    }
+
     public class DatabaseBackupJob : IJob
     {
         // Class Dependencies
@@ -47,21 +57,20 @@ namespace Spectero.daemon.Jobs
             _config = configMonitor.CurrentValue;
             _cloudHandler = cloudHandler;
 
-            logger.LogDebug("FCEJ: init successful, dependencies processed.");
+            logger.LogDebug("DBJ: init successful, dependencies processed.");
         }
 
         /// <summary>
         /// The cron time that the schedule should run.
-        /// Currently configured for every night at midnight.
         /// </summary>
         /// <returns></returns>
-        public string GetSchedule() => "0 0 * * *";
+        public string GetSchedule() => _config.BackupConfig.crontab;
 
         /// <summary>
         /// Determine if this job is enabled.
         /// </summary>
         /// <returns></returns>
-        public bool IsEnabled() => _cloudHandler.IsConnected().Result;
+        public bool IsEnabled() => _config.BackupConfig.enabled;
 
 
         /// <summary>
@@ -80,7 +89,7 @@ namespace Spectero.daemon.Jobs
 
             // Validate that the backup folders exist.
             if (!RootBackupDirectoryExists()) CreateRootBackupDirectory();
-         
+
             // Save the database into the dated directory.
             var destination = Path.Combine(RootBackupDirectory, string.Format("db.{0}.sqlite", DateTime.UtcNow));
             _logger.LogInformation("Beginning to make daily backup of database...");

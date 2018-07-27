@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using Spectero.daemon.Jobs;
 
 namespace Spectero.daemon.Libraries.Config
 {
@@ -38,6 +39,9 @@ namespace Spectero.daemon.Libraries.Config
         public bool IgnoreRFC1918 { get; set; }
         public bool HaltStartupIfServiceInitFails { get; set; }
         public string JobsConnectionString { get; set; }
+        
+        public BackupConfiguration BackupConfig { get; set; }
+        
 
         public static string ApiBaseUri
         {
