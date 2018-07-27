@@ -40,7 +40,7 @@ namespace Spectero.daemon.Libraries.Config
         public bool HaltStartupIfServiceInitFails { get; set; }
         public string JobsConnectionString { get; set; }
         
-        public BackupConfiguration BackupConfig { get; set; }
+        public BackupConfiguration Backups { get; set; }
         
 
         public static string ApiBaseUri

@@ -18,44 +18,26 @@ namespace Spectero.daemon.Jobs
     /// </summary>
     public class BackupConfiguration
     {
-        public int maintainAtATime = 30;
-        public bool enabled = true;
-        public string crontab = "0 0 * * *";
+        public int NumberToKeep;
+        public bool Enabled;
+        public string Frequency;
     }
 
     public class DatabaseBackupJob : IJob
     {
         // Class Dependencies
-        private readonly IRestClient _restClient;
-        private readonly IDbConnection _db;
-        private readonly IIdentityProvider _identityProvider;
         private readonly ILogger<FetchCloudEngagementsJob> _logger;
-        private readonly IMemoryCache _cache;
         private readonly AppConfig _config;
-        private readonly ICloudHandler _cloudHandler;
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="db"></param>
-        /// <param name="restClient"></param>
-        /// <param name="identityProvider"></param>
-        /// <param name="logger"></param>
-        /// <param name="cache"></param>
         /// <param name="configMonitor"></param>
-        /// <param name="cloudHandler"></param>
-        public DatabaseBackupJob(IDbConnection db, IRestClient restClient,
-            IIdentityProvider identityProvider, ILogger<FetchCloudEngagementsJob> logger,
-            IMemoryCache cache, IOptionsMonitor<AppConfig> configMonitor,
-            ICloudHandler cloudHandler)
+        /// <param name="logger"></param>
+        public DatabaseBackupJob(IOptionsMonitor<AppConfig> configMonitor, ILogger<FetchCloudEngagementsJob> logger)
         {
-            _restClient = restClient;
-            _db = db;
-            _identityProvider = identityProvider;
             _logger = logger;
-            _cache = cache;
             _config = configMonitor.CurrentValue;
-            _cloudHandler = cloudHandler;
 
             logger.LogDebug("DBJ: init successful, dependencies processed.");
         }
@@ -64,13 +46,13 @@ namespace Spectero.daemon.Jobs
         /// The cron time that the schedule should run.
         /// </summary>
         /// <returns></returns>
-        public string GetSchedule() => _config.BackupConfig.crontab;
+        public string GetSchedule() => _config.Backups.Frequency;
 
         /// <summary>
         /// Determine if this job is enabled.
         /// </summary>
         /// <returns></returns>
-        public bool IsEnabled() => _config.BackupConfig.enabled;
+        public bool IsEnabled() => _config.Backups.Enabled;
 
 
         /// <summary>
@@ -92,7 +74,7 @@ namespace Spectero.daemon.Jobs
 
             // Save the database into the dated directory.
             var destination = Path.Combine(RootBackupDirectory, string.Format("db.{0}.sqlite", DateTime.UtcNow));
-            _logger.LogInformation("Beginning to make daily backup of database...");
+            _logger.LogInformation("Starting database backup.");
             File.Copy(_config.DatabaseFile, destination);
             _logger.LogInformation("Database backup successful.\nDatabase has been saved to {0}", destination);
         }
@@ -101,10 +83,7 @@ namespace Spectero.daemon.Jobs
         /// Pointer to the root directory that backups should occur in.
         /// In the event that we write something else inside the daemon that needs easy access to find the path, we can call this static function.
         /// </summary>
-        public static string RootBackupDirectory => Path.Combine(
-            Path.Combine(Program.GetAssemblyLocation(), "Database"),
-            "Backups"
-        );
+        public static string RootBackupDirectory => Path.Combine(Program.GetAssemblyLocation(), "Database", "Backups");
 
         /// <summary>
         /// Utility function to create the root backup directory.
