@@ -169,7 +169,9 @@ namespace Spectero.daemon
         {
             // Create the filesystem marker that says Startup is now underway.
             // This is removed in LifetimeHandler once init finishes.
-            Utility.ManageStartupMarker();
+            // And yeah, the logging context is NOT yet available -_-
+            if (Utility.ManageStartupMarker())
+                Console.WriteLine($"ERROR: The startup marker ({Utility.GetCurrentStartupMarker()}) could NOT be created.");
             
             var appConfig = configMonitor.Value;
 

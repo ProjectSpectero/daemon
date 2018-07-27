@@ -163,7 +163,14 @@ namespace Spectero.daemon.Libraries.Core
             }
             else
             {
-                File.Create(marker).Dispose();
+                try
+                {
+                    File.Create(marker).Dispose();
+                }
+                catch (Exception e)
+                {
+                    return false;
+                }
             }
 
             return true;
