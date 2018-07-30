@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Errors;
@@ -32,21 +33,35 @@ namespace Spectero.daemon.Libraries.Core
                 foreach (var addr in ipAddresses)
                 {
                     if (!CheckIPFilter(addr, IPComparisonReasons.FOR_LOCAL_NETWORK_PROTECTION)) continue;
-                    
-                    IPNetwork network = null;
-                    
+                                        
                     var numericNetmask = 0;
 
                     if (AppConfig.isWindows)
                         numericNetmask = addr.PrefixLength;
                     else if (AppConfig.isUnix)
-                        numericNetmask = GetPrefixLengthFromNetmask(addr.IPv4Mask);
+                    {
+                        switch (addr.Address.AddressFamily)
+                        {
+                                case AddressFamily.InterNetwork:
+                                    numericNetmask = GetPrefixLengthFromIPv4Netmask(addr.IPv4Mask);
+                                    break;
+                                
+                                case AddressFamily.InterNetworkV6:
+                                    _logger?.LogWarning($"Spectero Daemon does NOT yet support compiling the list of directly connected IPv6 networks (encountered {addr.Address}), ignoring...");
+                                    continue;;
+                                    break;
+                                
+                                default:
+                                    _logger?.LogDebug($"Unknown address family {addr.Address.AddressFamily} encountered, silently ignored.");
+                                    continue;
+                        }
+                    }
 
                     // DAEM-189: workaround, some entries are generating a netmask of 0. TODO: debug netmask detection.
+                    // This check also somewhat protects against "unknown architectures."
                     if (numericNetmask != 0)
                     {
-                        network = IPNetwork.Parse($"{addr.Address}/{numericNetmask}");
-                        ipNetworks.Add(network);
+                        ipNetworks.Add(IPNetwork.Parse($"{addr.Address}/{numericNetmask}"));
                     }
                     else
                     {
@@ -74,7 +89,7 @@ namespace Spectero.daemon.Libraries.Core
             return ignoreRFC1918 ? output.Where(x => !x.IsInternal()) : output;
         }
 
-        private static int GetPrefixLengthFromNetmask(IPAddress netmask)
+        private static int GetPrefixLengthFromIPv4Netmask(IPAddress netmask)
         {
             var str = netmask.GetAddressBytes().Select(x => Convert.ToString(int.Parse(x.ToString()), 2).PadLeft(8, '0'));
 
