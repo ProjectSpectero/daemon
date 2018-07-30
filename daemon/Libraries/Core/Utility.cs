@@ -4,9 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Extensions;
+using Spectero.daemon.Libraries.Services.HTTPProxy;
+using Spectero.daemon.Libraries.Services.OpenVPN;
 using Titanium.Web.Proxy.Http;
 using Titanium.Web.Proxy.Models;
 
@@ -14,7 +17,7 @@ namespace Spectero.daemon.Libraries.Core
 {
     public class Utility
     {
-        public static IEnumerable<IPNetwork> GetLocalRanges()
+        public static IEnumerable<IPNetwork> GetLocalRanges(ILogger<object> _logger = null)
         {
             var nics = NetworkInterface.GetAllNetworkInterfaces();
             var ipNetworks = new List<IPNetwork>();
@@ -24,25 +27,32 @@ namespace Spectero.daemon.Libraries.Core
                 var ipProps = nic.GetIPProperties();
                 var ipAddresses = ipProps.UnicastAddresses;
 
-                // addr.PrefixLength is not available on Unix (https://github.com/dotnet/corefx/blob/35d0838c20965c526e05e119028dd7226084987c/src/System.Net.NetworkInformation/src/System/Net/NetworkInformation/UnixUnicastIPAddressInformation.cs#L47)
+                // addr.PrefixLength is not available on Unix (https://github.com/dotnet/corefx/blob/f9d403be123af9af4097b52403f61a17273727e6/src/System.Net.NetworkInformation/src/System/Net/NetworkInformation/UnixUnicastIPAddressInformation.cs#L47)
                 // So much for TRUE multiplatform, eh?
                 foreach (var addr in ipAddresses)
                 {
-                    if (CheckIPFilter(addr, IPComparisonReasons.FOR_LOCAL_NETWORK_PROTECTION))
+                    if (!CheckIPFilter(addr, IPComparisonReasons.FOR_LOCAL_NETWORK_PROTECTION)) continue;
+                    
+                    IPNetwork network = null;
+                    
+                    var numericNetmask = 0;
+
+                    if (AppConfig.isWindows)
+                        numericNetmask = addr.PrefixLength;
+                    else if (AppConfig.isUnix)
+                        numericNetmask = GetPrefixLengthFromNetmask(addr.IPv4Mask);
+
+                    // DAEM-189: workaround, some entries are generating a netmask of 0. TODO: debug netmask detection.
+                    if (numericNetmask != 0)
                     {
-                        IPNetwork network = null;
-                        
-                        if (AppConfig.isWindows)
-                            network = IPNetwork.Parse(addr.Address + "/" + addr.PrefixLength);                           
-                        else if (AppConfig.isUnix)
-                            network = IPNetwork.Parse(addr.Address + "/" + GetPrefixLengthFromNetmask(addr.IPv4Mask));
-                        else
-                        {
-                            // Well, giggity. If it ain't Windows OR Unix, then WHAT is it?
-                            continue;
-                        }
+                        network = IPNetwork.Parse($"{addr.Address}/{numericNetmask}");
                         ipNetworks.Add(network);
-                    }                       
+                    }
+                    else
+                    {
+                        _logger?.LogError($"{addr.Address} resulted in a netmask of 0 being calculated.");
+                    }
+                        
                 }
                    
             }
@@ -76,6 +86,11 @@ namespace Spectero.daemon.Libraries.Core
             FOR_PROXY_OUTGOING,
             FOR_LOCAL_NETWORK_PROTECTION
         }
+        
+        private static bool CheckIPFilter(UnicastIPAddressInformation ipAddressInformation, IPComparisonReasons reason)
+        {
+            return CheckIPFilter(ipAddressInformation.Address, reason);
+        }
 
         public static bool CheckIPFilter(IPAddress address, IPComparisonReasons reason)
         {
@@ -104,19 +119,9 @@ namespace Spectero.daemon.Libraries.Core
             return ret;
         }
 
-        private static bool CheckIPFilter(UnicastIPAddressInformation ipAddressInformation, IPComparisonReasons reason)
-        {
-            return CheckIPFilter(ipAddressInformation.Address, reason);
-        }
-
         public static IEnumerable<HttpHeader> ExtractHeader(HeaderCollection headers, string headerName)
         {
-           return ((IEnumerable<HttpHeader>) headers.ToArray<HttpHeader>())
-                .Where<HttpHeader>((Func<HttpHeader, bool>)
-                    (
-                        t => t.Name == headerName
-                    )
-                );
+           return headers.ToArray().Where(t => t.Name == headerName);
         }
 
         public static Type GetServiceType(string name)
@@ -125,10 +130,10 @@ namespace Spectero.daemon.Libraries.Core
             switch (name)
             {
                 case "HTTPProxy":
-                    ret = typeof(Services.HTTPProxy.HTTPProxy);
+                    ret = typeof(HTTPProxy);
                     break;
                 case "OpenVPN":
-                    ret = typeof(Services.OpenVPN.OpenVPN);
+                    ret = typeof(OpenVPN);
                     break;
                 case "SSHTunnel":
                     ret = null;
@@ -168,7 +173,7 @@ namespace Spectero.daemon.Libraries.Core
                 {
                     File.Create(marker).Dispose();
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     return false;
                 }

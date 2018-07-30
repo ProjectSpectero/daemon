@@ -85,7 +85,7 @@ namespace Spectero.daemon.HTTP.Controllers
                         break;
                         
                     default:
-                        _response.Result = Utility.GetLocalRanges().Select(x => x.ToString()).ToList();
+                        _response.Result = Utility.GetLocalRanges(Logger).Select(x => x.ToString()).ToList();
                         break;
             }
 
