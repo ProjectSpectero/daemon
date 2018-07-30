@@ -31,6 +31,7 @@ namespace Spectero.daemon.Libraries.Core
                     if (CheckIPFilter(addr, IPComparisonReasons.FOR_LOCAL_NETWORK_PROTECTION))
                     {
                         IPNetwork network = null;
+                        
                         if (AppConfig.isWindows)
                             network = IPNetwork.Parse(addr.Address + "/" + addr.PrefixLength);                           
                         else if (AppConfig.isUnix)

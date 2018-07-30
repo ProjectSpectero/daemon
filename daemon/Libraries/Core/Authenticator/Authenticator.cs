@@ -30,13 +30,13 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
         public async Task<User> Authenticate(string username, string password, User.Action action)
         {
-            _logger.LogDebug("UPA: Attempting to verify auth for " + username);
+            _logger.LogDebug($"UPA: Attempting to verify auth for {username}");
 
             var user = _cache.Get<User>(AuthUtils.GetCachedUserKey(username));
 
             if (user == null)
             {
-                _logger.LogDebug("UPA: Cache-miss for username -> " + username + ", doing SQL lookup.");
+                _logger.LogDebug($"UPA: Cache-miss for username -> {username}, doing SQL lookup.");
                 var dbQuery = await _db.SelectAsync<User>(x => x.AuthKey == username);
                 user = dbQuery.FirstOrDefault();
                 
@@ -49,7 +49,7 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
 
             if (user != null)
             {
-                _logger.LogDebug("UPA: User " + username + " was found, executing auth flow.");
+                _logger.LogDebug($"UPA: User {username} was found, executing auth flow.");
 
                 // This verification is a reason for performance problems on rapid fire services like the proxy,
                 // where requests are authenticated on every request
@@ -75,12 +75,12 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
                 }
                     
 
-                _logger.LogDebug("UPA: Password verification -> " + passwordVerified);
+                _logger.LogDebug($"UPA: Password verification -> {passwordVerified}");
                 if (passwordVerified && user.Can(action))
                     return user;
-                _logger.LogDebug("UPA: User can not perform " + action.ToString());
+                _logger.LogDebug($"UPA: User can not perform {action}");
             }
-            _logger.LogDebug("UPA: Couldn't find an user named " + username);
+            _logger.LogDebug($"UPA: Couldn't find an user named {username} that matched the given credentials.");
             return null;
         }
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -73,5 +74,22 @@ namespace Spectero.daemon.HTTP.Controllers
                         throw new DisclosableError();
             }    
        }
+
+        [HttpGet("network/{type?}", Name = "DebugNetworkDiscovery")]
+        public async Task<IActionResult> DebugNetworkDiscovery(string type = "")
+        {
+            switch (type)
+            {
+                    case "ips":
+                        _response.Result = Utility.GetLocalIPs().Select(x => x.ToString()).ToList();
+                        break;
+                        
+                    default:
+                        _response.Result = Utility.GetLocalRanges().Select(x => x.ToString()).ToList();
+                        break;
+            }
+
+            return Ok(_response);
+        }
     }
 }

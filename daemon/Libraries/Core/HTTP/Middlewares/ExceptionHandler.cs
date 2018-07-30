@@ -69,18 +69,24 @@ namespace Spectero.daemon.Libraries.Core.HTTP.Middlewares
                 _response.Errors.Add(Constants.Errors.SOMETHING_WENT_WRONG, Constants.Errors.DETAILS_ABSTRACTED);
             }
 
-            _response.Message = message;
-            
-            context.Response.Clear();
-            context.Response.StatusCode = code;
-
-            context.Response.ContentType = "application/json; charset=utf-8";
-                        
-            await context.Response.WriteAsync(JsonConvert.SerializeObject(_response, new JsonSerializerSettings 
-            { 
-                ContractResolver = new CamelCaseExceptDictionaryKeysResolver() 
-            }));
-            
+            _response.Message = message;            
+                      
+            if (!context.Response.HasStarted)
+            {
+                context.Response.Clear();
+                
+                context.Response.StatusCode = code;
+                context.Response.ContentType = "application/json; charset=utf-8";
+                
+                await context.Response.WriteAsync(JsonConvert.SerializeObject(_response, new JsonSerializerSettings 
+                { 
+                    ContractResolver = new CamelCaseExceptDictionaryKeysResolver() 
+                }));
+            }
+            else
+            {
+                _logger.LogWarning($"Could not return formatted response for exception of type {exception.GetType()} because response had already started.");
+            }
         }
     }
 }
