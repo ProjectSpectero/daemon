@@ -52,7 +52,7 @@ namespace Spectero.daemon.Jobs
         {
             var magicNumber = new Random().Next(2, 6);
             
-            _logger.LogDebug($"FCEJ: decided to contact the Spectero Cloud once every {magicNumber} minute(s) to sync up.");
+            _logger.LogInformation($"FCEJ: decided to contact the Spectero Cloud once every {magicNumber} minute(s) to sync up.");
             
             return $"*/{magicNumber} * * * *"; // This sets it every {magicNumber} minutes, in cron expression.
         }
@@ -139,7 +139,7 @@ namespace Spectero.daemon.Jobs
 
             foreach (var userToBeRemoved in currentCloudUsers.Except(usersToAllowToPersist))
             {
-                _logger.LogDebug("FCEJ: Terminating " + userToBeRemoved.AuthKey + " because cloud no longer has a reference to it.");
+                _logger.LogInformation("FCEJ: Terminating " + userToBeRemoved.AuthKey + " because cloud no longer has a reference to it.");
                 AuthUtils.ClearUserFromCacheIfExists(_cache, userToBeRemoved.AuthKey); // Order matters, let's pay attention
                 _db.Delete(userToBeRemoved);
             }
@@ -164,19 +164,22 @@ namespace Spectero.daemon.Jobs
 
                         AuthUtils.ClearUserFromCacheIfExists(_cache, existingUser.AuthKey); // Stop allowing cached logins, details are changing.
 
-                        _logger.LogDebug("FCEJ: Updating user " + existingUser.AuthKey + " with new details.");
+                        _logger.LogInformation("FCEJ: Updating user " + existingUser.AuthKey + " with new details from the Spectero Cloud.");
 
                         existingUser.AuthKey = engagement.username;
                         existingUser.Password = engagement.password; // This time it's already encrypted
                         existingUser.Cert = engagement.cert;
                         existingUser.CertKey = engagement.cert_key;
                         existingUser.CloudSyncDate = DateTime.Now;
+                        
+                        // Is the cert encrypted?
+                        existingUser.EncryptCertificate = !engagement.cert_key.IsNullOrEmpty();
 
                         _db.Update(existingUser);
                     }
                     else
                     {
-                        _logger.LogDebug("FCEJ: Adding new user " + engagement.username + " as directed by the cloud.");
+                        _logger.LogInformation("FCEJ: Adding new user " + engagement.username + " as directed by the Spectero Cloud.");
                         var user = new User
                         {
                             EngagementId = engagement.engagement_id,
@@ -191,6 +194,9 @@ namespace Spectero.daemon.Jobs
                             EmailAddress = "cloud-user@spectero.com",
                             CloudSyncDate = DateTime.Now
                         };
+
+                        // Is the cert encrypted?
+                        user.EncryptCertificate = !engagement.cert_key.IsNullOrEmpty();
 
                         _db.Insert(user);
                     }

@@ -431,7 +431,6 @@ namespace Spectero.daemon.HTTP.Controllers
             if (HasErrors())
                 return BadRequest(_response);
 
-            // TODO: Add checks for whether an user is allowed to access a specific service before generating config for them.
             if (Defaults.ValidServices.Any(s => s == name) || name.IsEmpty())
             {
                 if (!name.IsEmpty())
@@ -449,6 +448,7 @@ namespace Spectero.daemon.HTTP.Controllers
                     foreach (var serviceName in Defaults.ValidServices)
                     {
                         var type = Utility.GetServiceType(serviceName);
+                        
                         // TODO: Fix this constraint once the other services are implemented.
                         // The config manager's dictionary cannot lookup a null value, this fixes that (since GetServiceType returns null for ShadowSOCKS/SSHTunnel)
                         if (type != null && EnsureServiceAccess(user, type, false))
