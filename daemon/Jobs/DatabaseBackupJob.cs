@@ -73,17 +73,22 @@ namespace Spectero.daemon.Jobs
             if (!RootBackupDirectoryExists()) CreateRootBackupDirectory();
 
             // Save the database into the dated directory.
-            var destination = Path.Combine(RootBackupDirectory, string.Format("db.{0}.sqlite", DateTime.UtcNow));
-            _logger.LogInformation("Starting database backup.");
-            File.Copy(Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, "db.sqlite"), destination);
-            _logger.LogInformation("Database backup successful.\nDatabase has been saved to {0}", destination);
+            try
+            {
+                var destination = Path.Combine(RootBackupDirectory, string.Format("db.{0}.sqlite", GetEpochTimestamp()));
+                File.Copy(Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, "db.sqlite"), destination);
+                _logger.LogInformation("Backup has been written: {0}", destination);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("A problem occured while attempting to perform a backup of the database.\n:" + e.ToString());
+            }
         }
 
         /// <summary>
         /// Pointer to the root directory that backups should occur in.
-        /// In the event that we write something else inside the daemon that needs easy access to find the path, we can call this static function.
         /// </summary>
-        public static string RootBackupDirectory => Path.Combine(Program.GetAssemblyLocation(), "Database", "Backups");
+        public string RootBackupDirectory => Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, "Backups");
 
         /// <summary>
         /// Utility function to create the root backup directory.
@@ -95,5 +100,15 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         /// <returns></returns>
         private bool RootBackupDirectoryExists() => Directory.Exists(RootBackupDirectory);
+
+        /// <summary>
+        /// Get the unix timestamp.
+        /// </summary>
+        /// <returns></returns>
+        private string GetEpochTimestamp()
+        {
+            TimeSpan timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1);
+            return ((Int64)timeSpan.TotalSeconds).ToString();
+        }
     }
 }
