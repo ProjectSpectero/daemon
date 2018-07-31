@@ -18,9 +18,9 @@ namespace Spectero.daemon.Jobs
     /// </summary>
     public class BackupConfiguration
     {
-        public int NumberToKeep;
-        public bool Enabled;
-        public string Frequency;
+        public int NumberToKeep { get; set; }
+        public bool Enabled { get; set; }
+        public string Frequency { get; set; }
     }
 
     public class DatabaseBackupJob : IJob
@@ -34,7 +34,7 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         /// <param name="configMonitor"></param>
         /// <param name="logger"></param>
-        public DatabaseBackupJob(IOptionsMonitor<AppConfig> configMosnitor, ILogger<DatabaseBackupJob> logger)
+        public DatabaseBackupJob(IOptionsMonitor<AppConfig> configMonitor, ILogger<DatabaseBackupJob> logger)
         {
             _logger = logger;
             _config = configMonitor.CurrentValue;
