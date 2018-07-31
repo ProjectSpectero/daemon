@@ -75,7 +75,7 @@ namespace Spectero.daemon.Jobs
             // Save the database into the dated directory.
             var destination = Path.Combine(RootBackupDirectory, string.Format("db.{0}.sqlite", DateTime.UtcNow));
             _logger.LogInformation("Starting database backup.");
-            File.Copy(Path.Combine(_config.DatabaseDir, "db.sqlite"), destination);
+            File.Copy(Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, "db.sqlite"), destination);
             _logger.LogInformation("Database backup successful.\nDatabase has been saved to {0}", destination);
         }
 
