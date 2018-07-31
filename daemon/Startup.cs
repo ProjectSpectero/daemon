@@ -59,7 +59,7 @@ namespace Spectero.daemon
             var builder = new ConfigurationBuilder()
                 .SetBasePath(CurrentDirectory)
                 .AddJsonFile("appsettings.json", false, true)
-                .AddJsonFile($"appsettings.{envName}.json", true)
+                .AddJsonFile($"appsettings.{envName}.json", true, true)
                 .AddJsonFile("hosting.json", optional: true)
                 .AddEnvironmentVariables();
 
@@ -70,8 +70,9 @@ namespace Spectero.daemon
         public void ConfigureServices(IServiceCollection services)
         {
             // Don't build a premature service provider from IServiceCollection, it only includes the services registered when the provider is built.
+                
+            // Root app config, this does not seem to work with complex JSON objects
             var appConfig = Configuration.GetSection("Daemon");
-
             services.Configure<AppConfig>(appConfig);
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -132,6 +133,8 @@ namespace Spectero.daemon
             services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
 
             services.AddSingleton<IJob, FetchCloudEngagementsJob>();
+            
+            services.AddSingleton<IJob, DatabaseBackupJob>();
 
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
 
@@ -163,7 +166,7 @@ namespace Spectero.daemon
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IOptionsSnapshot<AppConfig> configMonitor, IApplicationBuilder app,
+        public void Configure(IOptionsMonitor<AppConfig> configMonitor, IApplicationBuilder app,
             IHostingEnvironment env, ILoggerFactory loggerFactory,
             IMigration migration, IAutoStarter autoStarter,
             IServiceProvider serviceProvider, IApplicationLifetime applicationLifetime,
@@ -175,7 +178,7 @@ namespace Spectero.daemon
             if (! Utility.ManageStartupMarker())
                 Console.WriteLine($"ERROR: The startup marker ({Utility.GetCurrentStartupMarker()}) could NOT be created.");
             
-            var appConfig = configMonitor.Value;
+            var appConfig = configMonitor.CurrentValue;
 
             if (env.IsDevelopment())
             {
