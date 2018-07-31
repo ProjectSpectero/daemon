@@ -151,7 +151,9 @@ namespace Spectero.daemon
             var builtProvider = services.BuildServiceProvider();
             services.AddHangfire(config =>
             {
-                config.UseSQLiteStorage(appConfig["JobsConnectionString"], new SQLiteStorageOptions());
+                var connectionString = $"Data Source={appConfig["DatabaseDir"]}/jobs.sqlite;";
+                
+                config.UseSQLiteStorage(connectionString, new SQLiteStorageOptions());
                 config.UseNLogLogProvider();
                 // Please ENSURE that this is the VERY last call (to add services) in this method body. 
                 // Provider once built is not retroactively updated from the collection.
