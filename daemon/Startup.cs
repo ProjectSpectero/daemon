@@ -77,7 +77,7 @@ namespace Spectero.daemon
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             services.AddSingleton(c =>
-                InitializeDbConnection(appConfig["DatabaseFile"], SqliteDialect.Provider)
+                InitializeDbConnection(appConfig["DatabaseDir"], SqliteDialect.Provider)
             );
 
             services.AddSingleton<IStatistician, Statistician>();
@@ -223,13 +223,13 @@ namespace Spectero.daemon
         /// <summary>
         /// Initialize a database connection using a provided connection string and provider.
         /// </summary>
-        /// <param name="connectionString"></param>
+        /// <param name="localResolvedFile"></param>
         /// <param name="provider"></param>
         /// <returns></returns>
-        private static IDbConnection InitializeDbConnection(string connectionString, IOrmLiteDialectProvider provider)
+        private static IDbConnection InitializeDbConnection(string databaseDirectory, IOrmLiteDialectProvider provider)
         {
             // Reassign the database location to support the relative path of the assembly.
-            connectionString = Path.Combine(CurrentDirectory, connectionString);
+            var localResolvedFile = Path.Combine(CurrentDirectory, databaseDirectory, "db.sqlite");
 
             // Validate that the DB connection can actually be used.
             // If not, attempt to fix it (for SQLite and corrupt files.)
@@ -246,7 +246,7 @@ namespace Spectero.daemon
                     model.UpdatedDate = DateTime.UtcNow;
             };
 
-            var factory = new OrmLiteConnectionFactory(connectionString, provider);
+            var factory = new OrmLiteConnectionFactory(localResolvedFile, provider);
 
             IDbConnection databaseContext = null;
 
@@ -265,11 +265,11 @@ namespace Spectero.daemon
                 databaseContext?.Close();
 
                 // Move the corrupt DB file into db.sqlite.corrupt to aid recovery if needed.
-                File.Copy(connectionString, connectionString + ".corrupt");
+                File.Copy(localResolvedFile, localResolvedFile + ".corrupt");
 
                 // Create a new empty DB file for the schema to be initialized into
                 // Dirty hack to ensure that the file's resource is actually released by the time ORMLite tries to open it
-                using (var resource = File.Create(connectionString))
+                using (var resource = File.Create(localResolvedFile))
                 {
                     Console.WriteLine(
                         "Error Recovery: Executing automatic DB schema creation after saving the corrupt DB into db.sqlite.corrupt");

@@ -46,8 +46,9 @@ namespace Spectero.daemon.Libraries.Core
                                     numericNetmask = GetPrefixLengthFromIPv4Netmask(addr.IPv4Mask);
                                     break;
                                 
+                                // TODO: DAEM-192, introduce support for subnet accounting -> IPv6.
                                 case AddressFamily.InterNetworkV6:
-                                    _logger?.LogWarning($"Spectero Daemon does NOT yet support compiling the list of directly connected IPv6 networks (encountered {addr.Address}), ignoring...");
+                                    _logger?.LogWarning($"DAEM-192: Spectero Daemon does NOT yet support compiling the list of directly connected IPv6 networks (encountered {addr.Address}), ignoring...");
                                     continue;;
                                     break;
                                 
@@ -57,7 +58,7 @@ namespace Spectero.daemon.Libraries.Core
                         }
                     }
 
-                    // DAEM-189: workaround, some entries are generating a netmask of 0. TODO: debug netmask detection.
+                    // DAEM-189: workaround, some entries are generating a netmask of 0.
                     // This check also somewhat protects against "unknown architectures."
                     if (numericNetmask != 0)
                     {
