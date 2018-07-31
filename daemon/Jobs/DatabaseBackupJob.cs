@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Data;
 using System.IO;
 using Hangfire;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using RestSharp;
-using ServiceStack.OrmLite;
-using Spectero.daemon.Libraries.CloudConnect;
+using ServiceStack.Text;
 using Spectero.daemon.Libraries.Config;
-using Spectero.daemon.Libraries.Core.Identity;
 
 namespace Spectero.daemon.Jobs
 {
@@ -81,19 +76,24 @@ namespace Spectero.daemon.Jobs
             }
             catch (Exception e)
             {
-                _logger.LogError("A problem occured while attempting to perform a backup of the database.\n:" + e.ToString());
+                _logger.LogError(e, "A problem occured while attempting to perform a backup of the database.");
+                throw;
             }
         }
 
         /// <summary>
         /// Pointer to the root directory that backups should occur in.
         /// </summary>
-        public string RootBackupDirectory => Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, "Backups");
+        private string RootBackupDirectory => Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, "Backups");
 
         /// <summary>
         /// Utility function to create the root backup directory.
         /// </summary>
-        private void CreateRootBackupDirectory() => Directory.CreateDirectory(RootBackupDirectory);
+        private void CreateRootBackupDirectory()
+        {
+            _logger.LogDebug($"The root backup directory ({RootBackupDirectory}) does not exist, creating...");
+            Directory.CreateDirectory(RootBackupDirectory);
+        }
 
         /// <summary>
         /// Utility function to check if the root backup directory exists.
@@ -105,10 +105,9 @@ namespace Spectero.daemon.Jobs
         /// Get the unix timestamp.
         /// </summary>
         /// <returns></returns>
-        private string GetEpochTimestamp()
+        private static string GetEpochTimestamp()
         {
-            TimeSpan timeSpan = DateTime.UtcNow - new DateTime(1970, 1, 1);
-            return ((Int64)timeSpan.TotalSeconds).ToString();
+            return DateTime.UtcNow.ToUnixTime().ToString();
         }
     }
 }
