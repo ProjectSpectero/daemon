@@ -65,7 +65,7 @@ namespace Spectero.daemon.Jobs
             // Check to make sure this job is enabled.
             if (!IsEnabled())
             {
-                _logger.LogError("FCEJ: Job enabled, but matching criterion does not match. This should not happen, silently going back to sleep.");
+                _logger.LogError("DBJ: Job enabled, but matching criterion does not match. This should not happen, silently going back to sleep.");
                 return;
             }
 
