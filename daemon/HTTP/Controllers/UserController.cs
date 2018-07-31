@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,7 @@ using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
+using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
@@ -353,6 +355,9 @@ namespace Spectero.daemon.HTTP.Controllers
         private async Task<UserServiceResource> GenerateUserServiceResource(User user, Type type, IEnumerable<IServiceConfig> configs)
         {
             var serviceReference = new UserServiceResource();
+            
+            EnsureServiceAccess(user, type);
+            
             // Giant hack, but hey, it works ┐(´∀｀)┌ﾔﾚﾔﾚ
             switch (true)
             {
@@ -376,6 +381,7 @@ namespace Spectero.daemon.HTTP.Controllers
                 case bool _ when type == typeof(OpenVPN):
                     // OpenVPN is a multi-instance service
                     var allListeners = new List<OpenVPNListener>();
+                    
                     OpenVPNConfig sanitizedOpenVPNConfig = null;
 
                     foreach (var vpnConfig in configs)
@@ -431,6 +437,9 @@ namespace Spectero.daemon.HTTP.Controllers
                 if (!name.IsEmpty())
                 {
                     var type = Utility.GetServiceType(name);
+
+                    EnsureServiceAccess(user, type);
+                    
                     var configs = _serviceConfigManager.Generate(type);
                     _response.Result = await GenerateUserServiceResource(user, type, configs);
                 }
@@ -442,7 +451,7 @@ namespace Spectero.daemon.HTTP.Controllers
                         var type = Utility.GetServiceType(serviceName);
                         // TODO: Fix this constraint once the other services are implemented.
                         // The config manager's dictionary cannot lookup a null value, this fixes that (since GetServiceType returns null for ShadowSOCKS/SSHTunnel)
-                        if (type != null)
+                        if (type != null && EnsureServiceAccess(user, type, false))
                         {
                             var configs = _serviceConfigManager.Generate(type);
                             resultDictionary.Add(serviceName,
@@ -459,6 +468,41 @@ namespace Spectero.daemon.HTTP.Controllers
 
             _response.Errors.Add(Errors.INVALID_SERVICE_OR_ACTION_ATTEMPT, "");
             return BadRequest(_response);
+        }
+
+        private static bool EnsureServiceAccess(User user, Type serviceName, bool throwsExceptions = true)
+        {
+            var fail = false;
+            
+            switch (true)
+            {
+                case bool _ when serviceName == typeof(HTTPProxy):
+                    if (!user.Can(Models.User.Action.ConnectToHTTPProxy))
+                        fail = true;
+                    
+                    break;
+                
+                case bool _ when serviceName == typeof(OpenVPN):
+                    if (!user.Can(Models.User.Action.ConnectToOpenVPN))
+                        fail = true;
+                    
+                    break;
+                
+                default:
+                    if (throwsExceptions)
+                        throw new DisclosableError(Errors.INVALID_SERVICE_OR_ACTION_ATTEMPT);
+                    else
+                        fail = true;
+                    break;
+            }
+
+            if (fail && throwsExceptions)
+                throw new DisclosableError(why: Errors.SERVICE_ACCESS_DENIED, code: HttpStatusCode.Forbidden);
+            
+            // The purpose is to "ensure success," i.e: we need to return true on success (and false on failure).
+            // This, inversion.
+            
+            return ! fail;
         }
     }
 }
