@@ -26,7 +26,7 @@ namespace Spectero.daemon.Jobs
     public class DatabaseBackupJob : IJob
     {
         // Class Dependencies
-        private readonly ILogger<FetchCloudEngagementsJob> _logger;
+        private readonly ILogger<DatabaseBackupJob> _logger;
         private readonly AppConfig _config;
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         /// <param name="configMonitor"></param>
         /// <param name="logger"></param>
-        public DatabaseBackupJob(IOptionsMonitor<AppConfig> configMonitor, ILogger<FetchCloudEngagementsJob> logger)
+        public DatabaseBackupJob(IOptionsMonitor<AppConfig> configMosnitor, ILogger<DatabaseBackupJob> logger)
         {
             _logger = logger;
             _config = configMonitor.CurrentValue;
