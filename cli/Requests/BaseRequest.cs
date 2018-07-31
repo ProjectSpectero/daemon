@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using RestSharp;
@@ -48,10 +49,16 @@ namespace Spectero.daemon.CLI.Requests
                 throw response.ErrorException;
 
             var upstreamError = response.Headers.FirstOrDefault(x => x.Name.Equals(Headers.EUpstreamError));
-                        
-            if (! response.IsSuccessful && upstreamError == null)
-                throw new Exception($"The local request to the Spectero Daemon was NOT successful (non-OK status code - {response.StatusCode}). Please review its logs to find out why.");
 
+            switch (response.StatusCode)
+            {
+                    case HttpStatusCode.InternalServerError:
+                        if (upstreamError == null)
+                            throw new Exception($"The local request to the Spectero Daemon was NOT successful (local error - {response.StatusCode}). Please review its logs to find out why.");
+                        
+                        break;
+            }
+                                       
             return JsonConvert.DeserializeObject<T>(response.Content);
         }
 

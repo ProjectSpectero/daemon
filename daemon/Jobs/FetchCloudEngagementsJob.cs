@@ -50,7 +50,11 @@ namespace Spectero.daemon.Jobs
 
         public string GetSchedule()
         {
-            return "*/6 * * * *"; // This sets it every 6 minutes, in cron expression.
+            var magicNumber = new Random().Next(2, 6);
+            
+            _logger.LogDebug($"FCEJ: decided to contact the Spectero Cloud once every {magicNumber} minute(s) to sync up.");
+            
+            return $"*/{magicNumber} * * * *"; // This sets it every {magicNumber} minutes, in cron expression.
         }
 
         [AutomaticRetry(Attempts = 2, OnAttemptsExceeded = AttemptsExceededAction.Delete)]
