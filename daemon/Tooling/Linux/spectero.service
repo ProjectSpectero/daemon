@@ -11,6 +11,8 @@ Restart=on-failure
 RestartSec=60
 User=spectero
 Group=spectero
+LimitNOFILE=500000
+LimitNPROC=500000
 
 # These options are (typically) not required for a normal daemon instance.
 # [Unit]
