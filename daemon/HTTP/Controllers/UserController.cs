@@ -428,7 +428,9 @@ namespace Spectero.daemon.HTTP.Controllers
                             BaseConfig = sanitizedOpenVPNConfig
                         });
 
-                        serviceReference.AccessCredentials = user?.CertKey;
+                        serviceReference.AccessCredentials = user.CertKey.IsNullOrEmpty()
+                            ? user.CertKey
+                            : Messages.SPECTERO_USERNAME_PASSWORD;
                     }
 
                     break;
