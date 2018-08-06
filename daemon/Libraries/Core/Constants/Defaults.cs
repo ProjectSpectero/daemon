@@ -36,7 +36,6 @@ namespace Spectero.daemon.Libraries.Core.Constants
                     RedirectGateway = new List<RedirectGatewayOptions> {RedirectGatewayOptions.Def1},
                     DhcpOptions = new List<Tuple<DhcpOptions, string>>(),
                     MaxClients = 1024
-
                 };
 
                 return new Lazy<OpenVPNConfig>(config);

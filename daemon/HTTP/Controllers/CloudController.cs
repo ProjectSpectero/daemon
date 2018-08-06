@@ -2,16 +2,12 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebSockets.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using RestSharp;
 using ServiceStack;
 using ServiceStack.OrmLite;
 using Spectero.daemon.HTTP.Filters;
@@ -19,15 +15,10 @@ using Spectero.daemon.Jobs;
 using Spectero.daemon.Libraries.APM;
 using Spectero.daemon.Libraries.CloudConnect;
 using Spectero.daemon.Libraries.Config;
-using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
-using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
-using Spectero.daemon.Libraries.Extensions;
 using Spectero.daemon.Models;
 using Spectero.daemon.Models.Opaque.Requests;
-using Spectero.daemon.Models.Opaque.Responses;
-using IRestClient = RestSharp.IRestClient;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 
 namespace Spectero.daemon.HTTP.Controllers

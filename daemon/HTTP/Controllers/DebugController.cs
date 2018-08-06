@@ -15,8 +15,8 @@ using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
+using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
-using Spectero.daemon.Models;
 
 namespace Spectero.daemon.HTTP.Controllers
 {
@@ -53,6 +53,42 @@ namespace Spectero.daemon.HTTP.Controllers
         [HttpGet("", Name = "Index")]
         public async Task<IActionResult> Index()
         {
+            return Ok(_response);
+        }
+        
+        [HttpGet("errors/{type}", Name = "DebugErrorMarshaling")]
+        public async Task<IActionResult> DebugErrors(string type)
+        {
+            switch (type)
+            {
+                    case "internal":
+                        throw new InternalError("Testing internal errors...");
+                    
+                    case "disclosable":
+                        throw new DisclosableError();
+                    
+                    case "validation":
+                        throw new ValidationError();
+                    
+                    default:
+                        throw new DisclosableError();
+            }    
+       }
+
+        [HttpGet("network/{type?}", Name = "DebugNetworkDiscovery")]
+        public async Task<IActionResult> DebugNetworkDiscovery(string type = "")
+        {
+            switch (type)
+            {
+                    case "ips":
+                        _response.Result = Utility.GetLocalIPs().Select(x => x.ToString()).ToList();
+                        break;
+                        
+                    default:
+                        _response.Result = Utility.GetLocalRanges(Logger).Select(x => x.ToString()).ToList();
+                        break;
+            }
+
             return Ok(_response);
         }
     }

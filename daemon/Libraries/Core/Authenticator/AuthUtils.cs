@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
-using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Libraries.Core.Authenticator
 {

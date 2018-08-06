@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Threading;
-using Medallion.Shell;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 

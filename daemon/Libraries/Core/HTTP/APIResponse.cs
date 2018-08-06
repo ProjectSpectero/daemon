@@ -29,6 +29,6 @@ namespace Spectero.daemon.Libraries.Core.HTTP
 
         public string Message { get; set; }
 
-        public string Version => "1.0";
+        public double Version => 1.0;
     }
 }

@@ -4,6 +4,9 @@
     {
         public const string VALIDATION_FAILED = "VALIDATION_FAILED";
         public const string OBJECT_PERSIST_FAILED = "OBJECT_PERSIST_FAILED";
+        
+        public const string SOMETHING_WENT_WRONG = "SOMETHING_WENT_WRONG";
+        public const string DETAILS_ABSTRACTED = "DETAILS_ABSTRACTED";
 
         public const string FIELD_REQUIRED = "FIELD_REQUIRED";
         public const string FIELD_MAXLENGTH = "FIELD_MAXLENGTH";
@@ -45,5 +48,11 @@
         public const string NODE_PERSIST_FAILED = "NODE_PERSIST_FAILED";
         public const string RESPONSE_CODE = "RESPONSE_CODE";
         public const string FAILED_TO_CONNECT_TO_SPECTERO_CLOUD = "FAILED_TO_CONNECT_TO_SPECTERO_CLOUD";
+        
+        // Fun stuff
+        public const string U_WOT_M8 = "U_WOT_M8";
+
+        public const string SERVICE_ACCESS_DENIED = "SERVICE_ACCESS_DENIED";
+
     }
 }

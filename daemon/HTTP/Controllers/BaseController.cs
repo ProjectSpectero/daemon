@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using ServiceStack;
-using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.HTTP;
 using Spectero.daemon.Libraries.Errors;
@@ -60,7 +59,7 @@ namespace Spectero.daemon.HTTP.Controllers
             user.LastLoginDate = DateTime.UtcNow;
 
             if (user == null || user.AuthKey.IsNullOrEmpty())
-                throw new EInternalError("JWT token did NOT contain a valid user object!");
+                throw new InternalError("JWT token did NOT contain a valid user object!");
 
             _currentUser = user;
             

@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using Spectero.daemon.Jobs;
 
 namespace Spectero.daemon.Libraries.Config
 {
     public class AppConfig
     {
         public string BlockedRedirectUri { get; set; }
-        public string DatabaseFile { get; set; }
+        public string DatabaseDir { get; set; }
         public double AuthCacheMinutes { get; set; }
         public bool LocalSubnetBanEnabled { get; set; }
         public Dictionary<string, Dictionary<string, string>> Defaults { get; set; }
@@ -37,7 +38,7 @@ namespace Spectero.daemon.Libraries.Config
         public bool LogCommonProxyEngineErrors { get; set; }
         public bool IgnoreRFC1918 { get; set; }
         public bool HaltStartupIfServiceInitFails { get; set; }
-        public string JobsConnectionString { get; set; }
+        public BackupConfiguration Backups { get; set; }
 
         public static string ApiBaseUri
         {

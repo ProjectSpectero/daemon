@@ -24,17 +24,17 @@ namespace Spectero.daemon.Libraries.Services
         private readonly AppConfig _appConfig;
         private readonly IAuthenticator _authenticator;
         private readonly IDbConnection _db;
-        private readonly IEnumerable<IPNetwork> _localNetworks = Utility.GetLocalRanges();
-        private readonly IEnumerable<IPAddress> _localAddresses = Utility.GetLocalIPs();
+        private readonly IEnumerable<IPNetwork> _localNetworks;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IServiceConfigManager _serviceConfigManager;
-        private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
         private readonly IStatistician _statistician;
         private readonly IMemoryCache _cache;
         private readonly IProcessRunner _processRunner;
+        
+        private readonly IEnumerable<IPAddress> _localAddresses = Utility.GetLocalIPs();
+        private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
 
         private bool initiated = false;
-
 
         public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
             IDbConnection db, IAuthenticator authenticator,
@@ -49,6 +49,8 @@ namespace Spectero.daemon.Libraries.Services
             _serviceConfigManager = serviceConfigManager;
             _cache = cache;
             _processRunner = processRunner;
+
+            _localNetworks = Utility.GetLocalRanges(_logger);
         }
 
 
