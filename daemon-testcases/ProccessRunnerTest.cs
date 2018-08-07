@@ -54,7 +54,8 @@ namespace daemon_testcases
                         : "cmd", // top and cmd are both processes that will run continuously until closed.
                 DisposeOnExit = false,
                 Monitor = true,
-                MonitoringInterval = 5
+                MonitoringInterval = 5,
+                ThrowOnError = true
             };
 
             // Run the example command.
