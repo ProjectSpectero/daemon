@@ -69,13 +69,11 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 // MASQUERADE
                 case NetworkRuleType.Masquerade:
                     // Assign the argument.
-                    commandOptions.Arguments = (
-                            "-A " + NetworkBuilder.BuildTemplate(
+                    commandOptions.Arguments = NetworkBuilder.BuildTemplate(
                                 NetworkRuleTemplates.MASQUERADE,
                                 networkRule,
                                 interfaceInformation
                             )
-                        )
                         // Convert to string array.
                         .Split(" ");
 
@@ -86,12 +84,11 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 // SNAT
                 case NetworkRuleType.SourceNetworkAddressTranslation:
                     // Assign the argument
-                    commandOptions.Arguments = (NetworkBuilder.BuildTemplate(
+                    commandOptions.Arguments = NetworkBuilder.BuildTemplate(
                                 NetworkRuleTemplates.SNAT,
                                 networkRule,
                                 interfaceInformation
                             )
-                        )
                         // Convert to string array.
                         .Split(" ");
 
