@@ -86,8 +86,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
                 // SNAT
                 case NetworkRuleType.SourceNetworkAddressTranslation:
                     // Assign the argument
-                    commandOptions.Arguments = (
-                            "-A " + NetworkBuilder.BuildTemplate(
+                    commandOptions.Arguments = (NetworkBuilder.BuildTemplate(
                                 NetworkRuleTemplates.SNAT,
                                 networkRule,
                                 interfaceInformation

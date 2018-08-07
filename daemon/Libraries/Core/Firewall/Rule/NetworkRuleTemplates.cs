@@ -21,7 +21,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Rule
     /// </summary>
     public class NetworkRuleTemplates
     {
-        public const string SNAT = "-t nat POSTROUTING -o {interface-name} -J SNAT --to {interface-address}";
-        public const string MASQUERADE = "POSTROUTING -s {network} -o {interface-name} -J MASQUERADE";
+        public const string SNAT = "-t nat -A POSTROUTING -s {network} -j SNAT --to-source {interface-address}";
+        public const string MASQUERADE = "-t nat -A POSTROUTING -s {network} -o {interface-name} -j MASQUERADE";
     }
 }
