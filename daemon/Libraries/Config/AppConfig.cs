@@ -55,6 +55,7 @@ namespace Spectero.daemon.Libraries.Config
         public bool IgnoreRFC1918 { get; set; }
         public bool HaltStartupIfServiceInitFails { get; set; }
         public BackupConfiguration Backups { get; set; }
+        public UpdaterConfiguration Updater { get; set; }
 
         public static string ApiBaseUri
         {

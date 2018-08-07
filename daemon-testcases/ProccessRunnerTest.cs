@@ -14,7 +14,11 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
+using System;
+using System.Diagnostics;
 using System.Threading;
+using Medallion.Shell;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -55,7 +59,6 @@ namespace daemon_testcases
                 DisposeOnExit = false,
                 Monitor = true,
                 MonitoringInterval = 5,
-                ThrowOnError = true
             };
 
             // Run the example command.
@@ -69,6 +72,21 @@ namespace daemon_testcases
             var newPid = runningProcess.Command.Process.Id;
 
             Assert.AreNotEqual(oldPid, newPid);
+        }
+
+        [Test]
+        public void TestThrowOnError()
+        {
+            try
+            {
+                var cmd = Command.Run(AppConfig.isUnix ? "top" : "powershell", new[] {"--testing"}, options: o => o.ThrowOnError());
+                Assert.Fail();
+            }
+            catch (Exception exception)
+            {
+                // Error means that the command execution broke. 
+                Assert.Pass();
+            }
         }
     }
 }
