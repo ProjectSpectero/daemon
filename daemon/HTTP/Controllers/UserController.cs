@@ -429,8 +429,8 @@ namespace Spectero.daemon.HTTP.Controllers
                         });
 
                         serviceReference.AccessCredentials = user.CertKey.IsNullOrEmpty()
-                            ? user.CertKey
-                            : Messages.SPECTERO_USERNAME_PASSWORD;
+                            ? Messages.SPECTERO_USERNAME_PASSWORD
+                            : user.CertKey;
                     }
 
                     break;
