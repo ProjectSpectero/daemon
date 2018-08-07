@@ -25,6 +25,7 @@ using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Models;
+using Titanium.Web.Proxy.EventArguments;
 
 namespace Spectero.daemon.Libraries.Core.Authenticator
 {
@@ -100,7 +101,8 @@ namespace Spectero.daemon.Libraries.Core.Authenticator
             return null;
         }
 
-        public async Task<bool> AuthenticateHttpProxy(string username, string password)
+        // TODO: Use the SessionEventArgsBase for improved authentication.
+        public async Task<bool> AuthenticateHttpProxy(SessionEventArgsBase eventArgsBase, string username, string password)
         {
             return await Authenticate(username, password, User.Action.ConnectToHTTPProxy) != null;
         }
