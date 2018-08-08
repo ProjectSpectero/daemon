@@ -69,10 +69,6 @@ namespace Spectero.daemon.Jobs
             // Get the latest set of release data.
             var releaseInformation = GetReleaseInformation();
 
-            // Break down the version infomration.
-            var executingVersionDataset = AppConfig.version.Split("-");
-            var currentBranch = executingVersionDataset[1];
-
             // Compare
             if (releaseInformation.channels[_config.Updater.ReleaseChannel.ToString()] != AppConfig.version)
             {
