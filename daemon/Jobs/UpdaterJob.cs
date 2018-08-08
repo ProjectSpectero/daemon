@@ -118,6 +118,7 @@ namespace Spectero.daemon.Jobs
 
                 // Fix the symlinks.
                 // TODO: Invoke System - May need to be platform specific.
+               
 
                 // Restart the service.
                 // TODO: Overview the instllation scripts and make sure they use the latest directory
