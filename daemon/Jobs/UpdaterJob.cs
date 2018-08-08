@@ -35,6 +35,10 @@ using Spectero.daemon.Libraries.Symlink;
 
 namespace Spectero.daemon.Jobs
 {
+    
+    /// <summary>
+    /// Configuration blueprint that the appconfig will provide.
+    /// </summary>
     public class UpdaterConfiguration
     {
         public int ReleaseChannel { get; set; }
@@ -42,12 +46,18 @@ namespace Spectero.daemon.Jobs
         public string Frequency { get; set; }
     }
 
+    /// <summary>
+    /// Release Object to hold JSON of release data.
+    /// </summary>
     public class Release
     {
         public Dictionary<string, string> channels;
         public Dictionary<string, SpecificVersion> versions;
     }
 
+    /// <summary>
+    /// Specific Version Internal Class for POCO.
+    /// </summary>
     public class SpecificVersion
     {
         public string download;
@@ -81,10 +91,21 @@ namespace Spectero.daemon.Jobs
             logger.LogDebug("UJ: init successful, dependencies processed.");
         }
 
+        /// <summary>
+        /// Get the crontab frequency of the job.
+        /// </summary>
+        /// <returns></returns>
         public string GetSchedule() => _config.Updater.Frequency;
 
+        /// <summary>
+        /// Determine if the job is enablked.
+        /// </summary>
+        /// <returns></returns>
         public bool IsEnabled() => _config.Updater.Enabled;
 
+        /// <summary>
+        /// Routine of the job.
+        /// </summary>
         public void Perform()
         {
             // Get the latest set of release data.
@@ -118,9 +139,6 @@ namespace Spectero.daemon.Jobs
                     var databaseDestPath = Path.Combine(targetDirectory, "daemon", "Database", basename);
                     File.Copy(databasePath, databaseDestPath);
                 }
-
-                // Fix the symlinks.
-                // TODO: Invoke System - May need to be platform specific.
                 
                 // Get the expected symlink path.
                 var latestPath = Path.Combine(RootInstallationDirectory, "latest");
@@ -133,9 +151,16 @@ namespace Spectero.daemon.Jobs
 
                 // Restart the service.
                 // TODO: Overview the instllation scripts and make sure they use the latest directory
+                // TODO: Talk to paul about how to go about restarting the service
+                // TODO: Assuming there's some form of watchdog, should it restart automatically if we kill the application?
             }
         }
 
+        /// <summary>
+        /// Get the latest release information from Spectero's Servers.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InternalError"></exception>
         private Release GetReleaseInformation()
         {
             try
@@ -152,12 +177,23 @@ namespace Spectero.daemon.Jobs
             }
         }
 
+        /// <summary>
+        /// Get the root installation directory for the spectero daemons.
+        /// This will inclue each versions and the latest symlink.
+        /// </summary>
         private string RootInstallationDirectory => Directory.GetParent(
             Directory.GetParent(Program.GetAssemblyLocation()).FullName
         ).FullName;
 
+        /// <summary>
+        /// Get the directory of the database.
+        /// </summary>
         private string DatabaseDirectory => Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir);
 
+        /// <summary>
+        /// Get the paths for each database.
+        /// </summary>
+        /// <returns></returns>
         private string[] GetDatabasePaths() => Directory.GetFiles(DatabaseDirectory, "*.sqlite", SearchOption.TopDirectoryOnly);
     }
 }
