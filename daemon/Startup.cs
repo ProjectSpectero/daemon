@@ -17,6 +17,7 @@
 using System;
 using System.Data;
 using System.IO;
+using System.Net.Http;
 using Hangfire;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -98,6 +99,8 @@ namespace Spectero.daemon
             );
 
             services.AddSingleton<IStatistician, Statistician>();
+            
+            services.AddSingleton<IStatistician, Statistician>();
 
             services.AddSingleton<IAuthenticator, Authenticator>();
 
@@ -117,6 +120,8 @@ namespace Spectero.daemon
                 new EngineFactory()
                     .ForFileSystem(Path.Combine(CurrentDirectory, appConfig["TemplateDirectory"]))
             );
+            
+            services.AddSingleton<HttpClient, HttpClient>();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -151,6 +156,8 @@ namespace Spectero.daemon
             services.AddSingleton<IJob, FetchCloudEngagementsJob>();
             
             services.AddSingleton<IJob, DatabaseBackupJob>();
+            
+            services.AddSingleton<IJob, UpdaterJob>();
 
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
 
