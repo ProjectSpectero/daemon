@@ -31,6 +31,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ServiceStack;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Symlink;
 
@@ -87,10 +88,12 @@ namespace Spectero.daemon.Jobs
             ILogger<UpdaterJob> logger,
             HttpClient httpClient,
             Symlink symlink,
-            IApplicationLifetime applicationLifetime)
+            IApplicationLifetime applicationLifetime,
+            ProcessRunner processRunner)
         {
             _httpClient = httpClient;
             _symlink = symlink;
+            _symlink.processRunner = processRunner;
             _applicationLifetime = applicationLifetime;
             _logger = logger;
             _config = configMonitor.CurrentValue;

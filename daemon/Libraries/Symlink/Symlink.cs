@@ -18,12 +18,14 @@
 using System;
 using System.IO;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 
 namespace Spectero.daemon.Libraries.Symlink
 {
     public class Symlink
     {
         private ISymlinkEnvironment _environment;
+        public ProcessRunner processRunner { get; set; }
 
         public enum SymbolicLink
         {
