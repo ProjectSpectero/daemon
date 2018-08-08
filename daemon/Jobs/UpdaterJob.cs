@@ -24,6 +24,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Hangfire.Common;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -35,7 +36,6 @@ using Spectero.daemon.Libraries.Symlink;
 
 namespace Spectero.daemon.Jobs
 {
-    
     /// <summary>
     /// Configuration blueprint that the appconfig will provide.
     /// </summary>
@@ -74,6 +74,7 @@ namespace Spectero.daemon.Jobs
         private readonly ILogger<UpdaterJob> _logger;
         private readonly AppConfig _config;
         private readonly Symlink _symlink;
+        private readonly IApplicationLifetime _applicationLifetime;
         private JObject _releaseInformation;
 
         /// <summary>
@@ -81,10 +82,16 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         /// <param name="configMonitor"></param>`
         /// <param name="logger"></param>
-        public UpdaterJob(IOptionsMonitor<AppConfig> configMonitor, ILogger<UpdaterJob> logger, HttpClient httpClient, Symlink symlink)
+        public UpdaterJob
+        (IOptionsMonitor<AppConfig> configMonitor,
+            ILogger<UpdaterJob> logger,
+            HttpClient httpClient,
+            Symlink symlink,
+            IApplicationLifetime applicationLifetime)
         {
             _httpClient = httpClient;
             _symlink = symlink;
+            _applicationLifetime = applicationLifetime;
             _logger = logger;
             _config = configMonitor.CurrentValue;
 
@@ -139,20 +146,19 @@ namespace Spectero.daemon.Jobs
                     var databaseDestPath = Path.Combine(targetDirectory, "daemon", "Database", basename);
                     File.Copy(databasePath, databaseDestPath);
                 }
-                
+
                 // Get the expected symlink path.
                 var latestPath = Path.Combine(RootInstallationDirectory, "latest");
-                
+
                 // Delete the symlink if it exists.
                 if (_symlink.IsSymlink(latestPath)) _symlink.Environment.Delete(latestPath);
-                
+
                 // Create the new symlink with the proper directory.
                 _symlink.Environment.Create(latestPath, targetDirectory);
 
                 // Restart the service.
-                // TODO: Overview the instllation scripts and make sure they use the latest directory
-                // TODO: Talk to paul about how to go about restarting the service
-                // TODO: Assuming there's some form of watchdog, should it restart automatically if we kill the application?
+                // We'll rely on the service manager to start us back up.
+                _applicationLifetime.StopApplication();
             }
         }
 
