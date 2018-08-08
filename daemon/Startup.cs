@@ -49,6 +49,7 @@ using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
+using Spectero.daemon.Libraries.Symlink;
 using Spectero.daemon.Migrations;
 using Spectero.daemon.Models;
 using JobActivator = Spectero.daemon.Jobs.JobActivator;
@@ -121,7 +122,11 @@ namespace Spectero.daemon
                     .ForFileSystem(Path.Combine(CurrentDirectory, appConfig["TemplateDirectory"]))
             );
             
+            // HTTP Client for Job.
             services.AddSingleton<HttpClient, HttpClient>();
+
+            // Symbolic Link Library
+            services.AddSingleton<Symlink, Symlink>();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>

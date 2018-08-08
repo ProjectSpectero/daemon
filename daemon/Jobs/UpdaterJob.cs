@@ -31,6 +31,7 @@ using Newtonsoft.Json.Linq;
 using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Errors;
+using Spectero.daemon.Libraries.Symlink;
 
 namespace Spectero.daemon.Jobs
 {
@@ -62,6 +63,7 @@ namespace Spectero.daemon.Jobs
         private readonly HttpClient _httpClient;
         private readonly ILogger<UpdaterJob> _logger;
         private readonly AppConfig _config;
+        private readonly Symlink _symlink;
         private JObject _releaseInformation;
 
         /// <summary>
@@ -69,9 +71,10 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         /// <param name="configMonitor"></param>`
         /// <param name="logger"></param>
-        public UpdaterJob(IOptionsMonitor<AppConfig> configMonitor, ILogger<UpdaterJob> logger, HttpClient httpClient)
+        public UpdaterJob(IOptionsMonitor<AppConfig> configMonitor, ILogger<UpdaterJob> logger, HttpClient httpClient, Symlink symlink)
         {
             _httpClient = httpClient;
+            _symlink = symlink;
             _logger = logger;
             _config = configMonitor.CurrentValue;
 
@@ -118,7 +121,15 @@ namespace Spectero.daemon.Jobs
 
                 // Fix the symlinks.
                 // TODO: Invoke System - May need to be platform specific.
-               
+                
+                // Get the expected symlink path.
+                var latestPath = Path.Combine(RootInstallationDirectory, "latest");
+                
+                // Delete the symlink if it exists.
+                if (_symlink.IsSymlink(latestPath)) _symlink.Environment.Delete(latestPath);
+                
+                // Create the new symlink with the proper directory.
+                _symlink.Environment.Create(latestPath, targetDirectory);
 
                 // Restart the service.
                 // TODO: Overview the instllation scripts and make sure they use the latest directory
