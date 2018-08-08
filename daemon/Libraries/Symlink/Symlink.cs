@@ -59,3 +59,4 @@ namespace Spectero.daemon.Libraries.Symlink
 
         public ISymlinkEnvironment Environment => _environment;
     }
+}
