@@ -14,36 +14,48 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
 using System.Threading;
+using Medallion.Shell;
+using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using NUnit.Framework;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Services;
+using Assert = NUnit.Framework.Assert;
 
 namespace daemon_testcases
 {
     [TestFixture]
     public class ProccessRunnerTest : BaseUnitTest
     {
+        private Mock<IService> mockedService;
+        private Mock<ILogger<ProcessRunner>> mockedLogger;
+        private Mock<IOptionsMonitor<AppConfig>> mockedMonitoredConfig;
+
+        private readonly ProcessRunner _runner;
+        
+        public ProccessRunnerTest ()
+        {
+            mockedService = new Mock<IService>();
+            mockedService.Setup(x => x.GetState()).Returns(ServiceState.Running);
+            
+            mockedLogger =  new Mock<ILogger<ProcessRunner>>();
+            
+            mockedMonitoredConfig = new Mock<IOptionsMonitor<AppConfig>>();
+            mockedMonitoredConfig.Setup(x => x.CurrentValue).Returns(new AppConfig());
+            
+            _runner = new ProcessRunner(mockedMonitoredConfig.Object, mockedLogger.Object);
+        }
+        
         [Test]
         public void TestMonitoring()
         {
-            var svcMock = new Mock<IService>();
-            svcMock.Setup(x => x.GetState()).Returns(ServiceState.Running);
-
-            var loggerMock = new Mock<ILogger<ProcessRunner>>();
-
-            var configMonitorMock = new Mock<IOptionsMonitor<AppConfig>>();
-            configMonitorMock.Setup(x => x.CurrentValue).Returns(new AppConfig());
-
-            Assert.AreEqual(svcMock.Object.GetState(), ServiceState.Running);
-
-
-            // Get a process runner going.
-            var processRunner = new ProcessRunner(configMonitorMock.Object, loggerMock.Object);
+            Assert.AreEqual(mockedService.Object.GetState(), ServiceState.Running);
 
             // Build the command options
             var processOptions = new ProcessOptions()
@@ -59,7 +71,7 @@ namespace daemon_testcases
             };
 
             // Run the example command.
-            var runningProcess = processRunner.Run(processOptions, svcMock.Object);
+            var runningProcess = _runner.Run(processOptions, mockedService.Object);
             var oldPid = runningProcess.Command.Process.Id;
 
             runningProcess.Command.Kill();
@@ -69,6 +81,27 @@ namespace daemon_testcases
             var newPid = runningProcess.Command.Process.Id;
 
             Assert.AreNotEqual(oldPid, newPid);
+        }
+
+        [Test]
+        public void TestThrowOnErrorBehavior()
+        {
+            var processOptions = new ProcessOptions()
+            {
+                Executable =
+                    AppConfig.isUnix
+                        ? "top"
+                        : "powershell", // top and cmd are both processes that will run continuously until closed.
+                DisposeOnExit = false,
+                Monitor = true,
+                MonitoringInterval = 5,
+                ThrowOnError = true,
+                Arguments = new[] { "this-does-not-exist" }
+            };
+
+            var holder = _runner.Run(processOptions, mockedService.Object);
+
+            Assert.Throws<ErrorExitCodeException>(() => holder.Command.Wait());
         }
     }
 }

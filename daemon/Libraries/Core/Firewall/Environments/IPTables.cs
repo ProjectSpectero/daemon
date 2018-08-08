@@ -105,7 +105,10 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             }
 
             // Run the process.
-            _processRunner.Run(commandOptions);
+            var holder = _processRunner.Run(commandOptions);
+            
+            // These are commands that are expected to return more or less instantaneously. Which means we can actually wait for them to complete.
+            holder.Command.Wait();
 
             // Track the rule.
             _rules.Add(networkRule);
