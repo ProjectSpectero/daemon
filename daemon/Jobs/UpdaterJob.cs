@@ -138,6 +138,7 @@ namespace Spectero.daemon.Jobs
 
                 // Extract
                 ZipFile.ExtractToDirectory(targetArchive, targetDirectory);
+                _logger.LogInformation("UJ: Extracting {0} to {1}", targetArchive, targetDirectory);
 
                 // Copy the databases
                 foreach (string databasePath in GetDatabasePaths())
@@ -145,19 +146,28 @@ namespace Spectero.daemon.Jobs
                     var basename = new FileInfo(databasePath).Name;
                     var databaseDestPath = Path.Combine(targetDirectory, "daemon", "Database", basename);
                     File.Copy(databasePath, databaseDestPath);
+                    _logger.LogInformation("UJ: Migrated Database: {0}\t->\t {1}", databasePath, databaseDestPath);
                 }
 
                 // Get the expected symlink path.
                 var latestPath = Path.Combine(RootInstallationDirectory, "latest");
 
                 // Delete the symlink if it exists.
-                if (_symlink.IsSymlink(latestPath)) _symlink.Environment.Delete(latestPath);
+                if (_symlink.IsSymlink(latestPath))
+                {
+                    _symlink.Environment.Delete(latestPath);
+                    _logger.LogDebug("UJ: Deleted old Symbolic Link: " + latestPath);
+                }
 
                 // Create the new symlink with the proper directory.
                 _symlink.Environment.Create(latestPath, targetDirectory);
+                _logger.LogDebug("UJ: Created Symbolic Link: {0}\t->\t{1}", latestPath, targetDirectory);
 
                 // Restart the service.
                 // We'll rely on the service manager to start us back up.
+                _logger.LogInformation("The update process is complete, and the spectero service has been configured to run the latest version.\n" +
+                                       "Please restart the spectero service to utilize the latest version.\n" +
+                                       "The application will now shutdown.");
                 _applicationLifetime.StopApplication();
             }
         }
