@@ -42,7 +42,7 @@ namespace Spectero.daemon.Jobs
     /// </summary>
     public class UpdaterConfiguration
     {
-        public int ReleaseChannel { get; set; }
+        public string ReleaseChannel { get; set; }
         public bool Enabled { get; set; }
         public string Frequency { get; set; }
     }
@@ -89,7 +89,7 @@ namespace Spectero.daemon.Jobs
             HttpClient httpClient,
             Symlink symlink,
             IApplicationLifetime applicationLifetime,
-            ProcessRunner processRunner)
+            IProcessRunner processRunner)
         {
             _httpClient = httpClient;
             _symlink = symlink;
@@ -127,17 +127,31 @@ namespace Spectero.daemon.Jobs
                 // Update available.
                 var newVersion = releaseInformation.channels[_config.Updater.ReleaseChannel.ToString()];
                 var targetDirectory = Path.Combine(RootInstallationDirectory, newVersion);
-                var targetArchive = Path.Combine(RootInstallationDirectory, "${newVersion}.zip");
+                var targetArchive = Path.Combine(RootInstallationDirectory, string.Format("{0}.zip", newVersion));
+                
+                // Check if the target directory already exists, we will use this to determine if an update has already happened.
+                if (Directory.Exists(targetDirectory)) return;;
 
                 // Log to the console that the update is available.
-                _logger.LogInformation("There is a update available for the spectero daemon: " + newVersion);
+                _logger.LogInformation("UJ: There is a update available for the spectero daemon: " + newVersion);
 
                 // Get the download link
                 var downloadLink = releaseInformation.versions[newVersion].download;
 
                 // Download
                 using (WebClient webClient = new WebClient())
-                    webClient.DownloadFile(new Uri(downloadLink), targetArchive);
+                {
+                    try
+                    {
+                        webClient.DownloadFile(new Uri(downloadLink), targetArchive);
+                        _logger.LogInformation("UJ: Update {0} has been downloaded successfully.", newVersion);
+                    }
+                    catch (Exception exception)
+                    {
+                        throw new Exception("The update job has failed due to a problem while downloading the update: " + exception);
+                    }
+                }
+                    
 
                 // Extract
                 ZipFile.ExtractToDirectory(targetArchive, targetDirectory);
@@ -149,7 +163,7 @@ namespace Spectero.daemon.Jobs
                     var basename = new FileInfo(databasePath).Name;
                     var databaseDestPath = Path.Combine(targetDirectory, "daemon", "Database", basename);
                     File.Copy(databasePath, databaseDestPath);
-                    _logger.LogInformation("UJ: Migrated Database: {0}\t->\t {1}", databasePath, databaseDestPath);
+                    _logger.LogInformation("UJ: Migrated Database: {0} => {1}", databasePath, databaseDestPath);
                 }
 
                 // Get the expected symlink path.
@@ -163,8 +177,9 @@ namespace Spectero.daemon.Jobs
                 }
 
                 // Create the new symlink with the proper directory.
+                //TODO: FIX - Symbolic Link Creation is broken for some reason!
                 _symlink.Environment.Create(latestPath, targetDirectory);
-                _logger.LogDebug("UJ: Created Symbolic Link: {0}\t->\t{1}", latestPath, targetDirectory);
+                _logger.LogDebug("UJ: Created Symbolic Link: {0}->{1}", latestPath, targetDirectory);
 
                 // Restart the service.
                 // We'll rely on the service manager to start us back up.

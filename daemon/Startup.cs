@@ -157,6 +157,8 @@ namespace Spectero.daemon
             services.AddMemoryCache();
 
             services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
+            
+            services.AddSingleton<IProcessRunner, ProcessRunner>();
 
             services.AddSingleton<IJob, FetchCloudEngagementsJob>();
             
@@ -167,8 +169,6 @@ namespace Spectero.daemon
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
 
             services.AddSingleton<Apm, Apm>();
-
-            services.AddSingleton<IProcessRunner, ProcessRunner>();
 
             services.AddSingleton<ILifetimeHandler, LifetimeHandler>();
 

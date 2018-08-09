@@ -25,7 +25,7 @@ namespace Spectero.daemon.Libraries.Symlink
     public class Symlink
     {
         private ISymlinkEnvironment _environment;
-        public ProcessRunner processRunner { get; set; }
+        public IProcessRunner processRunner { get; set; }
 
         public enum SymbolicLink
         {
