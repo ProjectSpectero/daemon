@@ -14,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,6 +25,13 @@ namespace Spectero.daemon.Libraries.Config
 {
     public class AppConfig
     {
+        /*
+         * Update Deadlock
+         * Used by the updating job to explictly check if the job is already running.
+         * Will prevent the job from running multiple times.
+         */
+        public static bool updateDeadlock = false;
+        
         public string BlockedRedirectUri { get; set; }
         public string DatabaseDir { get; set; }
         public double AuthCacheMinutes { get; set; }

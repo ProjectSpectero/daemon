@@ -22,6 +22,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using Hangfire.Common;
 using Microsoft.AspNetCore.Hosting;
@@ -120,25 +121,49 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         public void Perform()
         {
+            if (AppConfig.updateDeadlock == true)
+            {
+                _logger.LogWarning("UJ: Update deadlock detected - there is already an update in progress.");
+                return;
+            }
+
+            // Enable the deadlock.
+            AppConfig.updateDeadlock = true;
+
             // Get the latest set of release data.
             var releaseInformation = GetReleaseInformation();
 
             // Compare
-            if (releaseInformation.channels.GetValueOrDefault(_config.Updater.ReleaseChannel.ToString(), AppConfig.version) != AppConfig.version)
+            if (releaseInformation.channels.GetValueOrDefault(_config.Updater.ReleaseChannel, AppConfig.version) != AppConfig.version)
             {
                 // Update available.
-                var newVersion = releaseInformation.channels[_config.Updater.ReleaseChannel.ToString()];
+                var newVersion = releaseInformation.channels[_config.Updater.ReleaseChannel];
                 var targetDirectory = Path.Combine(RootInstallationDirectory, newVersion);
                 var targetArchive = Path.Combine(RootInstallationDirectory, string.Format("{0}.zip", newVersion));
-                
+
                 // Check if the target directory already exists, we will use this to determine if an update has already happened.
-                if (Directory.Exists(targetDirectory)) return;;
+                if (Directory.Exists(targetDirectory))
+                {
+                    AppConfig.updateDeadlock = false;
+                    return;
+                }
 
                 // Log to the console that the update is available.
                 _logger.LogInformation("UJ: There is a update available for the spectero daemon: " + newVersion);
 
                 // Get the download link
-                var downloadLink = releaseInformation.versions[newVersion].download;
+                string downloadLink = null;
+                try
+                {
+                    downloadLink = releaseInformation.versions[newVersion].download;
+                }
+                catch (Exception exception)
+                {
+                    var msg = "A error occured while attemting to resolve the download link for the update: \n" + exception;
+                    _logger.LogError(msg);
+                    AppConfig.updateDeadlock = false;
+                    throw new InternalError(msg);
+                }
 
                 // Download
                 using (WebClient webClient = new WebClient())
@@ -148,16 +173,18 @@ namespace Spectero.daemon.Jobs
                         webClient.DownloadFile(new Uri(downloadLink), targetArchive);
                         _logger.LogInformation("UJ: Update {0} has been downloaded successfully.", newVersion);
                     }
-                    catch (Exception exception)
+                    catch (WebException exception)
                     {
-                        throw new Exception("The update job has failed due to a problem while downloading the update: " + exception);
+                        var msg = "The update job has failed due to a problem while downloading the update: " + exception;
+                        _logger.LogError(msg);
+                        AppConfig.updateDeadlock = false;
+                        throw new InternalError(msg);
                     }
                 }
-                    
 
                 // Extract
-                ZipFile.ExtractToDirectory(targetArchive, targetDirectory);
                 _logger.LogInformation("UJ: Extracting {0} to {1}", targetArchive, targetDirectory);
+                ZipFile.ExtractToDirectory(targetArchive, targetDirectory);
 
                 // Copy the databases
                 foreach (string databasePath in GetDatabasePaths())
@@ -190,6 +217,9 @@ namespace Spectero.daemon.Jobs
                                        "The application will now shutdown.");
                 _applicationLifetime.StopApplication();
             }
+
+            // Disable th deadlock and allow the next run.
+            AppConfig.updateDeadlock = false;
         }
 
         /// <summary>
@@ -201,7 +231,7 @@ namespace Spectero.daemon.Jobs
         {
             try
             {
-                var response = _httpClient.GetAsync("https://c.spectero.com/releases.json").Result;
+                var response = _httpClient.GetAsync("http://192.168.1.57/releases.json").Result;
                 var releaseData = JsonConvert.DeserializeObject<Release>(response.Content.ReadAsStringAsync().Result);
                 return releaseData;
             }
@@ -209,6 +239,7 @@ namespace Spectero.daemon.Jobs
             {
                 var msg = "UJ: Failed to get release data from the internet.\n" + exception;
                 _logger.LogError(msg);
+                AppConfig.updateDeadlock = false;
                 throw new InternalError(msg);
             }
         }
