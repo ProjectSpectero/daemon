@@ -83,6 +83,8 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         /// <param name="configMonitor"></param>`
         /// <param name="logger"></param>
+        /// <param name="applicationLifetime"></param>
+        /// <param name="processRunner"></param>
         public UpdaterJob
         (IOptionsMonitor<AppConfig> configMonitor,
             ILogger<UpdaterJob> logger,
