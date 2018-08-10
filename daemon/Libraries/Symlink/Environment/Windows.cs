@@ -19,6 +19,10 @@ using System;
 using System.IO;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
+using Medallion.Shell;
+using ServiceStack;
+using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 
 namespace Spectero.daemon.Libraries.Symlink
 {
@@ -45,17 +49,10 @@ namespace Spectero.daemon.Libraries.Symlink
             _parent = parent;
         }
 
-        /// <summary>
-        /// External kernel call to create symlink.
-        /// </summary>
-        /// <param name="lpSymlinkFileName"></param>
-        /// <param name="lpTargetFileName"></param>
-        /// <param name="dwFlags"></param>
-        /// <returns></returns>
         [DllImport("kernel32.dll")]
-        static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, Symlink.SymbolicLink dwFlags);
+        public static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, Symlink.SymbolicLink dwFlags);
 
-        
+
         /// <summary>
         /// Wrapper function to create symlink and determine the type from the absolute path.
         /// </summary>
@@ -64,7 +61,7 @@ namespace Spectero.daemon.Libraries.Symlink
         /// <returns></returns>
         public bool Create(string symlink, string absolutePath)
         {
-            return CreateSymbolicLink(symlink, absolutePath, _parent.GetAbsolutePathType(absolutePath));
+            return (CreateSymbolicLink(symlink.ReplaceAll("\\", "/"), absolutePath.ReplaceAll("\\", "/"), Symlink.SymbolicLink.Directory));
         }
 
         /// <summary>

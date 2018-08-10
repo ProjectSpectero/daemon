@@ -23,6 +23,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Hangfire.Common;
 using Microsoft.AspNetCore.Hosting;
@@ -210,7 +211,10 @@ namespace Spectero.daemon.Jobs
                 if (_symlink.Environment.Create(latestPath, targetDirectory))
                     _logger.LogDebug("UJ: Created Symbolic Link: {0}->{1}", latestPath, targetDirectory);
                 else
-                    _logger.LogError("There was a error while creating the symbolic link.");
+                {
+                    var msg = "Failed to create symlink, Marshal response: " + AppConfig.MarshalDecoder(Marshal.GetLastWin32Error());
+                    _logger.LogError(msg);
+                }
                     
                 // Restart the service.
                 // We'll rely on the service manager to start us back up.

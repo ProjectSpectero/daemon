@@ -30,7 +30,8 @@ namespace Spectero.daemon.Libraries.Symlink
         public enum SymbolicLink
         {
             File = 0,
-            Directory = 1
+            Directory = 1,
+            WithoutEvevation = 2
         }
 
         public Symlink()
