@@ -207,9 +207,11 @@ namespace Spectero.daemon.Jobs
 
                 // Create the new symlink with the proper directory.
                 //TODO: FIX - Symbolic Link Creation is broken for some reason!
-                _symlink.Environment.Create(latestPath, targetDirectory);
-                _logger.LogDebug("UJ: Created Symbolic Link: {0}->{1}", latestPath, targetDirectory);
-
+                if (_symlink.Environment.Create(latestPath, targetDirectory))
+                    _logger.LogDebug("UJ: Created Symbolic Link: {0}->{1}", latestPath, targetDirectory);
+                else
+                    _logger.LogError("There was a error while creating the symbolic link.");
+                    
                 // Restart the service.
                 // We'll rely on the service manager to start us back up.
                 _logger.LogInformation("The update process is complete, and the spectero service has been configured to run the latest version.\n" +
@@ -231,7 +233,7 @@ namespace Spectero.daemon.Jobs
         {
             try
             {
-                var response = _httpClient.GetAsync("http://192.168.1.57/releases.json").Result;
+                var response = _httpClient.GetAsync("https://c.spectero.com/releases.json").Result;
                 var releaseData = JsonConvert.DeserializeObject<Release>(response.Content.ReadAsStringAsync().Result);
                 return releaseData;
             }
