@@ -115,7 +115,18 @@ namespace Spectero.daemon.Jobs
         /// Determine if the job is enablked.
         /// </summary>
         /// <returns></returns>
-        public bool IsEnabled() => _config.Updater.Enabled;
+        public bool IsEnabled()
+        {
+            if (AppConfig.isWindows)
+            {
+                _logger.LogWarning("DAEM-206: auto-update support for Windows is not fully functional.");
+                return false;
+            }
+            else
+            {
+                return _config.Updater.Enabled;
+            }
+        }
 
         /// <summary>
         /// Routine of the job.
@@ -215,7 +226,7 @@ namespace Spectero.daemon.Jobs
                     var msg = "Failed to create symlink, Marshal response: " + AppConfig.MarshalDecoder(Marshal.GetLastWin32Error());
                     _logger.LogError(msg);
                 }
-                    
+
                 // Restart the service.
                 // We'll rely on the service manager to start us back up.
                 _logger.LogInformation("The update process is complete, and the spectero service has been configured to run the latest version.\n" +

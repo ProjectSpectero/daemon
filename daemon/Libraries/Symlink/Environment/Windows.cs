@@ -48,20 +48,21 @@ namespace Spectero.daemon.Libraries.Symlink
         {
             _parent = parent;
         }
-
-        [DllImport("kernel32.dll")]
-        public static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, Symlink.SymbolicLink dwFlags);
-
+        
+        [DllImport("kernel32.dll", EntryPoint="CreateSymbolicLinkW", ExactSpelling=true, CharSet=CharSet.Unicode, SetLastError=true)] [return: MarshalAs(UnmanagedType.I1)]
+        static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, Symlink.SymbolicLink dwFlags);
 
         /// <summary>
         /// Wrapper function to create symlink and determine the type from the absolute path.
+        /// 0 = file
+        /// 1 = directory
         /// </summary>
         /// <param name="symlink"></param>
         /// <param name="absolutePath"></param>
         /// <returns></returns>
         public bool Create(string symlink, string absolutePath)
         {
-            return (CreateSymbolicLink(symlink.ReplaceAll("\\", "/"), absolutePath.ReplaceAll("\\", "/"), Symlink.SymbolicLink.Directory));
+            return CreateSymbolicLink(symlink, absolutePath, _parent.GetAbsolutePathType(absolutePath));
         }
 
         /// <summary>
