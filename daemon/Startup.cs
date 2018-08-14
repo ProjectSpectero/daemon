@@ -17,6 +17,7 @@
 using System;
 using System.Data;
 using System.IO;
+using System.Net.Http;
 using Hangfire;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -48,6 +49,7 @@ using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
+using Spectero.daemon.Libraries.Symlink;
 using Spectero.daemon.Migrations;
 using Spectero.daemon.Models;
 using JobActivator = Spectero.daemon.Jobs.JobActivator;
@@ -98,6 +100,8 @@ namespace Spectero.daemon
             );
 
             services.AddSingleton<IStatistician, Statistician>();
+            
+            services.AddSingleton<IStatistician, Statistician>();
 
             services.AddSingleton<IAuthenticator, Authenticator>();
 
@@ -117,6 +121,12 @@ namespace Spectero.daemon
                 new EngineFactory()
                     .ForFileSystem(Path.Combine(CurrentDirectory, appConfig["TemplateDirectory"]))
             );
+            
+            // HTTP Client for Job.
+            services.AddSingleton<HttpClient, HttpClient>();
+
+            // Symbolic Link Library
+            services.AddSingleton<Symlink, Symlink>();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -147,16 +157,18 @@ namespace Spectero.daemon
             services.AddMemoryCache();
 
             services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
+            
+            services.AddSingleton<IProcessRunner, ProcessRunner>();
 
             services.AddSingleton<IJob, FetchCloudEngagementsJob>();
             
             services.AddSingleton<IJob, DatabaseBackupJob>();
+            
+            services.AddSingleton<IJob, UpdaterJob>();
 
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
 
             services.AddSingleton<Apm, Apm>();
-
-            services.AddSingleton<IProcessRunner, ProcessRunner>();
 
             services.AddSingleton<ILifetimeHandler, LifetimeHandler>();
 
