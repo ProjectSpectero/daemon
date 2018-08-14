@@ -36,7 +36,7 @@ namespace Spectero.daemon.Libraries.Symlink
             var procOptions = new ProcessOptions
             {
                 Executable = "ln",
-                Arguments = new[] {"-s", symlink, absolutePath},
+                Arguments = new[] {"-s", absolutePath, symlink},
                 Monitor = false,
                 DisposeOnExit = true,
             };
