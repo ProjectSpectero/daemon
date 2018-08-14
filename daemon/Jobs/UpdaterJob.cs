@@ -44,7 +44,7 @@ namespace Spectero.daemon.Jobs
     /// </summary>
     public class UpdaterConfiguration
     {
-        public string ReleaseChannel { get; set; }
+        // public string ReleaseChannel { get; set; }
         public bool Enabled { get; set; }
         public string Frequency { get; set; }
     }
@@ -145,11 +145,17 @@ namespace Spectero.daemon.Jobs
             // Get the latest set of release data.
             var releaseInformation = GetReleaseInformation();
 
+            // Get version details.
+            var runningBranch = AppConfig.version.Split("-")[1];
+            var remoteVersion = releaseInformation.channels[runningBranch];
+            var remoteBranch = remoteVersion.Split("-")[1];
+            
+
             // Compare
-            if (releaseInformation.channels.GetValueOrDefault(_config.Updater.ReleaseChannel, AppConfig.version) != AppConfig.version)
+            if (remoteBranch == runningBranch && remoteVersion != AppConfig.version)
             {
                 // Update available.
-                var newVersion = releaseInformation.channels[_config.Updater.ReleaseChannel];
+                var newVersion = releaseInformation.channels[remoteBranch];
                 var targetDirectory = Path.Combine(RootInstallationDirectory, newVersion);
                 var targetArchive = Path.Combine(RootInstallationDirectory, string.Format("{0}.zip", newVersion));
 
