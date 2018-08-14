@@ -56,8 +56,15 @@ namespace Spectero.daemon.Libraries.Symlink
 
         public bool IsSymlink(string linkPath)
         {
-            FileInfo pathInfo = new FileInfo(linkPath);
-            return pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+            if (Directory.Exists(linkPath) || File.Exists(linkPath))
+            {
+                FileInfo pathInfo = new FileInfo(linkPath);
+                return pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public ISymlinkEnvironment Environment => _environment;
