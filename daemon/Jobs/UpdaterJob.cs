@@ -46,6 +46,7 @@ namespace Spectero.daemon.Jobs
     {
         // public string ReleaseChannel { get; set; }
         public bool Enabled { get; set; }
+        public string ReleaseChannel { get; set; }
         public string Frequency { get; set; }
     }
 
@@ -146,7 +147,7 @@ namespace Spectero.daemon.Jobs
             var releaseInformation = GetReleaseInformation();
 
             // Get version details.
-            var runningBranch = AppConfig.version.Split("-")[1];
+            var runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.version.Split("-")[1];
             var remoteVersion = releaseInformation.channels[runningBranch];
             var remoteBranch = remoteVersion.Split("-")[1];
             
