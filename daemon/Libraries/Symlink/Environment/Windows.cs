@@ -48,8 +48,9 @@ namespace Spectero.daemon.Libraries.Symlink
         {
             _parent = parent;
         }
-        
-        [DllImport("kernel32.dll", EntryPoint="CreateSymbolicLinkW", ExactSpelling=true, CharSet=CharSet.Unicode, SetLastError=true)] [return: MarshalAs(UnmanagedType.I1)]
+
+        [DllImport("kernel32.dll")]
+        [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.I1)]
         static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, Symlink.SymbolicLink dwFlags);
 
         /// <summary>
