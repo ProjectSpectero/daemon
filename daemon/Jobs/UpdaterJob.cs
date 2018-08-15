@@ -147,7 +147,7 @@ namespace Spectero.daemon.Jobs
             var releaseInformation = GetReleaseInformation();
 
             // Get version details.
-            var runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.version.Split("-")[1];
+            var runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.ReleaseChannel;
             var remoteVersion = releaseInformation.channels[runningBranch];
             var remoteBranch = remoteVersion.Split("-")[1];
             
