@@ -31,7 +31,7 @@ namespace Spectero.daemon.Libraries.Config
          * Will prevent the job from running multiple times.
          */
         public static bool updateDeadlock = false;
-        
+
         public string BlockedRedirectUri { get; set; }
         public string DatabaseDir { get; set; }
         public double AuthCacheMinutes { get; set; }
@@ -44,12 +44,11 @@ namespace Spectero.daemon.Libraries.Config
         public string PasswordCostCalculationTestTarget { get; set; }
         public double PasswordCostTimeThreshold { get; set; }
 
+        // Environment Detection.
         public static bool isWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         public static bool isLinux => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
         public static bool isMac => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-
-        public static bool isUnix => RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
-                                     RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+        public static bool isUnix => RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
 
         public bool RespectEndpointToOutgoingMapping { get; set; }
         public bool BindToUnbound { get; set; }
@@ -62,8 +61,14 @@ namespace Spectero.daemon.Libraries.Config
         public bool LogCommonProxyEngineErrors { get; set; }
         public bool IgnoreRFC1918 { get; set; }
         public bool HaltStartupIfServiceInitFails { get; set; }
+
+        // Job Configurations.
         public BackupConfiguration Backups { get; set; }
         public UpdaterConfiguration Updater { get; set; }
+
+        // Versoning Information.
+        public static string ReleaseChannel => version.Split("-")[1];
+        public static double NakedVersion => double.Parse(version.Split("-")[0]);
 
         public static string ApiBaseUri
         {
@@ -80,23 +85,6 @@ namespace Spectero.daemon.Libraries.Config
                     default:
                         return $"https://api.spectero.com/v1/";
                 }
-            }
-        }
-        
-        public static string MarshalDecoder(int marshall)
-        {
-            switch (marshall)
-            {
-                case 0:
-                    return "ERROR_SUCCESS";
-                case 1:
-                    return "ERROR_INVALID_FUNCTION";
-                case 2:
-                    return "ERROR_FILE_NOT_FOUND";
-                case 3:
-                    return "ERROR_PATH_NOT_FOUND";
-                default:
-                    return marshall.ToString();  
             }
         }
 
