@@ -35,6 +35,7 @@ using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Errors;
+using Spectero.daemon.Libraries.Marhsal;
 using Spectero.daemon.Libraries.Symlink;
 
 namespace Spectero.daemon.Jobs
@@ -150,7 +151,7 @@ namespace Spectero.daemon.Jobs
             var runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.ReleaseChannel;
             var remoteVersion = releaseInformation.channels[runningBranch];
             var remoteBranch = remoteVersion.Split("-")[1];
-            
+
 
             // Compare
             if (remoteBranch == runningBranch && remoteVersion != AppConfig.version)
@@ -230,7 +231,7 @@ namespace Spectero.daemon.Jobs
                     _logger.LogDebug("UJ: Created Symbolic Link: {0}->{1}", latestPath, targetDirectory);
                 else
                 {
-                    var msg = "Failed to create symlink, Marshal response: " + AppConfig.MarshalDecoder(Marshal.GetLastWin32Error());
+                    var msg = "Failed to create symlink, Marshal response: " + MarshalUtil.DecodeIntToString(Marshal.GetLastWin32Error());
                     _logger.LogError(msg);
                 }
 

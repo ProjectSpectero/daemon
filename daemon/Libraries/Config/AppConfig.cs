@@ -88,29 +88,6 @@ namespace Spectero.daemon.Libraries.Config
             }
         }
 
-        /// <summary>
-        /// Marshal Decoder
-        /// This is a utility function that serves to assist with error detection.
-        /// </summary>
-        /// <param name="marshall"></param>
-        /// <returns></returns>
-        public static string MarshalDecoder(int marshall)
-        {
-            switch (marshall)
-            {
-                case 0:
-                    return "ERROR_SUCCESS";
-                case 1:
-                    return "ERROR_INVALID_FUNCTION";
-                case 2:
-                    return "ERROR_FILE_NOT_FOUND";
-                case 3:
-                    return "ERROR_PATH_NOT_FOUND";
-                default:
-                    return marshall.ToString();
-            }
-        }
-
         public static string CloudConnectDefaultAuthKey => "cloud";
         public static string version => "0.1-alpha";
 
