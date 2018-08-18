@@ -117,18 +117,7 @@ namespace Spectero.daemon.Jobs
         /// Determine if the job is enablked.
         /// </summary>
         /// <returns></returns>
-        public bool IsEnabled()
-        {
-            if (AppConfig.isWindows)
-            {
-                _logger.LogWarning("DAEM-206: auto-update support for Windows is not fully functional.");
-                return false;
-            }
-            else
-            {
-                return _config.Updater.Enabled;
-            }
-        }
+        public bool IsEnabled() => _config.Updater.Enabled;
 
         /// <summary>
         /// Routine of the job.
