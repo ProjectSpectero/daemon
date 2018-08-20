@@ -31,29 +31,25 @@ namespace daemon_testcases
 
         [Test]
         // Example function to test if the Windows API for Symlink Creation is working.
-        public void WindowsSymlinkExample()
+        public void CreateAndDelete()
         {
-            if (AppConfig.isWindows)
+            var tempPath = Path.GetTempPath();
+            var tempPathSymlink = Path.Combine(tempPath, "symlink");
+
+            // Initialize the Symlink Library
+            var symlinkLib = new Symlink {processRunner = _runner};
+            
+            // Try to create the symlink.
+            if (symlinkLib.Environment.Create(tempPathSymlink, tempPath))
             {
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                var appDataSymlink = Path.Combine(appData, "symlink");
-
-                var symlinkLib = new Symlink();
-                symlinkLib.processRunner = _runner;
-                if (symlinkLib.Environment.Create(appDataSymlink, appData))
-                {
-                    // Symlink creation was successful - delete it and pass.
-                    symlinkLib.Environment.Delete(appDataSymlink);
-                    Assert.Pass();
-                }
-                else
-                {
-                    // Symlink failed to be created
-                    Assert.Fail();
-                }
+                // Symlink creation was successful - delete it and pass.
+                symlinkLib.Environment.Delete(tempPathSymlink);
             }
-
-            Assert.Pass("Linux Detected - Asserting as true for this test case.");
+            else
+            {
+                // Symlink failed to be created
+                Assert.Fail();
+            }
         }
     }
 }
