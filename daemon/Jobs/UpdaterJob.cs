@@ -195,6 +195,9 @@ namespace Spectero.daemon.Jobs
                 _logger.LogInformation("UJ: Extracting {0} to {1}", targetArchive, targetDirectory);
                 ZipFile.ExtractToDirectory(targetArchive, targetDirectory);
 
+                // Delete the archive after extraction.
+                File.Delete(targetArchive);
+
                 // Copy the databases
                 foreach (string databasePath in GetDatabasePaths())
                 {
