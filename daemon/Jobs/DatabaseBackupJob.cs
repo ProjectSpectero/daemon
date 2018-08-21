@@ -121,7 +121,7 @@ namespace Spectero.daemon.Jobs
         /// Get the unix timestamp.
         /// </summary>
         /// <returns></returns>
-        private static string GetEpochTimestamp()
+        public static string GetEpochTimestamp()
         {
             return DateTime.UtcNow.ToUnixTime().ToString();
         }

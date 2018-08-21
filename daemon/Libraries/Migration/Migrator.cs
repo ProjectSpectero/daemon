@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Data;
+using System.IO;
 using System.Linq;
+using Microsoft.Extensions.Options;
+using Spectero.daemon.Jobs;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Models;
@@ -9,6 +12,7 @@ namespace Spectero.daemon.Libraries.Migration
 {
     public class Migrator : IMigrator
     {
+        private readonly AppConfig _config;
         private readonly IDbConnection _db;
         private readonly Type _modelType;
 
@@ -16,9 +20,11 @@ namespace Spectero.daemon.Libraries.Migration
         /// Constructor
         /// Will inherit the database connector
         /// </summary>
+        /// <param name="config"></param>
         /// <param name="db"></param>
-        public Migrator(IDbConnection db)
+        public Migrator(IOptionsMonitor<AppConfig> config, IDbConnection db)
         {
+            _config = config;
             _db = db;
             _modelType = typeof(BaseModel);
         }
@@ -39,7 +45,7 @@ namespace Spectero.daemon.Libraries.Migration
              * The check is whether the naked version for both the currently running instance and the schema version are different, and
              * if so, they need to be altered to conform to the currently running version's models.
              */
-            
+
             // Get all defined models.
             var implementers = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
@@ -47,6 +53,12 @@ namespace Spectero.daemon.Libraries.Migration
                 .Where(p => p != _modelType) // Skip `BaseModel` itself, it cannot be activated
                 .ToArray();
 
+            // Backup the current database.
+            var currentDatabasePath = Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, "db.sqlite");
+            var backupDatabasePath = Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, GenerateDatabaseBackupFilename());
+            File.Copy(currentDatabasePath, backupDatabasePath);
+            
+            
             /*
              * Explanation:
              * We need to take a backup of the current db.sqlite before we can proceed further. Name it like <db.sqlite.version.timestamp>.
@@ -68,10 +80,22 @@ namespace Spectero.daemon.Libraries.Migration
              * _db has AlterColumn/AlterTable functions available.
              */
 
-            
-            
 
             throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Generate a fixated filename for the database backup we're about to make with an optional version.
+        /// </summary>
+        /// <param name="version"></param>
+        /// <returns></returns>
+        public string GenerateDatabaseBackupFilename(string version = null)
+        {
+            // Get the default version if not specified.
+            if (version == null) version = AppConfig.version;
+
+            // Return the generated string.
+            return string.Format("db.sqlite.{0}.{1}", version, DatabaseBackupJob.GetEpochTimestamp());
         }
     }
 }
