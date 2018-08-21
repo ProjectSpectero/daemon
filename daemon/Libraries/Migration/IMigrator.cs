@@ -2,6 +2,6 @@
 {
     public interface IMigrator
     {
-        
+        bool Migrate();
     }
 }
