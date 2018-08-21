@@ -34,8 +34,11 @@ namespace Spectero.daemon.Libraries.Migration
             var schemaVersion = ConfigUtils.GetConfig(_db, ConfigKeys.SchemaVersion).Result;
             var daemonVersion = AppConfig.version;
 
-            // The check is whether the naked version for both the currently running instance and the schema version are different, and if so, they need to be altered to conform to the currently running version's models.
-
+            /*
+             * The check is whether the naked version for both the currently running instance and the schema version are different, and
+             * if so, they need to be altered to conform to the currently running version's models.
+             */
+            
             // Get all defined models.
             var implementers = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
