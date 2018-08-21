@@ -22,9 +22,9 @@ namespace Spectero.daemon.Libraries.Migration
         /// </summary>
         /// <param name="config"></param>
         /// <param name="db"></param>
-        public Migrator(IOptionsMonitor<AppConfig> config, IDbConnection db)
+        public Migrator(IOptionsMonitor<AppConfig> configMonitor, IDbConnection db)
         {
-            _config = config;
+            _config = configMonitor.CurrentValue;
             _db = db;
             _modelType = typeof(BaseModel);
         }
