@@ -20,6 +20,6 @@ namespace Spectero.daemon.CLI
     {
         public static bool Debug = false;
         public static bool OutputJson = false;
-        public static string version => "0.1-alpha";
+        public static string version => "0.2-alpha";
     }
 }
