@@ -49,10 +49,6 @@ namespace Spectero.daemon.Libraries.Symlink
             _parent = parent;
         }
 
-        [DllImport("kernel32.dll")]
-        [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.I1)]
-        static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, Symlink.SymbolicLink dwFlags);
-
         /// <summary>
         /// Wrapper function to create symlink and determine the type from the absolute path.
         /// 0 = file
@@ -63,7 +59,23 @@ namespace Spectero.daemon.Libraries.Symlink
         /// <returns></returns>
         public bool Create(string symlink, string absolutePath)
         {
-            return CreateSymbolicLink(symlink, absolutePath, _parent.GetAbsolutePathType(absolutePath));
+            var processOptions = new ProcessOptions()
+            {
+                Executable = "cmd",
+                Arguments = (_parent.GetAbsolutePathType(absolutePath) == Symlink.SymbolicLink.Directory)
+                    ? new[] {"/c", "mklink", "/d", symlink, absolutePath}
+                    : new[] {"/c", "mklink", symlink, absolutePath},
+            };
+
+            try
+            {
+                _parent.processRunner.Run(processOptions).Command.Wait();
+                return true;
+            }
+            catch (ErrorExitCodeException exception)
+            {
+                return false;
+            }
         }
 
         /// <summary>

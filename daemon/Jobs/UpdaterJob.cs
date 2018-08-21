@@ -117,18 +117,7 @@ namespace Spectero.daemon.Jobs
         /// Determine if the job is enablked.
         /// </summary>
         /// <returns></returns>
-        public bool IsEnabled()
-        {
-            if (AppConfig.isWindows)
-            {
-                _logger.LogWarning("DAEM-206: auto-update support for Windows is not fully functional.");
-                return false;
-            }
-            else
-            {
-                return _config.Updater.Enabled;
-            }
-        }
+        public bool IsEnabled() => _config.Updater.Enabled;
 
         /// <summary>
         /// Routine of the job.
@@ -205,6 +194,9 @@ namespace Spectero.daemon.Jobs
                 // Extract
                 _logger.LogInformation("UJ: Extracting {0} to {1}", targetArchive, targetDirectory);
                 ZipFile.ExtractToDirectory(targetArchive, targetDirectory);
+
+                // Delete the archive after extraction.
+                File.Delete(targetArchive);
 
                 // Copy the databases
                 foreach (string databasePath in GetDatabasePaths())
