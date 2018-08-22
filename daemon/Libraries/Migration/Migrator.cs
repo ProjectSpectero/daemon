@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Options;
+using ServiceStack.OrmLite;
 using Spectero.daemon.Jobs;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
@@ -15,7 +17,8 @@ namespace Spectero.daemon.Libraries.Migration
         private readonly AppConfig _config;
         private readonly IDbConnection _db;
         private readonly Type _modelType;
-
+        
+        
         /// <summary>
         /// Constructor
         /// Will inherit the database connector
@@ -58,7 +61,19 @@ namespace Spectero.daemon.Libraries.Migration
             var backupDatabasePath = Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, GenerateDatabaseBackupFilename());
             File.Copy(currentDatabasePath, backupDatabasePath);
             
+            // Load the table data into memory
+            var userModel = _db.Select<User>();
             
+            // Delete the old table and re-create the new one.
+            _db.DropAndCreateTable<User>();
+            
+            // Add the data back to the model.
+            foreach (User item in userModel)
+            {
+                //TODO: Perform reflection to insert the old data back into the new table with the proper columns.
+            }
+                
+
             /*
              * Explanation:
              * We need to take a backup of the current db.sqlite before we can proceed further. Name it like <db.sqlite.version.timestamp>.
