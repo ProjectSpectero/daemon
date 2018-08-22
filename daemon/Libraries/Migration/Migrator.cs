@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.Extensions.Options;
 using ServiceStack.OrmLite;
 using Spectero.daemon.Jobs;
@@ -17,8 +18,8 @@ namespace Spectero.daemon.Libraries.Migration
         private readonly AppConfig _config;
         private readonly IDbConnection _db;
         private readonly Type _modelType;
-        
-        
+
+
         /// <summary>
         /// Constructor
         /// Will inherit the database connector
@@ -60,19 +61,34 @@ namespace Spectero.daemon.Libraries.Migration
             var currentDatabasePath = Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, "db.sqlite");
             var backupDatabasePath = Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, GenerateDatabaseBackupFilename());
             File.Copy(currentDatabasePath, backupDatabasePath);
-            
+
             // Load the table data into memory
             var userModel = _db.Select<User>();
-            
+
             // Delete the old table and re-create the new one.
             _db.DropAndCreateTable<User>();
-            
+
             // Add the data back to the model.
-            foreach (User item in userModel)
+            foreach (var item in userModel)
             {
-                //TODO: Perform reflection to insert the old data back into the new table with the proper columns.
+                var properties = typeof(User).GetProperties();
+                foreach (var property in properties)
+                {
+                    // Generaete a new instance of the user.
+                    var newUser = new User();
+
+                    // Generate property information.
+                    var oldPropertyInfo = item.GetType().GetProperty(property.Name);
+                    var newPropertyInfo = newUser.GetType().GetProperty(property.Name);
+
+                    // Set the new property
+                    newPropertyInfo.SetValue(newUser, oldPropertyInfo.GetValue(item, null) ?? null, null);
+
+                    // Save to database
+                    _db.Insert(newUser);
+                }
             }
-                
+
 
             /*
              * Explanation:
