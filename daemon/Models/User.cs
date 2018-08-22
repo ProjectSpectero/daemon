@@ -57,22 +57,30 @@ namespace Spectero.daemon.Models
             ConnectToSSHTunnel
         }
 
-        [JsonConverter(typeof(StringEnumConverter))]
-        public SourceTypes Source { get; set; }
-
         [ServiceStack.DataAnnotations.Required]
         [ServiceStack.DataAnnotations.StringLength(50)]
         [Index(Unique = true)]
         public string AuthKey { get; set; }
+        
+        [JsonConverter(typeof(StringEnumConverter))]
+        public SourceTypes Source { get; set; }
 
         [JsonProperty("roles", ItemConverterType = typeof(StringEnumConverter))]
         public List<Role> Roles { get; set; }
 
-
-        [ServiceStack.DataAnnotations.Required]
-        [JsonIgnore] // Prevent JSON serialization
-        public string Password { get; set; }
-
+        // Certificate Information
+        public string Cert { get; set; }
+        public string CertKey { get; set; }
+        
+        [Ignore]
+        public bool? EncryptCertificate { get; set; }
+        
+        public long EngagementId { get; set; }
+        
+        // User Information
+        public string FullName { get; set; }
+        public string EmailAddress { get; set; }
+        
         [Ignore]
         private string RawPassword { get; set; }
 
@@ -89,30 +97,31 @@ namespace Spectero.daemon.Models
                 }
             }  
         }
-
-        public string Cert { get; set; }
-
-        public string CertKey { get; set; }
-
-        [Ignore]
-        public bool? EncryptCertificate { get; set; }
-
-        public long EngagementId { get; set; }
-
-        public string FullName { get; set; }
-        public string EmailAddress { get; set; }
-
+        
+        [ServiceStack.DataAnnotations.Required]
+        [JsonIgnore] // Prevent JSON serialization
+        public string Password { get; set; }
+        
         [DataType(DataType.Date)]
         public DateTime LastLoginDate { get; set; }
 
         [DataType(DataType.Date)]
         public DateTime CloudSyncDate { get; set; }
 
+        /// <summary>
+        /// Convert the user data to a interpolated string.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
-            return "Id -> " + Id + ", AuthKey -> " + AuthKey + ", Password -> " + Password + ", Created At -> " + CreatedDate;
+            return $"Id -> {Id}, Authkey -> {AuthKey}, Password -> {Password}, Created At -> {CreatedDate}";
         }
 
+        /// <summary>
+        /// Getter to determine if the user has a specified role
+        /// </summary>
+        /// <param name="role"></param>
+        /// <returns></returns>
         internal bool HasRole(Role role)
         {
             if (Roles == null || Roles.Count == 0)
@@ -121,9 +130,12 @@ namespace Spectero.daemon.Models
             return Roles.Contains(role);
         }
 
-        /*
-         * Poor man's RBAC, our needs are not big enough to use a proper roles framework.
-         */
+        /// <summary>
+        /// Determines if a user can perform an action.
+        /// Poor man's RBAC, our needs are not big enough to use a proper roles framework.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
         internal bool Can(Action action)
         {
             if (HasRole(Role.SuperAdmin))
@@ -151,10 +163,13 @@ namespace Spectero.daemon.Models
             return false;
         }
 
-        /*
-         * Built in object validator
-         */
 
+        /// <summary>
+        /// Built in model object validator for posting information.
+        /// </summary>
+        /// <param name="errors"></param>
+        /// <param name="operation"></param>
+        /// <returns></returns>
         public override bool Validate(out ImmutableArray<string> errors, CRUDOperation operation = CRUDOperation.Create)
         {
             IValitResult result = ValitRules<User>
