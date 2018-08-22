@@ -48,6 +48,7 @@ using Spectero.daemon.Libraries.Core.LifetimeHandler;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
+using Spectero.daemon.Libraries.Migration;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Symlink;
 using Spectero.daemon.Migrations;
@@ -160,6 +161,8 @@ namespace Spectero.daemon
             
             services.AddSingleton<IProcessRunner, ProcessRunner>();
 
+            services.AddSingleton<IMigrator, Migrator>();
+            
             services.AddSingleton<IJob, FetchCloudEngagementsJob>();
             
             services.AddSingleton<IJob, DatabaseBackupJob>();

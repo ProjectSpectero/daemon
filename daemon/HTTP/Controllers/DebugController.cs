@@ -14,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -21,6 +22,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RazorLight;
@@ -32,7 +34,9 @@ using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
+using Spectero.daemon.Libraries.Migration;
 using Spectero.daemon.Libraries.Services;
+using Migrator = Spectero.daemon.Libraries.Migration.Migrator;
 
 namespace Spectero.daemon.HTTP.Controllers
 {
@@ -41,7 +45,6 @@ namespace Spectero.daemon.HTTP.Controllers
     [Route("v1/[controller]")]
     public class DebugController : BaseController
     {
-
         private readonly IAuthenticator _authenticator;
         private readonly IDbConnection _db;
         private readonly IEnumerable<IPNetwork> _localNetworks = Utility.GetLocalRanges();
@@ -50,60 +53,69 @@ namespace Spectero.daemon.HTTP.Controllers
         private readonly IRazorLightEngine _engine;
         private readonly IIdentityProvider _identity;
         private readonly IProcessRunner _processRunner;
+        private readonly IMigrator _migrator;
 
         public DebugController(IOptionsSnapshot<AppConfig> appConfig, ILogger<DebugController> logger,
             IDbConnection db, IServiceManager serviceManager,
             IServiceConfigManager serviceConfigManager, IStatistician statistician,
             IIdentityProvider identityProvider, IRazorLightEngine engine,
-            IProcessRunner processRunner)
+            IProcessRunner processRunner, IMigrator migrator)
             : base(appConfig, logger, db)
         {
             _engine = engine;
             _identity = identityProvider;
             _serviceConfigManager = serviceConfigManager;
             _processRunner = processRunner;
-
+            _migrator = migrator;
         }
-        
-        
+
+
         [HttpGet("", Name = "Index")]
         public async Task<IActionResult> Index()
         {
             return Ok(_response);
         }
-        
+
         [HttpGet("errors/{type}", Name = "DebugErrorMarshaling")]
         public async Task<IActionResult> DebugErrors(string type)
         {
             switch (type)
             {
-                    case "internal":
-                        throw new InternalError("Testing internal errors...");
-                    
-                    case "disclosable":
-                        throw new DisclosableError();
-                    
-                    case "validation":
-                        throw new ValidationError();
-                    
-                    default:
-                        throw new DisclosableError();
-            }    
-       }
+                case "internal":
+                    throw new InternalError("Testing internal errors...");
+
+                case "disclosable":
+                    throw new DisclosableError();
+
+                case "validation":
+                    throw new ValidationError();
+
+                default:
+                    throw new DisclosableError();
+            }
+        }
 
         [HttpGet("network/{type?}", Name = "DebugNetworkDiscovery")]
         public async Task<IActionResult> DebugNetworkDiscovery(string type = "")
         {
             switch (type)
             {
-                    case "ips":
-                        _response.Result = Utility.GetLocalIPs().Select(x => x.ToString()).ToList();
-                        break;
-                        
-                    default:
-                        _response.Result = Utility.GetLocalRanges(Logger).Select(x => x.ToString()).ToList();
-                        break;
+                case "ips":
+                    _response.Result = Utility.GetLocalIPs().Select(x => x.ToString()).ToList();
+                    break;
+
+                default:
+                    _response.Result = Utility.GetLocalRanges(Logger).Select(x => x.ToString()).ToList();
+                    break;
             }
+
+            return Ok(_response);
+        }
+
+        [HttpGet("database/migrate", Name = "DatabaseMigrator")]
+        public async Task<IActionResult> DatabaseMigrator()
+        {
+            _response.Result = _migrator.Migrate();
 
             return Ok(_response);
         }
