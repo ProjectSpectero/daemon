@@ -125,7 +125,8 @@ namespace Spectero.daemon
 
             services.AddSingleton<ICryptoService, CryptoService>();
 
-            services.AddSingleton<IMigration, Initialize>();
+            // DISABLE THIS FOR TESTING OF FLUENTMIGRATOR
+            // services.AddSingleton<IMigration, Initialize>();
 
             services.AddSingleton<IServiceConfigManager, ServiceConfigManager>();
 

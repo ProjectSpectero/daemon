@@ -2,7 +2,7 @@
 
 namespace Spectero.daemon.Migrations
 {
-    [Migration(20180822203601)]
+    [Migration(20180822203602)]
     public class CreateConfigurationTable : Migration
     {
         public override void Up()
