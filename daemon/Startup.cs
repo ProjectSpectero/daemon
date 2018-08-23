@@ -14,10 +14,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
 using System;
 using System.Data;
 using System.IO;
 using System.Net.Http;
+using FluentMigrator.Runner;
 using Hangfire;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -89,19 +91,25 @@ namespace Spectero.daemon
         public void ConfigureServices(IServiceCollection services)
         {
             // Don't build a premature service provider from IServiceCollection, it only includes the services registered when the provider is built.
-                
+
             // Root app config, this does not seem to work with complex JSON objects
             var appConfig = Configuration.GetSection("Daemon");
             services.Configure<AppConfig>(appConfig);
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-            services.AddSingleton(c =>
-                InitializeDbConnection(appConfig["DatabaseDir"], SqliteDialect.Provider)
-            );
-
-            services.AddSingleton<IStatistician, Statistician>();
+            var databaseContext = InitializeDbConnection(appConfig["DatabaseDir"], SqliteDialect.Provider);
             
+            services.AddFluentMigratorCore().ConfigureRunner(
+                rb => rb
+                    .AddSQLite()
+                    
+                )
+
+            services.AddSingleton(c => databaseContext);
+            
+            services.AddSingleton<IStatistician, Statistician>();
+
             services.AddSingleton<IStatistician, Statistician>();
 
             services.AddSingleton<IAuthenticator, Authenticator>();
@@ -122,7 +130,7 @@ namespace Spectero.daemon
                 new EngineFactory()
                     .ForFileSystem(Path.Combine(CurrentDirectory, appConfig["TemplateDirectory"]))
             );
-            
+
             // HTTP Client for Job.
             services.AddSingleton<HttpClient, HttpClient>();
 
@@ -158,15 +166,15 @@ namespace Spectero.daemon
             services.AddMemoryCache();
 
             services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
-            
+
             services.AddSingleton<IProcessRunner, ProcessRunner>();
 
             services.AddSingleton<IMigrator, Migrator>();
-            
+
             services.AddSingleton<IJob, FetchCloudEngagementsJob>();
-            
+
             services.AddSingleton<IJob, DatabaseBackupJob>();
-            
+
             services.AddSingleton<IJob, UpdaterJob>();
 
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
@@ -186,7 +194,7 @@ namespace Spectero.daemon
             services.AddHangfire(config =>
             {
                 var connectionString = $"Data Source={appConfig["DatabaseDir"]}/jobs.sqlite;";
-                
+
                 config.UseSQLiteStorage(connectionString, new SQLiteStorageOptions());
                 config.UseNLogLogProvider();
                 // Please ENSURE that this is the VERY last call (to add services) in this method body. 
@@ -206,9 +214,9 @@ namespace Spectero.daemon
             // Create the filesystem marker that says Startup is now underway.
             // This is removed in LifetimeHandler once init finishes.
             // And yeah, the logging context is NOT yet available -_-
-            if (! Utility.ManageStartupMarker())
+            if (!Utility.ManageStartupMarker())
                 Console.WriteLine($"ERROR: The startup marker ({Utility.GetCurrentStartupMarker()}) could NOT be created.");
-            
+
             var appConfig = configMonitor.CurrentValue;
 
             if (env.IsDevelopment())
