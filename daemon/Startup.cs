@@ -100,7 +100,13 @@ namespace Spectero.daemon
 
             var databaseContext = InitializeDbConnection(appConfig["DatabaseDir"], SqliteDialect.Provider);
 
-            // FluentMigrator
+            /*
+             * FluentMigrator Explanation
+             *
+             * For the following: .ScanIn(typeof(CreateUserTable).Assembly).For.Migrations()
+             * line, we are finding the first migration with the earliest timestamp and incrementing through each
+             * migration by a form of reflection.
+             */
             services.AddFluentMigratorCore().ConfigureRunner(
                     rb => rb
                         .AddSQLite()
@@ -110,9 +116,11 @@ namespace Spectero.daemon
                         .ScanIn(typeof(CreateUserTable).Assembly).For.Migrations()
                 )
                 .BuildServiceProvider(false);
+            
+            // It requires an ServiceProvider instance as well.
             UpdateDatabase(services.BuildServiceProvider());
 
-            // ServiceStack.ORMLite Construction
+            // Continue with ORMLite.
             services.AddSingleton(c => databaseContext);
 
             services.AddSingleton<IStatistician, Statistician>();
