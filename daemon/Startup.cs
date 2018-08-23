@@ -99,15 +99,22 @@ namespace Spectero.daemon
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             var databaseContext = InitializeDbConnection(appConfig["DatabaseDir"], SqliteDialect.Provider);
-            
-            services.AddFluentMigratorCore().ConfigureRunner(
-                rb => rb
-                    .AddSQLite()
-                    
-                )
 
+            // FluentMigrator
+            services.AddFluentMigratorCore().ConfigureRunner(
+                    rb => rb
+                        .AddSQLite()
+                        .WithGlobalConnectionString(
+                            string.Format("Data Source={0}", Path.Combine(Program.GetAssemblyLocation(), appConfig["DatabaseDir"], "db.sqlite"))
+                        )
+                        .ScanIn(typeof(CreateUserTable).Assembly).For.Migrations()
+                )
+                .BuildServiceProvider(false);
+            UpdateDatabase(services.BuildServiceProvider());
+
+            // ServiceStack.ORMLite Construction
             services.AddSingleton(c => databaseContext);
-            
+
             services.AddSingleton<IStatistician, Statistician>();
 
             services.AddSingleton<IStatistician, Statistician>();
@@ -323,6 +330,18 @@ namespace Spectero.daemon
             }
 
             return databaseContext;
+        }
+
+        /// <summary>
+        /// Update the database
+        /// </summary>
+        private static void UpdateDatabase(IServiceProvider serviceProvider)
+        {
+            // Instantiate the runner
+            var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
+
+            // Execute the migrations
+            runner.MigrateUp();
         }
     }
 }
