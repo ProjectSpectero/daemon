@@ -27,8 +27,7 @@ namespace Spectero.daemon.Seeds
         private readonly ILogger<FirstInitSeed> _logger;
         private readonly AppConfig _config;
         private readonly ICryptoService _cryptoService;
-        private readonly IIdentityProvider _identityProvider;
-        
+
         public FirstInitSeed(IServiceProvider serviceProvider)
         {
             _db = serviceProvider.GetRequiredService<IDbConnection>();
@@ -36,8 +35,6 @@ namespace Spectero.daemon.Seeds
 
             _config = serviceProvider.GetRequiredService<IOptionsMonitor<AppConfig>>().CurrentValue;
             _cryptoService = serviceProvider.GetRequiredService<ICryptoService>();
-
-            _identityProvider = serviceProvider.GetRequiredService<IIdentityProvider>();
         }
         
         public override void Up()
