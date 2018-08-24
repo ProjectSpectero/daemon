@@ -17,11 +17,7 @@
 
 using System;
 using System.IO;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.InteropServices;
 using Medallion.Shell;
-using ServiceStack;
-using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 
 namespace Spectero.daemon.Libraries.Symlink

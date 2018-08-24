@@ -11,14 +11,20 @@ namespace Spectero.daemon.Libraries.Seeder
     {
         private readonly IDbConnection _db;
         private readonly ILogger<SeedRunner> _logger;
+        private readonly IServiceProvider _serviceProvider;
         
         private readonly Type _seederType;
         
-        public SeedRunner(IDbConnection db, ILogger<SeedRunner> logger)
+        public SeedRunner(IDbConnection db, ILogger<SeedRunner> logger, IServiceProvider serviceProvider)
         {
             _db = db;
             _logger = logger;
+            _serviceProvider = serviceProvider;
+            
             _seederType = typeof(BaseSeed);
+
+            // This creates the tracker table if it doesn't exist, independent of the migrations framework.
+            _db.CreateTableIfNotExists<Models.Seeder>();
         }
 
         public bool Run()
@@ -33,7 +39,7 @@ namespace Spectero.daemon.Libraries.Seeder
             {
                 _logger.LogDebug($"Checking if {seeder} needs to be run.");
                 
-                var init = (ISeed) Activator.CreateInstance(seeder, _db, _logger);
+                var init = (ISeed) Activator.CreateInstance(seeder, _serviceProvider);
 
                 var existingRunEntry = _db.Select<Models.Seeder>(x => x.Description == seeder.ToString()
                                                                       && x.Version == init.GetVersion()).FirstOrDefault();
@@ -44,11 +50,12 @@ namespace Spectero.daemon.Libraries.Seeder
                     continue;
                 }
 
-                _logger.LogDebug($"Run validated, attempting to call Up() on {seeder}");
+                _logger.LogDebug($"Run validated for {seeder}, attempting to call Up().");
                 
                 // Prob should wrap this in a try/catch
                 init.Up();
 
+                _logger.LogDebug($"Run finished for {seeder}, adding tracking entry into the DB.");
                 _db.Insert(new Models.Seeder
                 {
                     Description = seeder.ToString(),

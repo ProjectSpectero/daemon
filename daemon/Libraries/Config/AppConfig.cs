@@ -91,6 +91,8 @@ namespace Spectero.daemon.Libraries.Config
         public static string CloudConnectDefaultAuthKey => "cloud";
         public static string version => "0.2-alpha";
 
+        public static string FirstRunConfigName => ".firstrun";
+
         /// <summary>
         /// Simple function to detect the presence of OpenVZ hosts.
         /// </summary>

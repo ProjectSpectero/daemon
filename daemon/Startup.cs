@@ -99,8 +99,6 @@ namespace Spectero.daemon
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-            var databaseContext = InitializeDbConnection(appConfig["DatabaseDir"], SqliteDialect.Provider);
-
             /*
              * FluentMigrator Explanation
              *
@@ -109,17 +107,17 @@ namespace Spectero.daemon
              * migration by a form of reflection.
              */
             services.AddFluentMigratorCore().ConfigureRunner(
-                    rb => rb
-                        .AddSQLite()
-                        .WithGlobalConnectionString(
-                            string.Format("Data Source={0}", Path.Combine(Program.GetAssemblyLocation(), appConfig["DatabaseDir"], "db.sqlite"))
-                        )
-                        .ScanIn(typeof(CreateUserTable).Assembly).For.Migrations()
-                )
-                .BuildServiceProvider(false);
+                rb => rb
+                    .AddSQLite()
+                    .WithGlobalConnectionString(
+                        string.Format("Data Source={0}",
+                            Path.Combine(Program.GetAssemblyLocation(), appConfig["DatabaseDir"], "db.sqlite"))
+                    )
+                    .ScanIn(typeof(CreateUserTable).Assembly).For.Migrations()
+            );
            
-            // Continue with ORMLite.
-            services.AddSingleton(c => databaseContext);
+            // Add IDbConnection via ORMLite to the ServiceCollection
+            services.AddSingleton(c => InitializeDbConnection(appConfig["DatabaseDir"], SqliteDialect.Provider));
             
             // This depends on ORMLite, you gotta register it after.
             services.AddSingleton<ISeedRunner, SeedRunner>();
@@ -265,9 +263,8 @@ namespace Spectero.daemon
 
             migrationRunner.MigrateUp();
             
-            // TODO: Uncomment this once you have the seed stuff figured out.
-            // This always has to be after the migration's run.
-            // seedRunner.Run();
+            // This always has to be after the migrations run.
+            seedRunner.Run();
             
             autoStarter.Startup();
 

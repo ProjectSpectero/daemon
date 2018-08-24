@@ -22,7 +22,6 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RazorLight;
@@ -36,7 +35,6 @@ using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Migration;
 using Spectero.daemon.Libraries.Services;
-using Migrator = Spectero.daemon.Libraries.Migration.Migrator;
 
 namespace Spectero.daemon.HTTP.Controllers
 {
