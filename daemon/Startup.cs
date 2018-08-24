@@ -51,6 +51,7 @@ using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Migration;
+using Spectero.daemon.Libraries.Seeder;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Symlink;
 using Spectero.daemon.Migrations;
@@ -118,10 +119,13 @@ namespace Spectero.daemon
                 .BuildServiceProvider(false);
             
             // It requires an ServiceProvider instance as well.
-            UpdateDatabase(services.BuildServiceProvider());
-
+            MigrateDatabase(services.BuildServiceProvider());
+           
             // Continue with ORMLite.
             services.AddSingleton(c => databaseContext);
+            
+            // This depends on ORMLite, you gotta register it after.
+            services.AddSingleton<ISeedRunner, SeedRunner>();
 
             services.AddSingleton<IStatistician, Statistician>();
 
@@ -204,7 +208,6 @@ namespace Spectero.daemon
             services.AddSingleton<ICloudHandler, CloudHandler>();
 
             services.AddMvc();
-
 
             var builtProvider = services.BuildServiceProvider();
             services.AddHangfire(config =>
@@ -344,13 +347,20 @@ namespace Spectero.daemon
         /// <summary>
         /// Update the database
         /// </summary>
-        private static void UpdateDatabase(IServiceProvider serviceProvider)
+        private static void MigrateDatabase(IServiceProvider serviceProvider)
         {
             // Instantiate the runner
             var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
 
             // Execute the migrations
             runner.MigrateUp();
+        }
+
+        private static void SeedDatabase(IServiceProvider serviceProvider)
+        {
+            var runner = serviceProvider.GetRequiredService<ISeedRunner>();
+
+            runner.Run();
         }
     }
 }
