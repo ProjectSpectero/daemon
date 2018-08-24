@@ -5,7 +5,7 @@ namespace Spectero.daemon.Models
     public class Seeder : BaseModel
     {
         public string Version { get; set; }
-        public DateTime AppliedOn = DateTime.UtcNow;
+        public DateTime AppliedOn { get; set; }
         public string Description { get; set; }
     }
 }

@@ -59,7 +59,8 @@ namespace Spectero.daemon.Libraries.Seeder
                 _db.Insert(new Models.Seeder
                 {
                     Description = seeder.ToString(),
-                    Version = init.GetVersion()
+                    Version = init.GetVersion(),
+                    AppliedOn = DateTime.UtcNow
                 });
             }
 

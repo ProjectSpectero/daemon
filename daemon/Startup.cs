@@ -221,10 +221,9 @@ namespace Spectero.daemon
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IOptionsMonitor<AppConfig> configMonitor, IApplicationBuilder app,
             IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IMigrationRunner migrationRunner, IAutoStarter autoStarter,
+            IAutoStarter autoStarter, ISeedRunner seedRunner,
             IServiceProvider serviceProvider, IApplicationLifetime applicationLifetime,
-            ILifetimeHandler lifetimeHandler,
-            ISeedRunner seedRunner)
+            ILifetimeHandler lifetimeHandler)
         {
             // Create the filesystem marker that says Startup is now underway.
             // This is removed in LifetimeHandler once init finishes.
@@ -261,7 +260,8 @@ namespace Spectero.daemon
             loggerFactory.ConfigureNLog(appConfig.LoggingConfig);
             app.AddNLogWeb();
 
-            migrationRunner.MigrateUp();
+            // Execute the migrations in a separate scope to ensure their disposal.
+            serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateUp();
             
             // This always has to be after the migrations run.
             seedRunner.Run();
