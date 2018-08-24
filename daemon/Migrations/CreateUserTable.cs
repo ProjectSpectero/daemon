@@ -19,7 +19,7 @@ namespace Spectero.daemon.Migrations
                 .WithColumn("FullName").AsString().Nullable()
                 .WithColumn("EmailAddress").AsString().Nullable()
                 .WithColumn("LastLoginDate").AsString()
-                .WithColumn("CloudSyncState").AsString()
+                .WithColumn("CloudSyncDate").AsString()
                 .WithColumn("CreatedDate").AsString()
                 .WithColumn("UpdatedDate").AsString();
         }
