@@ -48,6 +48,12 @@ namespace Spectero.daemon.Libraries.Seeder
                 
                 // Prob should wrap this in a try/catch
                 init.Up();
+
+                _db.Insert(new Models.Seeder
+                {
+                    Description = seeder.ToString(),
+                    Version = init.GetVersion()
+                });
             }
 
             return true;

@@ -8,14 +8,14 @@
     "0.1-stable": {
       "download": "https://c.spectero.com/master/0.1-alpha.zip",
       "altDownload": null,
-      "changelog": "https://spectero.atlassian.net/wiki/spaces/docs/pages/4325380/0.1-alpha",
+      "changelog": "https://spectero.atlassian.net/wiki/spaces/docs/pages/4325380/0.1",
       "requiredDotnetCoreVersion": "2.1.2",
       "requiredInstallerRevision": 1
     },
     "0.2-alpha": {
       "download": "https://c.spectero.com/staging/0.2-alpha.zip",
       "altDownload": null,
-      "changelog": "https://spectero.atlassian.net/wiki/spaces/docs/pages/4325380/0.1-alpha",
+      "changelog": "https://spectero.atlassian.net/wiki/spaces/docs/pages/10551297/0.2",
       "requiredDotnetCoreVersion": "2.1.2",
       "requiredInstallerRevision": 1
     }
