@@ -314,7 +314,7 @@ namespace Spectero.daemon.Jobs
             }
 
             // Compare the MINOR level of semantic versioning.
-            if (int.Parse(splitRemote[1]) > int.Parse(splitRunning[0]))
+            if (int.Parse(splitRemote[1]) > int.Parse(splitRunning[1]))
             {
                 _logger.LogInformation("There is a new minor release available for the Spectero Daemon.");
                 return true;
