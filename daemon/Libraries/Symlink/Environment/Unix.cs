@@ -18,7 +18,6 @@
 using System;
 using Medallion.Shell;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
-using Spectero.daemon.Libraries.Errors;
 
 namespace Spectero.daemon.Libraries.Symlink
 {

@@ -83,11 +83,11 @@ namespace Spectero.daemon.Migrations
                     Value = instanceId
                 });
                 
-                // Schema version
+                // Schema Version
                 _db.Insert(new Configuration
                 {
                     Key = ConfigKeys.SchemaVersion,
-                    Value = AppConfig.version
+                    Value = AppConfig.Version
                 });
 
                 // Cloud Connectivity

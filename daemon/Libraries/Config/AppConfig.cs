@@ -30,7 +30,7 @@ namespace Spectero.daemon.Libraries.Config
          * Used by the updating job to explictly check if the job is already running.
          * Will prevent the job from running multiple times.
          */
-        public static bool updateDeadlock = false;
+        public static bool UpdateDeadlock = false;
 
         public string BlockedRedirectUri { get; set; }
         public string DatabaseDir { get; set; }
@@ -67,8 +67,13 @@ namespace Spectero.daemon.Libraries.Config
         public UpdaterConfiguration Updater { get; set; }
 
         // Versoning Information.
-        public static string ReleaseChannel => version.Split("-")[1];
-        public static double NakedVersion => double.Parse(version.Split("-")[0]);
+        public static string Version => "0.2.0";
+        
+        public static int MajorVersion => int.Parse(Version.Split(".")[0]); 
+        public static int MinorVersion => int.Parse(Version.Split(".")[1]); 
+        public static int PatchVersion => int.Parse(Version.Split(".")[2]); 
+        
+        public static string ReleaseChannel => "CHANNEL_PLACEHOLDER";
 
         public static string ApiBaseUri
         {
@@ -89,7 +94,8 @@ namespace Spectero.daemon.Libraries.Config
         }
 
         public static string CloudConnectDefaultAuthKey => "cloud";
-        public static string version => "0.2-alpha";
+        
+
 
         /// <summary>
         /// Simple function to detect the presence of OpenVZ hosts.

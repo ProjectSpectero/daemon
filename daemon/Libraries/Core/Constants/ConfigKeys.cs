@@ -42,7 +42,7 @@ namespace Spectero.daemon.Libraries.Core.Constants
         public const string CloudConnectNodeKey = "cloud.connect.node-key";
         
         // Core Schema
-        public const string SchemaVersion = "schema.version";
+        public const string SchemaVersion = "schema.Version";
 
     }
 }

@@ -99,7 +99,7 @@ namespace Spectero.daemon.Libraries.CloudConnect
 
             // This is data about *THIS* specific system being contributed to the cloud/CRM.
             body.SystemData = _apm.GetAllDetails();
-            body.Version = AppConfig.version;
+            body.Version = AppConfig.Version;
 
             // Ok, we got the user created. Everything is ready, let's send off the request.
             var serializedBody = JsonConvert.SerializeObject(body);

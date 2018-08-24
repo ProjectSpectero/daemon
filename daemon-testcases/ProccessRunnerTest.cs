@@ -17,10 +17,8 @@
 
 using System.Threading;
 using Medallion.Shell;
-using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using NUnit.Framework;
 using Spectero.daemon.Libraries.Config;
