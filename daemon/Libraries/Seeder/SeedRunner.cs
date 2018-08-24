@@ -41,7 +41,7 @@ namespace Spectero.daemon.Libraries.Seeder
                 if (existingRunEntry != null)
                 {
                     _logger.LogDebug($"Existing entry found for {seeder}, it was applied on {existingRunEntry.AppliedOn} with version {existingRunEntry.Version}");
-                    continue;;
+                    continue;
                 }
 
                 _logger.LogDebug($"Run validated, attempting to call Up() on {seeder}");
