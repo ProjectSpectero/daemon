@@ -117,9 +117,6 @@ namespace Spectero.daemon
                         .ScanIn(typeof(CreateUserTable).Assembly).For.Migrations()
                 )
                 .BuildServiceProvider(false);
-            
-            // It requires an ServiceProvider instance as well.
-            MigrateDatabase(services.BuildServiceProvider());
            
             // Continue with ORMLite.
             services.AddSingleton(c => databaseContext);
@@ -226,9 +223,10 @@ namespace Spectero.daemon
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IOptionsMonitor<AppConfig> configMonitor, IApplicationBuilder app,
             IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IMigration migration, IAutoStarter autoStarter,
+            IMigrationRunner migrationRunner, IAutoStarter autoStarter,
             IServiceProvider serviceProvider, IApplicationLifetime applicationLifetime,
-            ILifetimeHandler lifetimeHandler)
+            ILifetimeHandler lifetimeHandler,
+            ISeedRunner seedRunner)
         {
             // Create the filesystem marker that says Startup is now underway.
             // This is removed in LifetimeHandler once init finishes.
@@ -265,7 +263,12 @@ namespace Spectero.daemon
             loggerFactory.ConfigureNLog(appConfig.LoggingConfig);
             app.AddNLogWeb();
 
-            migration.Up();
+            migrationRunner.MigrateUp();
+            
+            // TODO: Uncomment this once you have the seed stuff figured out.
+            // This always has to be after the migration's run.
+            // seedRunner.Run();
+            
             autoStarter.Startup();
 
             foreach (var implementer in serviceProvider.GetServices<IJob>())
@@ -342,25 +345,6 @@ namespace Spectero.daemon
             }
 
             return databaseContext;
-        }
-
-        /// <summary>
-        /// Update the database
-        /// </summary>
-        private static void MigrateDatabase(IServiceProvider serviceProvider)
-        {
-            // Instantiate the runner
-            var runner = serviceProvider.GetRequiredService<IMigrationRunner>();
-
-            // Execute the migrations
-            runner.MigrateUp();
-        }
-
-        private static void SeedDatabase(IServiceProvider serviceProvider)
-        {
-            var runner = serviceProvider.GetRequiredService<ISeedRunner>();
-
-            runner.Run();
         }
     }
 }
