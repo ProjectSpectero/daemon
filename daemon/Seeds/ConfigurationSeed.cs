@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -15,40 +12,30 @@ using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
-using Spectero.daemon.Libraries.Core.Identity;
-using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Seeds
 {
-    public class FirstInitSeed : BaseSeed
+    public class ConfigurationSeed : BaseSeed
     {
         private readonly IDbConnection _db;
         private readonly ILogger<FirstInitSeed> _logger;
         private readonly AppConfig _config;
         private readonly ICryptoService _cryptoService;
 
-        public FirstInitSeed(IServiceProvider serviceProvider)
+        public ConfigurationSeed(IServiceProvider serviceProvider)
         {
             _db = serviceProvider.GetRequiredService<IDbConnection>();
             _logger = serviceProvider.GetRequiredService<ILogger<FirstInitSeed>>();
             _config = serviceProvider.GetRequiredService<IOptionsMonitor<AppConfig>>().CurrentValue;
             _cryptoService = serviceProvider.GetRequiredService<ICryptoService>();
         }
-        
+
         public override void Up()
         {
             var instanceId = Guid.NewGuid().ToString();
-            long viablePasswordCost = _config.PasswordCostLowerThreshold;
-
-            var specteroCertKey = "";
-            X509Certificate2 specteroCertificate = null;
-            X509Certificate2 ca = null;
-
             var localIPs = Utility.GetLocalIPs(_config.IgnoreRFC1918);
-            if (! _db.TableExists<Configuration>())           
-                throw new InternalError("Required table 'Configuration' does not exist, did the migrations run?");
-                
+
             _logger.LogDebug("Firstrun: Seeding default configuration values.");
 
             // Identity
@@ -57,7 +44,7 @@ namespace Spectero.daemon.Seeds
                 Key = ConfigKeys.SystemIdentity,
                 Value = instanceId
             });
-            
+
             // Schema version
             _db.Insert(new Configuration
             {
@@ -72,25 +59,26 @@ namespace Spectero.daemon.Seeds
                 Value = false.ToString()
             });
 
-            // HTTP proxy
+            // HTTP Proxy Configuration
             var httpSkeleton = Defaults.HTTP.Value;
-            var proposedListeners = localIPs.Select(ip => Tuple.Create(ip.ToString(), 10240))
-                .ToList();
-            if (proposedListeners.Count > 0)
-                httpSkeleton.listeners = proposedListeners;
-
+            var proposedListeners = localIPs.Select(ip => Tuple.Create(ip.ToString(), 10240)).ToList();
+            if (proposedListeners.Count > 0) httpSkeleton.listeners = proposedListeners;
             _db.Insert(new Configuration
             {
                 Key = ConfigKeys.HttpConfig,
                 Value = JsonConvert.SerializeObject(httpSkeleton)
             });
 
-            // Password Hashing
+            // Determine the password hashing cost.
             _logger.LogDebug("Firstrun: Calculating optimal password hashing cost.");
-            viablePasswordCost = AuthUtils.GenerateViableCost(_config.PasswordCostCalculationTestTarget,
+            var viablePasswordCost = AuthUtils.GenerateViableCost(_config.PasswordCostCalculationTestTarget,
                 _config.PasswordCostCalculationIterations,
                 _config.PasswordCostTimeThreshold, _config.PasswordCostLowerThreshold);
+            
+            // Tell the console we have a value.
             _logger.LogDebug($"Firstrun: Determined {viablePasswordCost} to be the optimal password hashing cost.");
+            
+            // Insert Password information into database.
             _db.Insert(new Configuration
             {
                 Key = ConfigKeys.PasswordHashingCost,
@@ -105,24 +93,25 @@ namespace Spectero.daemon.Seeds
                 Value = PasswordUtils.GeneratePassword(48, 8)
             });
 
-            // Crypto
-            // 48 characters len with 12 non-alpha-num characters
-            // Ought to be good enough for everyone. -- The IPv4 working group, 1996
+            /*
+             * Cryptography
+             * Create Server and Certificate Authority Passwords. 
+             */
             var caPassword = PasswordUtils.GeneratePassword(48, 8);
             var serverPassword = PasswordUtils.GeneratePassword(48, 8);
-            
-            ca = _cryptoService.CreateCertificateAuthorityCertificate($"CN={instanceId}.ca.instance.spectero.io",
-                null, null, caPassword);
-            
-            var serverCertificate = _cryptoService.IssueCertificate($"CN={instanceId}.instance.spectero.io", ca, null, 
-                new[] { KeyPurposeID.AnyExtendedKeyUsage, KeyPurposeID.IdKPServerAuth }, serverPassword,
-                new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment ));
 
-            specteroCertKey = PasswordUtils.GeneratePassword(48, 8);
-            specteroCertificate = _cryptoService.IssueCertificate(
-                "CN=" + "spectero", ca, null,
-                new[] {KeyPurposeID.IdKPClientAuth}, specteroCertKey);
-                
+            // Generate Certificate Authory
+            var ca = _cryptoService.CreateCertificateAuthorityCertificate($"CN={instanceId}.ca.instance.spectero.io", null, null, caPassword);
+
+            // Generate Server Certificate Authority Key.
+            var serverCertificate = _cryptoService.IssueCertificate($"CN={instanceId}.instance.spectero.io", ca, null,
+                new[] {KeyPurposeID.AnyExtendedKeyUsage, KeyPurposeID.IdKPServerAuth}, serverPassword,
+                new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment));
+
+            // Generate Public Key
+            var specteroCertKey = PasswordUtils.GeneratePassword(48, 8);
+            var specteroCertificate = _cryptoService.IssueCertificate("CN=" + "spectero", ca, null, new[] {KeyPurposeID.IdKPClientAuth}, specteroCertKey);
+
             // Store CA Password
             _db.Insert(new Configuration
             {
@@ -156,7 +145,7 @@ namespace Spectero.daemon.Seeds
             {
                 Key = ConfigKeys.ServerPFXChain,
                 // Yes, passwordless. Somewhat intentionally, as this is mostly consumed by 3rd party apps.
-                Value = Convert.ToBase64String(_cryptoService.ExportCertificateChain(serverCertificate, ca)) 
+                Value = Convert.ToBase64String(_cryptoService.ExportCertificateChain(serverCertificate, ca))
             });
 
             // OpenVPN defaults
@@ -164,7 +153,6 @@ namespace Spectero.daemon.Seeds
             {
                 Key = ConfigKeys.OpenVPNListeners,
                 Value = JsonConvert.SerializeObject(Defaults.OpenVPNListeners)
-
             });
 
             // Store OpenVPN Base Configuration Template.
@@ -173,41 +161,6 @@ namespace Spectero.daemon.Seeds
                 Key = ConfigKeys.OpenVPNBaseConfig,
                 Value = JsonConvert.SerializeObject(Defaults.OpenVPN.Value)
             });
-
-            if (! _db.TableExists<User>())           
-                throw new InternalError("Required table 'User' does not exist, did the migrations run?");
-            
-
-            _logger.LogDebug("Firstrun: Seeding Users table");
-            
-            var password = PasswordUtils.GeneratePassword(16, 8);
-            _db.CreateTable<User>();
-            _db.Insert(new User
-            {
-                AuthKey = "spectero",
-                Roles = new List<User.Role>
-                {
-                    User.Role.SuperAdmin
-                },
-                FullName = "Spectero Administrator",
-                EmailAddress = "changeme@example.com",
-                Password = BCrypt.Net.BCrypt.HashPassword(password, (int) viablePasswordCost),
-                Cert = specteroCertificate != null && ca != null ? Convert.ToBase64String(_cryptoService.ExportCertificateChain(specteroCertificate, ca, specteroCertKey)) : "",
-                CertKey = specteroCertKey,
-                Source = User.SourceTypes.Local,
-                CreatedDate = DateTime.Now
-            });
-
-            using (var tw = new StreamWriter(AppConfig.FirstRunConfigName, false))
-            {
-                tw.WriteLine("username: spectero");
-                tw.WriteLine($"password: {password}");
-            }
-            
-            if (!_db.TableExists<Statistic>())
-                throw new InternalError("Required table 'Statistic' does not exist, did the migrations run?");
-            
-            _logger.LogInformation("Firstrun: Initialization complete!");
         }
 
         public override void Down()
@@ -217,7 +170,7 @@ namespace Spectero.daemon.Seeds
 
         public override string GetVersion()
         {
-            return "20180824005103";
+            throw new System.NotImplementedException();
         }
     }
 }
