@@ -207,7 +207,7 @@ namespace Spectero.daemon.Models
                 .Ensure(m => m.EncryptCertificate, _ => _
                     .Required()
                         .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "encryptCertificate"))
-                        .When(m => operation.Equals(CRUDOperation.Create)))
+                        .When(m => operation == CRUDOperation.Create))
                 .For(this)
                 .Validate();
 

@@ -188,7 +188,7 @@ namespace Spectero.daemon.HTTP.Controllers
             }
 
             // Make sure the authkey isn't undefined.
-            if (!user.AuthKey.IsNullOrEmpty() && !fetchedUser.AuthKey.Equals(user.AuthKey))
+            if (!fetchedUser.AuthKey.Equals(user.AuthKey))
             {
                 if (!user.AuthKey.ToLower().Equals(user.AuthKey))
                 {
@@ -202,8 +202,10 @@ namespace Spectero.daemon.HTTP.Controllers
 
             // Quick Validaation
             if (!user.Password.IsNullOrEmpty()) fetchedUser.Password = user.Password;
-            if (!user.FullName.IsNullOrEmpty()) fetchedUser.FullName = user.FullName;
             if (!user.EmailAddress.IsNullOrEmpty()) fetchedUser.EmailAddress = user.EmailAddress;
+            
+            // DAEM-204: allow null fullnames (to remove an existing entry).
+            fetchedUser.FullName = user.FullName;
             
             // The List<Role> is not equal between the two objects, i.e: changes have been proposed.
             if (!user.Roles.SequenceEqual(fetchedUser.Roles))
