@@ -17,56 +17,33 @@
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
-using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
-using Spectero.daemon.Libraries.Core.ProcessRunner;
-using Spectero.daemon.Libraries.Core.Statistics;
 
 namespace Spectero.daemon.Libraries.Services
 {
     public class ServiceManager : IServiceManager
     {
-        private readonly AppConfig _appConfig;
-        private readonly IAuthenticator _authenticator;
-        private readonly IDbConnection _db;
-        private readonly IEnumerable<IPNetwork> _localNetworks;
         private readonly ILogger<ServiceManager> _logger;
         private readonly IServiceConfigManager _serviceConfigManager;
-        private readonly IStatistician _statistician;
-        private readonly IMemoryCache _cache;
-        private readonly IProcessRunner _processRunner;
-        
-        private readonly IEnumerable<IPAddress> _localAddresses = Utility.GetLocalIPs();
+
+        private readonly IServiceProvider _serviceProvider;
+
         private readonly ConcurrentDictionary<Type, IService> _services = new ConcurrentDictionary<Type, IService>();
 
         private bool initiated = false;
 
-        public ServiceManager(IOptionsMonitor<AppConfig> appConfig, ILogger<ServiceManager> logger,
-            IDbConnection db, IAuthenticator authenticator,
-            IStatistician statistician, IServiceConfigManager serviceConfigManager,
-            IMemoryCache cache, IProcessRunner processRunner)
+        public ServiceManager(ILogger<ServiceManager> logger, IServiceConfigManager serviceConfigManager,
+            IServiceProvider serviceProvider)
         {
-            _appConfig = appConfig.CurrentValue;
             _logger = logger;
-            _db = db;
-            _authenticator = authenticator;
-            _statistician = statistician;
             _serviceConfigManager = serviceConfigManager;
-            _cache = cache;
-            _processRunner = processRunner;
-
-            _localNetworks = Utility.GetLocalRanges(_logger);
+            _serviceProvider = serviceProvider;
         }
 
 
@@ -177,7 +154,7 @@ namespace Spectero.daemon.Libraries.Services
             if (initiated)
                 return;
 
-            var type = typeof(IService);
+            var type = typeof(BaseService);
             var implementers = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(s => s.GetTypes())
                 .Where(p => type.IsAssignableFrom(p))
@@ -190,10 +167,13 @@ namespace Spectero.daemon.Libraries.Services
             foreach (var serviceType in implementers)
             {
                 _logger.LogDebug("IS: Processing activation request for " + serviceType);
-                var service = (IService) Activator.CreateInstance(serviceType, _appConfig, _logger, _db, _authenticator,
-                    _localNetworks, _localAddresses, _statistician, _cache, _processRunner);
+                
+                var service = (IService) Activator.CreateInstance(serviceType, _serviceProvider);
+                
                 var config = _serviceConfigManager.Generate(serviceType);
+                
                 service.SetConfig(config);
+                
                 _logger.LogDebug("IS: Activation succeeded for " + serviceType);
                 _services.TryAdd(serviceType, service);
             }

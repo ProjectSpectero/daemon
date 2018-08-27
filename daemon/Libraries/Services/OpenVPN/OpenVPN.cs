@@ -21,7 +21,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Authenticator;
@@ -32,17 +34,13 @@ using Spectero.daemon.Libraries.Errors;
 
 namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
-    public class OpenVPN : IService
+    public class OpenVPN : BaseService
     {
         // Dependency Injected Objects.
-        private readonly AppConfig _appConfig;
-        private readonly IAuthenticator _authenticator;
-        private readonly IDbConnection _db;
+
         private readonly IEnumerable<IPNetwork> _localNetworks;
         private readonly IEnumerable<IPAddress> _localAddresses;
-        private readonly ILogger<ServiceManager> _logger;
-        private readonly IStatistician _statistician;
-        private readonly IMemoryCache _cache;
+        private new readonly ILogger<OpenVPN> _logger;
         private readonly IProcessRunner _processRunner;
         private readonly Firewall _firewall;
         private readonly List<string> _configsOnDisk;
@@ -64,37 +62,19 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Dependency Injected Constructor
         /// Initializes the class with all of it's passed arguments.
         /// </summary>
-        /// <param name="appConfig"></param>
-        /// <param name="logger"></param>
-        /// <param name="db"></param>
-        /// <param name="authenticator"></param>
-        /// <param name="localNetworks"></param>
-        /// <param name="localAddresses"></param>
-        /// <param name="statistician"></param>
-        /// <param name="cache"></param>
-        /// <param name="processRunner"></param>
-        public OpenVPN(AppConfig appConfig, ILogger<ServiceManager> logger,
-            IDbConnection db, IAuthenticator authenticator,
-            IEnumerable<IPNetwork> localNetworks, IEnumerable<IPAddress> localAddresses,
-            IStatistician statistician, IMemoryCache cache,
-            IProcessRunner processRunner)
+        /// <param name="serviceProvider"></param>
+        public OpenVPN(IServiceProvider serviceProvider)
         {
             // Inherit the objects.
-            _appConfig = appConfig;
-            _logger = logger;
-            _db = db;
-            _authenticator = authenticator;
-            _localNetworks = localNetworks;
-            _statistician = statistician;
-            _cache = cache;
-            _localAddresses = localAddresses;
-            _processRunner = processRunner;
+            _logger = serviceProvider.GetRequiredService<ILogger<OpenVPN>>();
+            
+            _processRunner = serviceProvider.GetRequiredService<IProcessRunner>();
 
             // This is tracked so we can clean it up when stopping (assuming managed stop).
             _configsOnDisk = new List<string>();
 
             // Invoke the firewall, talk to paul about this.
-            _firewall = new Firewall(logger, _processRunner);
+            _firewall = new Firewall(_logger, _processRunner);
         }
 
         /// <summary>
@@ -250,7 +230,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Start the OpenVPN Service from the provided List{IServiceConfig}.
         /// </summary>
         /// <param name="serviceConfig"></param>
-        public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
+        public override void Start(IEnumerable<IServiceConfig> serviceConfig = null)
         {
             LogState("Start");
             
@@ -272,7 +252,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Restart the OpenVPN Service.
         /// </summary>
         /// <param name="serviceConfig"></param>
-        public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
+        public override void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
         {
             LogState("ReStart");
             SetConfig(serviceConfig);
@@ -286,14 +266,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Effectively similar to restart in this context.
         /// </summary>
         /// <param name="serviceConfig"></param>
-        public void Reload(IEnumerable<IServiceConfig> serviceConfig = null) =>
+        public override void Reload(IEnumerable<IServiceConfig> serviceConfig = null) =>
             ReStart(serviceConfig);
 
         /// <summary>
         /// Stop the OpenVPN Service.
         /// Temporary configurations will also be deleted, and the tracking object will be emptied.
         /// </summary>
-        public void Stop()
+        public override void Stop()
         {
             LogState("Stop");
             
@@ -319,14 +299,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Get the state of the service.
         /// </summary>
         /// <returns></returns>
-        public ServiceState GetState() => _state;
+        public override ServiceState GetState() => _state;
 
         /// <summary>
         /// Get the list of configurations.
         /// The _vpnConfig is a private class variable, and this should be considered as a getter.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<IServiceConfig> GetConfig() =>
+        public override IEnumerable<IServiceConfig> GetConfig() =>
             _vpnConfig;
 
         /// <summary>
@@ -334,7 +314,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Get the state of the logger.
         /// </summary>
         /// <param name="caller"></param>
-        public void LogState(string caller) =>
+        public override void LogState(string caller) =>
             _logger.LogDebug($"OpenVPN ({caller}): current state is {_state}");
 
         /// <summary>
@@ -342,15 +322,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// </summary>
         /// <param name="config"></param>
         /// <param name="restartNeeded"></param>
-        public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
+        public override void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
         {
-            if (config != null)
-            {
-                _vpnConfig = config as List<OpenVPNConfig>;
-                if (restartNeeded)
-                    ReStart();
-            }
-                
+            if (config == null) return;
+            
+            _vpnConfig = config as List<OpenVPNConfig>;
+            if (restartNeeded)
+                ReStart();
+
         }
             
     }

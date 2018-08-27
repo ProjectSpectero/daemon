@@ -32,7 +32,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// <summary>
         /// Reference to the new logger for the specific firewall class.
         /// </summary>
-        private ILogger<ServiceManager> _logger;
+        private ILogger<object> _logger;
 
         /// <summary>
         /// Environment Holder
@@ -44,7 +44,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall
         /// Class Constructor.
         /// </summary>
         /// <exception cref="???"></exception>
-        public Firewall(ILogger<ServiceManager> logger, ProcessRunner.IProcessRunner processRunner)
+        public Firewall(ILogger<object> logger, ProcessRunner.IProcessRunner processRunner)
         {
             // Store the reference to the process runner.
             _processRunner = processRunner;

@@ -16,17 +16,14 @@
 */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ServiceStack;
-using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
-using Spectero.daemon.Libraries.Core.Authenticator;
-using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
@@ -35,53 +32,42 @@ using Titanium.Web.Proxy.Models;
 
 namespace Spectero.daemon.Libraries.Services.HTTPProxy
 {
-    public class HTTPProxy : IService
+    // ReSharper disable once InconsistentNaming
+    public class HTTPProxy : BaseService
     {
-        private readonly AppConfig _appConfig;
-        private readonly IAuthenticator _authenticator;
-        private readonly IDbConnection _db;
-        private readonly IEnumerable<IPNetwork> _localNetworks;
-        private readonly IEnumerable<IPAddress> _localAddresses;
-        private readonly ILogger<ServiceManager> _logger;
         private readonly IStatistician _statistician;
+        private new readonly ILogger<HTTPProxy> _logger;
+     
 
         private readonly List<string> _cacheKeys;
-
-        private IMemoryCache _cache;
-
-        private readonly ProxyServer _proxyServer;
-        private HTTPConfig _proxyConfig;
-        
-        private ServiceState _state = ServiceState.Halted;
         private readonly Uri _blockedRedirectUri;
+        private readonly ProxyServer _proxyServer;
 
-        public HTTPProxy(AppConfig appConfig, ILogger<ServiceManager> logger,
-            IDbConnection db, IAuthenticator authenticator,
-            IEnumerable<IPNetwork> localNetworks, IEnumerable<IPAddress> localAddresses,
-            IStatistician statistician, IMemoryCache cache,
-            IProcessRunner processRunner)
+        // Variables which get modified while executing (the cache one is more of a failsafe).
+        private IMemoryCache _cache;
+        private HTTPConfig _proxyConfig;
+        private ServiceState _state = ServiceState.Halted;
+        
+
+        public HTTPProxy(IServiceProvider serviceProvider) : base(serviceProvider)
         {
-            _appConfig = appConfig;
-            _logger = logger;
-            _db = db;
-            _authenticator = authenticator;
-            _localNetworks = localNetworks;
-            _localAddresses = localAddresses;
-            _statistician = statistician;
-            _cache = cache;
+            _logger = serviceProvider.GetRequiredService<ILogger<HTTPProxy>>();
+            _statistician = serviceProvider.GetRequiredService<IStatistician>();
+            _cache = serviceProvider.GetRequiredService<IMemoryCache>();
 
             // Constructor param disables asking it to import a local root cert
             _proxyServer = new ProxyServer(false);
+            
             _cacheKeys = new List<string>();
-            _blockedRedirectUri = new Uri(appConfig.BlockedRedirectUri);
+            _blockedRedirectUri = new Uri(_appConfig.BlockedRedirectUri);
         }
 
         public HTTPProxy()
         {
-
+            
         }
 
-        public void Start(IEnumerable<IServiceConfig> serviceConfig = null)
+        public override void Start(IEnumerable<IServiceConfig> serviceConfig = null)
         {
             LogState("Start");
 
@@ -141,7 +127,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 _logger.LogDebug(exception, "Internal Error on the Proxy Engine: ");
         }
 
-        public void Stop()
+        public override void Stop()
         {
             LogState("Stop");
             if (_state == ServiceState.Running)
@@ -152,7 +138,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             LogState("Stop");
         }
 
-        public void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
+        public override void ReStart(IEnumerable<IServiceConfig> serviceConfig = null)
         {
             LogState("ReStart");
             if (_state == ServiceState.Running)
@@ -163,17 +149,17 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             LogState("ReStart");
         }
 
-        public void Reload(IEnumerable<IServiceConfig> serviceConfig)
+        public override void Reload(IEnumerable<IServiceConfig> serviceConfig)
         {
             SetConfig(serviceConfig);
         }
 
-        public void LogState(string caller)
+        public override void LogState(string caller)
         {
             _logger.LogDebug($"[{GetType().Name}][{caller}] Current state is {_state}");
         }
 
-        public ServiceState GetState()
+        public override ServiceState GetState()
         {
             return _state;
         }
@@ -403,12 +389,12 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             return ret;
         }
 
-        public IEnumerable<IServiceConfig> GetConfig()
+        public override IEnumerable<IServiceConfig> GetConfig()
         {
             return new List<IServiceConfig> { _proxyConfig };
         }
 
-        public void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
+        public override void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
         {
             ClearLocalCache();
 
