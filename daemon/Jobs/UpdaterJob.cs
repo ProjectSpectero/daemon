@@ -119,12 +119,12 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         public void Perform()
         {
-            if (! IsEnabled())
+            if (!IsEnabled())
             {
                 _logger.LogError("UJ: Job enabled, but matching criterion does not match. This should not happen, silently going back to sleep.");
                 return;
             }
-            
+
             if (AppConfig.UpdateDeadlock == true)
             {
                 _logger.LogWarning("UJ: Update deadlock detected - there is already an update in progress.");
@@ -144,7 +144,7 @@ namespace Spectero.daemon.Jobs
 
 
             // Compare
-            if (remoteBranch == runningBranch && remoteVersion != AppConfig.Version)
+            if (remoteBranch == runningBranch && SemanticVersionUpdateChecker(remoteVersion, AppConfig.Version))
             {
                 // Update available.
                 var newVersion = releaseInformation.channels[remoteBranch];
@@ -280,5 +280,55 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         /// <returns></returns>
         private string[] GetDatabasePaths() => Directory.GetFiles(DatabaseDirectory, "*.sqlite", SearchOption.TopDirectoryOnly);
+
+        /// <summary>
+        /// Comparison function designed specifically for semantic versioning.
+        /// Ths function will handle every possible edge case for a different version, and return a bool if there's an update available
+        /// based on the data provided.
+        /// </summary>
+        /// <param name="remote"></param>
+        /// <param name="running"></param>
+        /// <returns></returns>
+        private bool SemanticVersionUpdateChecker(string remote, string running)
+        {
+            string[] splitRemote = remote.Split(".");
+            string[] splitRunning = remote.Split(".");
+
+            // Check for semantic versioning differences.
+            if (splitRemote.Length == 3 && splitRunning.Length == 2)
+            {
+                _logger.LogWarning("The latest release is semantic versioned while the current running version release is not - an update will be forced.");
+                return true;
+            }
+            // We're already running the latest version.
+            else if (remote == running)
+            {
+                return false;
+            }
+
+            // Compare the MAJOR level of semantic versioning.
+            if (int.Parse(splitRemote[0]) > int.Parse(splitRunning[0]))
+            {
+                _logger.LogInformation("There is a new major release available for the Spectero Daemon.");
+                return true;
+            }
+
+            // Compare the MINOR level of semantic versioning.
+            if (int.Parse(splitRemote[1]) > int.Parse(splitRunning[1]))
+            {
+                _logger.LogInformation("There is a new minor release available for the Spectero Daemon.");
+                return true;
+            }
+
+            // Compare the PATCH level of semantic versioning.
+            if (int.Parse(splitRemote[2]) > int.Parse(splitRunning[2]))
+            {
+                _logger.LogInformation("There is a new patch available for the Spectero Daemon.");
+                return true;
+            }
+
+            // Generic return, no update available although we should never reach here.
+            return false;
+        }
     }
 }
