@@ -30,7 +30,7 @@ namespace Spectero.daemon.Migrations
             Create.Table("User")
                 .WithColumn("Id").AsInt32().PrimaryKey().Nullable()
                 .WithColumn("Source").AsInt32()
-                .WithColumn("AuthKey").AsString().Indexed("uidx_user_authkey")
+                .WithColumn("AuthKey").AsString().Indexed("uidx_user_authkey").Unique()
                 .WithColumn("Roles").AsString().Nullable()
                 .WithColumn("Password").AsString()
                 .WithColumn("Cert").AsString().Nullable()
