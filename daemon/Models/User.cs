@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using ServiceStack;
 using ServiceStack.DataAnnotations;
+using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
 using Valit;
 
@@ -181,6 +182,9 @@ namespace Spectero.daemon.Models
                         .WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "authKey", "50"))
                     .Matches(@"^[a-zA-Z][\w]*$")
                         .WithMessage(FormatValidationError(Errors.FIELD_REGEX_MATCH, "authKey", @"^[a-zA-Z][\w]*$")))
+                .Ensure(m => m.AuthKey, _ => _
+                    .Satisfies(m => ! m.IsNullOrEmpty() && ! m.Equals(AppConfig.CloudConnectDefaultAuthKey))
+                        .WithMessage(FormatValidationError(Errors.FIELD_RESERVED, "authKey")))
                 .Ensure(m => m.RawPassword, _ => _
                     .Required()
                         .WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "password"))
