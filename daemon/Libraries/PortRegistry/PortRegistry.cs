@@ -13,10 +13,15 @@
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Open.Nat;
+using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Services;
 
@@ -41,16 +46,42 @@ namespace Spectero.daemon.Libraries.PortRegistry
          */
 
         private readonly ConcurrentDictionary<IService, IEnumerable<PortAllocation>> _serviceAllocations;
-        private readonly List<PortAllocation> _appAllocations;
+        private readonly IEnumerable<PortAllocation> _appAllocations;
         private readonly ILogger<PortRegistry> _logger;
+        private readonly AppConfig _config;
 
-        public PortRegistry(ILogger<PortRegistry> logger)
+        private NatDevice _device;
+        // ReSharper disable once InconsistentNaming
+        private IPAddress _externalIP;
+
+        public PortRegistry(IOptionsMonitor<AppConfig> configMonitor, ILogger<PortRegistry> logger)
         {
+            _config = configMonitor.CurrentValue;
             _logger = logger;
+            
             _serviceAllocations = new ConcurrentDictionary<IService, IEnumerable<PortAllocation>>();
-            _appAllocations = new List<PortAllocation>();
+            _appAllocations = new List<PortAllocation>();            
         }
-        
+
+        // Separated from the constructor because this method may take a long time before timing out.
+        private void Initialize()
+        {
+            var nat = new NatDiscoverer();
+            var cancellationToken = new CancellationTokenSource(_config.NatDiscoveryTimeoutInSeconds * 1000);
+
+            // TODO: Handle NatDeviceNotFoundException
+            try
+            {
+                _device = nat.DiscoverDeviceAsync(PortMapper.Upnp, cancellationToken).Result;
+                _externalIP = _device.GetExternalIPAsync().Result;
+            
+                _logger.LogInformation($"Discovered external IP was: {_externalIP}");
+            }
+            catch (NatDeviceNotFoundException exception)
+            {
+                _device = null;
+            }
+        }
 
         public bool Allocate(IPAddress ip, int port, IService forwardedFor = null)
         {

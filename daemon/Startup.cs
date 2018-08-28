@@ -48,6 +48,7 @@ using Spectero.daemon.Libraries.Core.LifetimeHandler;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
+using Spectero.daemon.Libraries.PortRegistry;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Symlink;
 using Spectero.daemon.Migrations;
@@ -175,6 +176,8 @@ namespace Spectero.daemon
             services.AddScoped<EnforceLocalOnlyAccess>();
 
             services.AddSingleton<ICloudHandler, CloudHandler>();
+
+            services.AddSingleton<IPortRegistry, PortRegistry>();
 
             services.AddMvc();
 
