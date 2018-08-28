@@ -144,7 +144,7 @@ namespace Spectero.daemon.Jobs
 
 
             // Compare
-            if (remoteBranch == runningBranch && SemanticVersionUpdateChecker(remoteVersion, AppConfig.Version))
+            if (remoteBranch == runningBranch && SemanticVersionUpdateChecker(remoteVersion))
             {
                 // Update available.
                 var newVersion = releaseInformation.channels[remoteBranch];
@@ -198,6 +198,10 @@ namespace Spectero.daemon.Jobs
 
                 // Delete the archive after extraction.
                 File.Delete(targetArchive);
+                
+                
+                //TODO: COPY DOTNET RUNTIMES.
+                if ()
 
                 // Copy the databases
                 foreach (var databasePath in GetDatabasePaths())
@@ -289,19 +293,18 @@ namespace Spectero.daemon.Jobs
         /// <param name="remote"></param>
         /// <param name="running"></param>
         /// <returns></returns>
-        private bool SemanticVersionUpdateChecker(string remote, string running)
+        private bool SemanticVersionUpdateChecker(string remote)
         {
             string[] splitRemote = remote.Split(".");
-            string[] splitRunning = remote.Split(".");
 
             // Check for semantic versioning differences.
-            if (splitRemote.Length == 3 && splitRunning.Length == 2)
+            if (splitRemote.Length == 3 && AppConfig.Version.Split(".").Length == 2)
             {
                 _logger.LogWarning("The latest release is semantic versioned while the current running version release is not - an update will be forced.");
                 return true;
             }
             // We're already running the latest version.
-            else if (remote == running)
+            else if (remote == AppConfig.Version)
             {
                 return false;
             }
