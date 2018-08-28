@@ -307,21 +307,21 @@ namespace Spectero.daemon.Jobs
             }
 
             // Compare the MAJOR level of semantic versioning.
-            if (int.Parse(splitRemote[0]) > int.Parse(splitRunning[0]))
+            if (int.Parse(splitRemote[0]) > AppConfig.MajorVersion)
             {
                 _logger.LogInformation("There is a new major release available for the Spectero Daemon.");
                 return true;
             }
 
             // Compare the MINOR level of semantic versioning.
-            if (int.Parse(splitRemote[1]) > int.Parse(splitRunning[1]))
+            if (int.Parse(splitRemote[1]) > AppConfig.MinorVersion)
             {
                 _logger.LogInformation("There is a new minor release available for the Spectero Daemon.");
                 return true;
             }
 
             // Compare the PATCH level of semantic versioning.
-            if (int.Parse(splitRemote[2]) > int.Parse(splitRunning[2]))
+            if (int.Parse(splitRemote[2]) > AppConfig.PatchVersion)
             {
                 _logger.LogInformation("There is a new patch available for the Spectero Daemon.");
                 return true;
