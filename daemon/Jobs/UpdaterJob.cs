@@ -202,55 +202,6 @@ namespace Spectero.daemon.Jobs
                 // Get the expected symlink path.
                 var latestPath = Path.Combine(RootInstallationDirectory, "latest");
 
-                //TODO: COPY DOTNET RUNTIMES.
-                if (AppConfig.isUnix)
-                {
-                    var dotnetDir = Path.Combine(latestPath, "dotnet");
-                    var dotnetBinary = Path.Combine(dotnetDir, "dotnet"); // Reminder: ./dotnet is an executable.
-                    if (Directory.Exists(dotnetDir) && File.Exists(dotnetBinary))
-                    {
-                        var procOption = new ProcessOptions()
-                        {
-                            Executable = dotnetBinary,
-                            WorkingDirectory = dotnetDir,
-                            Arguments = new string[] {"--list-runtimes"},
-                            Monitor = false
-                        };
-                        var proc = _symlink.processRunner.Run(procOption);
-                        foreach (var line in proc.Command.StandardOutput.ReadToEnd().Split("\n"))
-                        {
-                            // Get the line that contains a version.
-                            var fixedLine = "";
-                            if (line.Contains("Microsoft.AspNetCore.All"))
-                            {
-                                // Single out the data from the installed version.
-                                fixedLine = line.Remove(0, 25); // Remove the "Microsoft.AspNetCore.All"
-                                fixedLine = fixedLine.Substring(0, 5); // Single out the version                
-
-                                // Split 
-                                string[] installed = fixedLine.Split('.');
-                                string[] requirement = releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion.Split('.');
-
-                                // Compare.
-                                for (var i = 0; i != installed.Length; i++)
-                                {
-                                    if (int.Parse(installed[i]) < int.Parse(requirement[i]))
-                                    {
-                                        // The installed version cannot run the required version.
-                                        // Download a new dotnet core.
-                                    }
-                                }
-
-                                // Copy it, it should work.
-                            }
-                        }
-                    }
-                }
-                else if ()
-                {
-                    
-                }
-
                 // Copy the databases
                 foreach (var databasePath in GetDatabasePaths())
                 {
