@@ -443,7 +443,7 @@ namespace Spectero.daemon.Jobs
 
                 // Restart the service.
                 // We'll rely on the service manager to start us back up.
-                _logger.LogInformation("The update process is complete, and the spectero service has been configured to run the latest Version.\n" +
+                _logger.LogInformation("The update process is complete, and the spectero service has been configured to run the latest version.\n" +
                                        "Please restart the spectero service to utilize the latest Version.\n" +
                                        "The application will now shutdown.");
                 _applicationLifetime.StopApplication();
@@ -476,6 +476,11 @@ namespace Spectero.daemon.Jobs
             }
         }
 
+        /// <summary>
+        /// Get download information from the sources repository on github.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InternalError"></exception>
         private SourcesInformation GetSources()
         {
             try

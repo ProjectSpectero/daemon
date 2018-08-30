@@ -68,12 +68,13 @@ namespace Spectero.daemon.Libraries.Config
 
         // Versoning Information.
         public static string Version => "0.2.0";
+        public static string ReleaseChannel => "CHANNEL_PLACEHOLDER";
         
         public static int MajorVersion => int.Parse(Version.Split(".")[0]); 
         public static int MinorVersion => int.Parse(Version.Split(".")[1]); 
         public static int PatchVersion => int.Parse(Version.Split(".")[2]); 
         
-        public static string ReleaseChannel => "CHANNEL_PLACEHOLDER";
+
 
         public static string ApiBaseUri
         {

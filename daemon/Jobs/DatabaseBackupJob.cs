@@ -14,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
 using System;
 using System.IO;
 using Hangfire;
@@ -86,7 +87,7 @@ namespace Spectero.daemon.Jobs
             // Save the database into the dated directory.
             try
             {
-                var destination = Path.Combine(RootBackupDirectory, string.Format("db.{0}.sqlite", GetEpochTimestamp()));
+                var destination = Path.Combine(RootBackupDirectory, GenerateDatabaseBackupName());
                 File.Copy(Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, "db.sqlite"), destination);
                 _logger.LogInformation("Backup has been written: {0}", destination);
             }
@@ -124,6 +125,11 @@ namespace Spectero.daemon.Jobs
         public static string GetEpochTimestamp()
         {
             return DateTime.UtcNow.ToUnixTime().ToString();
+        }
+
+        public static string GenerateDatabaseBackupName()
+        {
+            return string.Format("db.{0}.v{1}-{2}.sqlite.", GetEpochTimestamp(), AppConfig.Version, AppConfig.ReleaseChannel);
         }
     }
 }
