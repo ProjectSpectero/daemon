@@ -36,13 +36,14 @@ namespace daemon_testcases
             var tempPathSymlink = Path.Combine(tempPath, "symlink");
 
             // Initialize the Symlink Library
-            var symlinkLib = new Symlink {processRunner = _runner};
-            
+            var symlinkLib = new Symlink();
+            symlinkLib.SetProcessRunner(_runner);
+
             // Try to create the symlink.
-            if (symlinkLib.Environment.Create(tempPathSymlink, tempPath))
+            if (symlinkLib.GetEnvironment().Create(tempPathSymlink, tempPath))
             {
                 // Symlink creation was successful - delete it and pass.
-                symlinkLib.Environment.Delete(tempPathSymlink);
+                symlinkLib.GetEnvironment().Delete(tempPathSymlink);
             }
             else
             {
