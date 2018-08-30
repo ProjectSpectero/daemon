@@ -127,7 +127,7 @@ namespace Spectero.daemon
             services.AddSingleton<HttpClient, HttpClient>();
 
             // Symbolic Link Library
-            services.AddSingleton<Symlink, Symlink>();
+            services.AddSingleton<ISymlink, Symlink>();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>

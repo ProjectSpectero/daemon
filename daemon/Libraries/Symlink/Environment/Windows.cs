@@ -65,7 +65,7 @@ namespace Spectero.daemon.Libraries.Symlink
 
             try
             {
-                _parent.processRunner.Run(processOptions).Command.Wait();
+                _parent.GetProcessRunner().Run(processOptions).Command.Wait();
                 return true;
             }
             catch (ErrorExitCodeException exception)

@@ -84,10 +84,10 @@ namespace Spectero.daemon.Jobs
 
     public class SourcesInformation
     {
-        [@JsonProperty(PropertyName = "terms-of-service")]
+        [JsonProperty(PropertyName = "terms-of-service")]
         public string termsOfService { get; set; }
 
-        public SourcesDependenciesProperty dependencies;
+        public SourcesDependenciesProperty dependencies { get; set; }
     }
 
 
@@ -97,10 +97,12 @@ namespace Spectero.daemon.Jobs
         private readonly HttpClient _httpClient;
         private readonly ILogger<UpdaterJob> _logger;
         private readonly AppConfig _config;
-        private readonly Symlink _symlink;
+        private readonly ISymlink _symlink;
         private readonly IApplicationLifetime _applicationLifetime;
         private readonly IArchitectureUtility _architectureUtility;
+        private readonly IProcessRunner _processRunner;
         private JObject _releaseInformation;
+
 
         /// <summary>
         /// Constructor
@@ -113,14 +115,20 @@ namespace Spectero.daemon.Jobs
         (IOptionsMonitor<AppConfig> configMonitor,
             ILogger<UpdaterJob> logger,
             HttpClient httpClient,
-            Symlink symlink,
+            ISymlink symlink,
             IApplicationLifetime applicationLifetime,
             IProcessRunner processRunner,
             IArchitectureUtility architectureUtility)
         {
             _httpClient = httpClient;
+            
+            // Set symlink inheritance - also needs the processrunner.
             _symlink = symlink;
-            _symlink.processRunner = processRunner;
+            _symlink.SetProcessRunner(processRunner);
+            
+            // Inherit the process runner into the class for when needed.
+            _processRunner = processRunner;
+            
             _applicationLifetime = applicationLifetime;
             _logger = logger;
             _architectureUtility = architectureUtility;
@@ -177,7 +185,7 @@ namespace Spectero.daemon.Jobs
                 var newVersion = releaseInformation.channels[remoteBranch];
                 var targetDirectory = Path.Combine(RootInstallationDirectory, newVersion);
                 var targetArchive = Path.Combine(RootInstallationDirectory, string.Format("{0}.zip", newVersion));
-                
+
                 // Generate a projected path of where the new dotnet core installation should exist - will utilize this in the future.
                 var newDotnetCorePath = Path.Combine(targetDirectory, "dotnet");
 
@@ -286,8 +294,8 @@ namespace Spectero.daemon.Jobs
                         dotnetCoreBinary = _dotnetCoreBinary;
                     }
                 }
-                
-           
+
+
                 // Compare dotnet versions.
                 if (dotnetCorePath != "" && dotnetCoreBinary != "")
                 {
@@ -305,8 +313,8 @@ namespace Spectero.daemon.Jobs
                     };
 
                     // Run the event.
-                    var proc = _symlink.processRunner.Run(procOption);
-                    
+                    var proc = _processRunner.Run(procOption);
+
                     // TODO: MAKE THIS MORE ROBUST AFTER TESTING.
                     // Read the lines to see if compatible. 
                     foreach (var line in proc.Command.StandardOutput.ReadToEnd().Split("\n"))
@@ -380,7 +388,7 @@ namespace Spectero.daemon.Jobs
                         try
                         {
                             // Run the installer.
-                            var installerRunner = _symlink.processRunner.Run(dotnetInstallerProcOptions);
+                            var installerRunner = _processRunner.Run(dotnetInstallerProcOptions);
                             installerRunner.Command.Wait();
 
                             // If we can get past the wait, the installation succeeded.
@@ -399,7 +407,7 @@ namespace Spectero.daemon.Jobs
                     {
                         // Generate path of where zip should be saved.
                         var downloadPath = Path.Combine(targetDirectory, "dotnet.zip");
-                        
+
                         // Download zip
                         using (var client = new WebClient())
                         {
@@ -407,10 +415,10 @@ namespace Spectero.daemon.Jobs
                                 releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion
                             ].linux[_architectureUtility.GetArchitecture()], downloadPath);
                         }
-                        
+
                         // Extract
                         ZipFile.ExtractToDirectory(downloadPath, newDotnetCorePath);
-                        
+
                         // Delete zip
                         File.Delete(downloadPath);
                     }
@@ -420,12 +428,12 @@ namespace Spectero.daemon.Jobs
                 // Delete the symlink if it exists.
                 if (_symlink.IsSymlink(latestPath))
                 {
-                    _symlink.Environment.Delete(latestPath);
+                    _symlink.GetEnvironment().Delete(latestPath);
                     _logger.LogDebug("UJ: Deleted old Symbolic Link: " + latestPath);
                 }
 
                 // Create the new symlink with the proper directory.
-                if (_symlink.Environment.Create(latestPath, targetDirectory))
+                if (_symlink.GetEnvironment().Create(latestPath, targetDirectory))
                     _logger.LogDebug("UJ: Created Symbolic Link: {0}->{1}", latestPath, targetDirectory);
                 else
                 {

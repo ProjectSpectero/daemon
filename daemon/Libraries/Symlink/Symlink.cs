@@ -21,10 +21,10 @@ using Spectero.daemon.Libraries.Core.ProcessRunner;
 
 namespace Spectero.daemon.Libraries.Symlink
 {
-    public class Symlink
+    public class Symlink : ISymlink
     {
         private ISymlinkEnvironment _environment;
-        public IProcessRunner processRunner { get; set; }
+        private IProcessRunner _processRunner;
 
         public enum SymbolicLink
         {
@@ -66,6 +66,25 @@ namespace Spectero.daemon.Libraries.Symlink
             }
         }
 
-        public ISymlinkEnvironment Environment => _environment;
+        /// <summary>
+        /// Get the environment - interface friendly.
+        /// </summary>
+        /// <returns></returns>
+        public ISymlinkEnvironment GetEnvironment() => _environment;
+
+        /// <summary>
+        /// Get the process runner instance - interface friendly.
+        /// </summary>
+        /// <returns></returns>
+        public IProcessRunner GetProcessRunner() => _processRunner;
+
+        /// <summary>
+        /// Set the process runner for the class.
+        /// </summary>
+        /// <param name="processRunner"></param>
+        public void SetProcessRunner(IProcessRunner processRunner)
+        {
+            _processRunner = processRunner;
+        }
     }
 }
