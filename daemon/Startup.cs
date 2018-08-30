@@ -50,6 +50,7 @@ using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Symlink;
+using Spectero.daemon.Libraries.Utilities.Architecture;
 using Spectero.daemon.Migrations;
 using Spectero.daemon.Models;
 using JobActivator = Spectero.daemon.Jobs.JobActivator;
@@ -158,7 +159,11 @@ namespace Spectero.daemon
 
             services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
             
+            // Process runner to execute processes safely.
             services.AddSingleton<IProcessRunner, ProcessRunner>();
+            
+            // Service Utility to get System Architecture.
+            services.AddSingleton<IArchitectureUtility, ArchitectureUtility>();
 
             services.AddSingleton<IJob, FetchCloudEngagementsJob>();
             
@@ -168,6 +173,7 @@ namespace Spectero.daemon
 
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
 
+            // Application Performance Management.
             services.AddSingleton<Apm, Apm>();
 
             services.AddSingleton<ILifetimeHandler, LifetimeHandler>();

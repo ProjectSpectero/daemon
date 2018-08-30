@@ -22,16 +22,19 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using Medallion.Shell;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Marhsal;
 using Spectero.daemon.Libraries.Symlink;
+using Spectero.daemon.Libraries.Utilities.Architecture;
 
 namespace Spectero.daemon.Jobs
 {
@@ -67,6 +70,27 @@ namespace Spectero.daemon.Jobs
         public int requiredInstallReversion;
     }
 
+    public class DotnetVersion
+    {
+        public Dictionary<string, string> linux;
+        public Dictionary<string, string> windows;
+    }
+
+    public class SourcesDependenciesProperty
+    {
+        public Dictionary<string, DotnetVersion> dotnet;
+        public string nssm { get; set; }
+    }
+
+    public class SourcesInformation
+    {
+        [@JsonProperty(PropertyName = "terms-of-service")]
+        public string termsOfService { get; set; }
+
+        public SourcesDependenciesProperty dependencies;
+    }
+
+
     public class UpdaterJob : IJob
     {
         // Class Dependencies
@@ -75,6 +99,7 @@ namespace Spectero.daemon.Jobs
         private readonly AppConfig _config;
         private readonly Symlink _symlink;
         private readonly IApplicationLifetime _applicationLifetime;
+        private readonly IArchitectureUtility _architectureUtility;
         private JObject _releaseInformation;
 
         /// <summary>
@@ -90,13 +115,15 @@ namespace Spectero.daemon.Jobs
             HttpClient httpClient,
             Symlink symlink,
             IApplicationLifetime applicationLifetime,
-            IProcessRunner processRunner)
+            IProcessRunner processRunner,
+            IArchitectureUtility architectureUtility)
         {
             _httpClient = httpClient;
             _symlink = symlink;
             _symlink.processRunner = processRunner;
             _applicationLifetime = applicationLifetime;
             _logger = logger;
+            _architectureUtility = architectureUtility;
             _config = configMonitor.CurrentValue;
 
             logger.LogDebug("UJ: init successful, dependencies processed.");
@@ -150,6 +177,9 @@ namespace Spectero.daemon.Jobs
                 var newVersion = releaseInformation.channels[remoteBranch];
                 var targetDirectory = Path.Combine(RootInstallationDirectory, newVersion);
                 var targetArchive = Path.Combine(RootInstallationDirectory, string.Format("{0}.zip", newVersion));
+                
+                // Generate a projected path of where the new dotnet core installation should exist - will utilize this in the future.
+                var newDotnetCorePath = Path.Combine(targetDirectory, "dotnet");
 
                 // Check if the target directory already exists, we will use this to determine if an update has already happened.
                 if (Directory.Exists(targetDirectory))
@@ -211,54 +241,181 @@ namespace Spectero.daemon.Jobs
                     _logger.LogInformation("UJ: Migrated Database: {0} => {1}", databasePath, databaseDestPath);
                 }
 
-                //TODO: COPY DOTNET RUNTIMES.
-                if (AppConfig.isUnix)
+
+                // Dotnet Core Shenanigans
+                _logger.LogDebug("UJ: Checking for dotnet core compatibility.");
+
+                // Dotnet core placeholder variables.
+                var dotnetCorePath = "";
+                var dotnetCoreBinary = "";
+                if (AppConfig.isWindows)
                 {
-                    var dotnetDir = Path.Combine(latestPath, "dotnet");
-                    var dotnetBinary = Path.Combine(dotnetDir, "dotnet"); // Reminder: ./dotnet is an executable.
-                    if (Directory.Exists(dotnetDir) && File.Exists(dotnetBinary))
+                    // Potential windows directory where files exist.
+                    var potentialDotnetDirectories = new string[]
                     {
-                        var procOption = new ProcessOptions()
+                        "C:/Program Files/dotnet/dotnet.exe",
+                        "C:/Program Files (x86)/dotnet/dotnet.exe",
+                        Path.Combine(latestPath, "dotnet", "dotnet.exe")
+                    };
+
+                    // Iterate through each possibility
+                    foreach (var iterPath in potentialDotnetDirectories)
+                    {
+                        // Check to see if it exists
+                        if (File.Exists(iterPath))
                         {
-                            Executable = dotnetBinary,
-                            WorkingDirectory = dotnetDir,
-                            Arguments = new string[] {"--list-runtimes"},
-                            Monitor = false
-                        };
-                        var proc = _symlink.processRunner.Run(procOption);
-                        foreach (var line in proc.Command.StandardOutput.ReadToEnd().Split("\n"))
+                            // Assign the paths to the parent variables.
+                            dotnetCorePath = new FileInfo(iterPath).Directory.FullName;
+                            dotnetCoreBinary = iterPath;
+                        }
+
+                        // If none of the paths are valid, we shall install - exit point
+                        break;
+                    }
+                }
+                else if (AppConfig.isUnix)
+                {
+                    // We only perform local installs on linux, and thus the currently running version should have a copy - local variables that can be easily disposed.
+                    var _dotnetCorePath = Path.Combine(latestPath, "dotnet");
+                    var _dotnetCoreBinary = Path.Combine(dotnetCorePath, "dotnet"); // Reminder: ./dotnet is an executable.
+
+                    if (File.Exists(_dotnetCoreBinary))
+                    {
+                        // Assign the paths to the parent variables.
+                        dotnetCorePath = _dotnetCorePath;
+                        dotnetCoreBinary = _dotnetCoreBinary;
+                    }
+                }
+                
+           
+                // Compare dotnet versions.
+                if (dotnetCorePath != "" && dotnetCoreBinary != "")
+                {
+                    // Exists, see what it's got.
+                    _logger.LogDebug("UJ: Found dotnet core installation: " + dotnetCoreBinary);
+
+                    // Determine if it can be used.
+                    // Create the process options
+                    var procOption = new ProcessOptions()
+                    {
+                        Executable = dotnetCoreBinary,
+                        WorkingDirectory = dotnetCorePath,
+                        Arguments = new string[] {"--list-runtimes"},
+                        Monitor = false
+                    };
+
+                    // Run the event.
+                    var proc = _symlink.processRunner.Run(procOption);
+                    
+                    // TODO: MAKE THIS MORE ROBUST AFTER TESTING.
+                    // Read the lines to see if compatible. 
+                    foreach (var line in proc.Command.StandardOutput.ReadToEnd().Split("\n"))
+                    {
+                        // Get the line that contains a version.
+                        var fixedLine = "";
+                        if (line.Contains("Microsoft.AspNetCore.All"))
                         {
-                            // Get the line that contains a version.
-                            var fixedLine = "";
-                            if (line.Contains("Microsoft.AspNetCore.All"))
+                            // Single out the data from the installed version.
+                            fixedLine = line.Remove(0, 25); // Remove the "Microsoft.AspNetCore.All"
+                            fixedLine = fixedLine.Substring(0, 5); // Single out the version                
+
+                            // Split 
+                            string[] installed = fixedLine.Split('.');
+                            string[] requirement = releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion.Split('.');
+
+                            // Compare.
+                            for (var i = 0; i != installed.Length; i++)
                             {
-                                // Single out the data from the installed version.
-                                fixedLine = line.Remove(0, 25); // Remove the "Microsoft.AspNetCore.All"
-                                fixedLine = fixedLine.Substring(0, 5); // Single out the version                
-
-                                // Split 
-                                string[] installed = fixedLine.Split('.');
-                                string[] requirement = releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion.Split('.');
-
-                                // Compare.
-                                for (var i = 0; i != installed.Length; i++)
+                                if (int.Parse(installed[i]) < int.Parse(requirement[i]))
                                 {
-                                    if (int.Parse(installed[i]) < int.Parse(requirement[i]))
-                                    {
-                                        // The installed version cannot run the required version.
-                                        // Download a new dotnet core.
-                                    }
+                                    // The installed version cannot run the required version.
+                                    // Download a new dotnet core.
                                 }
-
-                                // Copy it, it should work.
                             }
+
+                            // Get the projected path of where dotnet core should be copied - create the directory if it does not exist..
+                            if (Directory.Exists(newDotnetCorePath)) Directory.CreateDirectory(newDotnetCorePath);
+
+                            // Create the required directories
+                            foreach (var dirPath in Directory.GetDirectories(dotnetCorePath, "*", SearchOption.AllDirectories))
+                                Directory.CreateDirectory(dirPath.Replace(dotnetCorePath, newDotnetCorePath));
+
+                            // Copy the files.
+                            foreach (var newPath in Directory.GetFiles(dotnetCorePath, "*.*", SearchOption.AllDirectories))
+                                File.Copy(newPath, newPath.Replace(dotnetCorePath, newDotnetCorePath), true);
+
+                            _logger.LogInformation("UJ: Requirement for dotnet core has been satisfied.");
                         }
                     }
                 }
-                else if (AppConfig.isWindows)
+                else
                 {
-                 // TODO: Implement.   
+                    // Doesn't exist, download a new version.
+                    _logger.LogDebug("UJ: A usable dotnet core installation was not found, thus will be made.");
+
+                    // Get Sources.json information.
+                    var sources = GetSources();
+
+                    // Determine operating system
+                    if (AppConfig.isWindows)
+                    {
+                        // Download installer
+                        var downloadPath = Path.Combine(targetDirectory, "dotnet-installer.exe");
+                        using (var client = new WebClient())
+                        {
+                            client.DownloadFile(sources.dependencies.dotnet[
+                                releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion
+                            ].windows["default"], downloadPath);
+                        }
+
+                        // Create a process runner for the new dotnet installer
+                        var dotnetInstallerProcOptions = new ProcessOptions()
+                        {
+                            Executable = downloadPath,
+                            InvokeAsSuperuser = true,
+                            Monitor = false
+                        };
+
+                        // Attempt to run the installer.
+                        try
+                        {
+                            // Run the installer.
+                            var installerRunner = _symlink.processRunner.Run(dotnetInstallerProcOptions);
+                            installerRunner.Command.Wait();
+
+                            // If we can get past the wait, the installation succeeded.
+                            _logger.LogInformation("UJ: Dotnet Core Runtime was successfully updated to version {0}",
+                                releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion);
+                        }
+                        catch (ErrorExitCodeException exception)
+                        {
+                            AppConfig.UpdateDeadlock = false;
+                            var msg = "UJ: A exception occured while trying to update dotnet core for windows\n" + exception;
+                            _logger.LogError(msg);
+                            throw new Exception(msg);
+                        }
+                    }
+                    else if (AppConfig.isUnix)
+                    {
+                        // Generate path of where zip should be saved.
+                        var downloadPath = Path.Combine(targetDirectory, "dotnet.zip");
+                        
+                        // Download zip
+                        using (var client = new WebClient())
+                        {
+                            client.DownloadFile(sources.dependencies.dotnet[
+                                releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion
+                            ].linux[_architectureUtility.GetArchitecture()], downloadPath);
+                        }
+                        
+                        // Extract
+                        ZipFile.ExtractToDirectory(downloadPath, newDotnetCorePath);
+                        
+                        // Delete zip
+                        File.Delete(downloadPath);
+                    }
                 }
+
 
                 // Delete the symlink if it exists.
                 if (_symlink.IsSymlink(latestPath))
@@ -268,7 +425,6 @@ namespace Spectero.daemon.Jobs
                 }
 
                 // Create the new symlink with the proper directory.
-                //TODO: FIX - Symbolic Link Creation is broken for some reason!
                 if (_symlink.Environment.Create(latestPath, targetDirectory))
                     _logger.LogDebug("UJ: Created Symbolic Link: {0}->{1}", latestPath, targetDirectory);
                 else
@@ -285,7 +441,7 @@ namespace Spectero.daemon.Jobs
                 _applicationLifetime.StopApplication();
             }
 
-            // Disable th deadlock and allow the next run.
+            // Disable the deadlock and allow the next run.
             AppConfig.UpdateDeadlock = false;
         }
 
@@ -299,6 +455,7 @@ namespace Spectero.daemon.Jobs
             try
             {
                 var response = _httpClient.GetAsync("https://c.spectero.com/releases.json").Result;
+
                 var releaseData = JsonConvert.DeserializeObject<Release>(response.Content.ReadAsStringAsync().Result);
                 return releaseData;
             }
@@ -311,9 +468,27 @@ namespace Spectero.daemon.Jobs
             }
         }
 
+        private SourcesInformation GetSources()
+        {
+            try
+            {
+                var response = _httpClient.GetAsync("https://raw.githubusercontent.com/ProjectSpectero/daemon-installers/master/SOURCES.json").Result;
+
+                var sourcesData = JsonConvert.DeserializeObject<SourcesInformation>(response.Content.ReadAsStringAsync().Result);
+                return sourcesData;
+            }
+            catch (Exception exception)
+            {
+                var msg = "UJ: Failed to get source information from github.\n" + exception;
+                _logger.LogError(msg);
+                AppConfig.UpdateDeadlock = false;
+                throw new InternalError(msg);
+            }
+        }
+
         /// <summary>
         /// Get the root installation directory for the spectero daemons.
-        /// This will inclue each versions and the latest symlink.
+        /// This will include each versions and the latest symlink.
         /// </summary>
         private string RootInstallationDirectory => Directory.GetParent(
             Directory.GetParent(Program.GetAssemblyLocation()).FullName
