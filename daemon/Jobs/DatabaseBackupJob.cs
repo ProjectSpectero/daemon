@@ -127,9 +127,9 @@ namespace Spectero.daemon.Jobs
             return DateTime.UtcNow.ToUnixTime().ToString();
         }
 
-        public static string GenerateDatabaseBackupName()
+        public static string GenerateDatabaseBackupName(string basename = "db")
         {
-            return string.Format("db.{0}.v{1}-{2}.sqlite.", GetEpochTimestamp(), AppConfig.Version, AppConfig.ReleaseChannel);
+            return $"{basename}.{GetEpochTimestamp()}.v{AppConfig.Version}-{AppConfig.ReleaseChannel}.sqlite";
         }
     }
 }
