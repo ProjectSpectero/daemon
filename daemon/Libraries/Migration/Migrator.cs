@@ -57,7 +57,7 @@ namespace Spectero.daemon.Libraries.Migration
 
             // Backup the current database.
             var currentDatabasePath = Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, "db.sqlite");
-            var backupDatabasePath = Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, GenerateDatabaseBackupFilename());
+            var backupDatabasePath = Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir, DatabaseBackupJob.GenerateDatabaseBackupName("db.migration"));
             File.Copy(currentDatabasePath, backupDatabasePath);
 
             // Load the table data into memory
@@ -111,20 +111,6 @@ namespace Spectero.daemon.Libraries.Migration
 
 
             throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Generate a fixated filename for the database backup we're about to make with an optional Version.
-        /// </summary>
-        /// <param name="version"></param>
-        /// <returns></returns>
-        public string GenerateDatabaseBackupFilename(string version = null)
-        {
-            // Get the default Version if not specified.
-            if (version == null) version = AppConfig.Version;
-
-            // Return the generated string.
-            return string.Format("db.sqlite.{0}.{1}", version, DatabaseBackupJob.GetEpochTimestamp());
         }
     }
 }

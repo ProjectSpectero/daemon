@@ -182,6 +182,7 @@ namespace Spectero.daemon.Jobs
             if (remoteBranch == runningBranch && SemanticVersionUpdateChecker(remoteVersion))
             {
                 // Update available.
+                
                 var newVersion = releaseInformation.channels[remoteBranch];
                 var targetDirectory = Path.Combine(RootInstallationDirectory, newVersion);
                 var targetArchive = Path.Combine(RootInstallationDirectory, string.Format("{0}.zip", newVersion));
@@ -192,6 +193,10 @@ namespace Spectero.daemon.Jobs
                 // Check if the target directory already exists, we will use this to determine if an update has already happened.
                 if (Directory.Exists(targetDirectory))
                 {
+                    /*
+                     * Explanation
+                     * There's already the directory for the updated version, at this point we should recognize we cannot modify it. 
+                     */
                     AppConfig.UpdateDeadlock = false;
                     return;
                 }
