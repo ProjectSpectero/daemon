@@ -26,6 +26,7 @@ using ServiceStack.OrmLite;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
 using Spectero.daemon.Libraries.Core.Identity;
+using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
@@ -84,8 +85,8 @@ namespace Spectero.daemon.Libraries.Config
 
                         if (serviceConfig == null)
                         {
-                            _logger.LogError("TG: No listeners could be retrieved from the DB for " +
-                                             typeof(HTTPProxy) + ", using defaults.");
+                            _logger.LogWarning("TG: No listeners could be retrieved from the DB for " +
+                                             typeof(HTTPProxy) + ", using defaults. Please consider re-installing or restoring the database from backups.");
                             serviceConfig = Defaults.HTTP.Value;
                         }
 
@@ -104,10 +105,7 @@ namespace Spectero.daemon.Libraries.Config
 
                         // Check if values exist.
                         if (storedOpenVPNConfig == null || storedCryptoConfig == null)
-                        {
-                            _logger.LogError("TG: Could not fetch OpenVPN or Crypto config from the database. Please re-install, no defaults are possible for the CA/PKI.");
-                            return null;
-                        }
+                            throw new InternalError("TG: Could not fetch OpenVPN or Crypto config from the database. Please re-install or restore the database from backups, no defaults are possible for the CA/PKI parameters.");
 
                         // Certificate Information Placeholder Object.
                         var certInfo = new CertificateBaseInformation();
@@ -148,8 +146,7 @@ namespace Spectero.daemon.Libraries.Config
                             certInfo.ServerCertificatePassword.IsNullOrEmpty()
                         )
                         {
-                            _logger.LogError("TG: One or more crypto parameters are invalid, please re-install.");
-                            return null;
+                            throw new InternalError("TG: One or more crypto parameters are invalid, please re-install or restore the database from backups.");
                         }
 
                         var certificateAuthory = _cryptoService.LoadCertificate(
@@ -171,7 +168,8 @@ namespace Spectero.daemon.Libraries.Config
                         // Make sure there's configuration information in the database.
                         if (baseOpenVPNConfig == null || listeners == null || listeners.Count == 0)
                         {
-                            _logger.LogError("TG: Could not fetch OpenVPN config from the database. Using defaults.");
+                            _logger.LogWarning("TG: Could not fetch OpenVPN config from the database, using defaults. Please consider re-installing or restoring the database from backups.");
+                            
                             baseOpenVPNConfig = Defaults.OpenVPN.Value;
                             listeners = Defaults.OpenVPNListeners;
                         }

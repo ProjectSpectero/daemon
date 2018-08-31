@@ -40,12 +40,12 @@ namespace Spectero.daemon.Libraries.Migration
         {
             // Get versioning information and compare if we need to migrate.
             var schemaVersion = ConfigUtils.GetConfig(_db, ConfigKeys.SchemaVersion).Result;
-            var daemonVersion = AppConfig.version;
+            var daemonVersion = AppConfig.Version;
 
             /*
              * TODO: Handle check implementation.
-             * The check is whether the naked version for both the currently running instance and the schema version are different, and
-             * if so, they need to be altered to conform to the currently running version's models.
+             * The check is whether the naked Version for both the currently running instance and the schema Version are different, and
+             * if so, they need to be altered to conform to the currently running Version's models.
              */
 
             // Get all defined models.
@@ -90,7 +90,7 @@ namespace Spectero.daemon.Libraries.Migration
 
             /*
              * Explanation:
-             * We need to take a backup of the current db.sqlite before we can proceed further. Name it like <db.sqlite.version.timestamp>.
+             * We need to take a backup of the current db.sqlite before we can proceed further. Name it like <db.sqlite.Version.timestamp>.
              * Reuse the jobs mechanism for it @Andrew, perhaps making a library of functions that are needed so they can be both used here and on the Backup job.
              * 
              * The ORM in use is https://github.com/ServiceStack/ServiceStack.OrmLite, read up on its docs first thoroughly.
@@ -114,14 +114,14 @@ namespace Spectero.daemon.Libraries.Migration
         }
 
         /// <summary>
-        /// Generate a fixated filename for the database backup we're about to make with an optional version.
+        /// Generate a fixated filename for the database backup we're about to make with an optional Version.
         /// </summary>
         /// <param name="version"></param>
         /// <returns></returns>
         public string GenerateDatabaseBackupFilename(string version = null)
         {
-            // Get the default version if not specified.
-            if (version == null) version = AppConfig.version;
+            // Get the default Version if not specified.
+            if (version == null) version = AppConfig.Version;
 
             // Return the generated string.
             return string.Format("db.sqlite.{0}.{1}", version, DatabaseBackupJob.GetEpochTimestamp());

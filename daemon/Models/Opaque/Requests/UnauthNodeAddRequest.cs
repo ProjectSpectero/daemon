@@ -35,7 +35,7 @@ namespace Spectero.daemon.Models.Opaque.Requests
         public string AccessToken { get; set; }
         [JsonProperty("system_data")]
         public Dictionary<string, object> SystemData { get; set; }
-        [JsonProperty("version")]
+        [JsonProperty("Version")]
         public string Version { get; set; }
     }
 }

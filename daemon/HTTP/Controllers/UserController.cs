@@ -77,20 +77,16 @@ namespace Spectero.daemon.HTTP.Controllers
         [HttpPost("", Name = "CreateUser")]
         public async Task<IActionResult> Create([FromBody] User user)
         {
-            if (ModelState.IsValid)
+            // Check to see if the model state is valid.
+            if (!ModelState.IsValid || !user.Validate(out var errors))
             {
-                // Invoked with default operation = create param
-                if (!user.Validate(out var validationErrors))
-                    _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
-
-                if (user.AuthKey.Equals(AppConfig.CloudConnectDefaultAuthKey))
-                    _response.Errors.Add(Errors.RESOURCE_RESERVED, "");
-            }
-            else
-                _response.Errors.Add(Errors.MISSING_BODY, "");
-
-            if (HasErrors())
+                if (errors == null)
+                    _response.Errors.Add(Errors.MISSING_BODY, "");
+                else
+                    _response.Errors.Add(Errors.VALIDATION_FAILED, errors);
+                
                 return BadRequest(_response);
+            }
 
             if ((user.HasRole(Models.User.Role.SuperAdmin) ||
                  user.HasRole(Models.User.Role.WebApi)) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
@@ -149,55 +145,6 @@ namespace Spectero.daemon.HTTP.Controllers
 
             return Created(Url.RouteUrl("GetUserById", new {id = userId}), _response);
         }
-
-        [HttpGet("self", Name = "GetCurrentUserByAuthToken")]
-        public IActionResult GetCurrentUserByAuthToken()
-        {
-            _response.Result = CurrentUser();
-            return Ok(_response);
-        }
-
-
-        [HttpGet("{id}", Name = "GetUserById")]
-        public async Task<IActionResult> GetUserById(long id)
-        {
-            var user = await Db.SingleByIdAsync<User>(id);
-            if (user != null)
-            {
-                _response.Result = user;
-                return Ok(_response);
-            }
-            else
-                return NotFound(_response);
-        }
-
-        [HttpGet("", Name = "GetUsers")]
-        public async Task<IActionResult> GetUsers()
-        {
-            _response.Result = await Db.SelectAsync<User>();
-            return Ok(_response);
-        }
-
-        // This method "ensures" that there are at least n users left of a specific role.
-        // It's invoked to enforce certain constraints like "there must always be at least one SuperAdmin defined."
-        private async Task<int> EnsureRoleCount(User.Role role, int count)
-        {
-            // Counter placeholder variable.
-            var superAdmins = 0;
-
-            // Iterate over each user and count where superadmin.
-            foreach (var user in await Db.SelectAsync<User>())
-                if (user.HasRole(role))
-                    superAdmins++;
-
-            // Check if there is enough superadmins.
-            Logger.LogDebug($"There must be at least {count} users with the {role} role, found: {superAdmins}");
-            
-            if (superAdmins < count)
-                throw new Exception(string.Format("There must be at least {0} users of {1} role.", count, role));
-            
-            return count;
-        }
         
         [HttpPut("{id}", Name = "UpdateUser")]
         public async Task<IActionResult> UpdateUser(long id, [FromBody] User user)
@@ -205,23 +152,15 @@ namespace Spectero.daemon.HTTP.Controllers
             User fetchedUser = null;
 
             // Check to see if the model state is valid.
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid || !user.Validate(out var errors, CRUDOperation.Update))
             {
-                if (!user.Validate(out var validationErrors, CRUDOperation.Update))
-                    _response.Errors.Add(Errors.VALIDATION_FAILED, validationErrors);
-
-                // Check if unprohibited auth key.
-                if (user.AuthKey.Equals(AppConfig.CloudConnectDefaultAuthKey))
-                    _response.Errors.Add(Errors.RESOURCE_RESERVED, "");
+                if (errors == null)
+                    _response.Errors.Add(Errors.MISSING_BODY, "");
+                else
+                    _response.Errors.Add(Errors.VALIDATION_FAILED, errors);
+                
+                return BadRequest(_response);
             }
-            else
-            {
-                // Received no body.
-                _response.Errors.Add(Errors.MISSING_BODY, "");
-            }
-
-            // Check to see for pre-existing errors.
-            if (HasErrors()) return BadRequest(_response);
 
             // Get the provided user.
             fetchedUser = await Db.SingleByIdAsync<User>(id);
@@ -249,7 +188,7 @@ namespace Spectero.daemon.HTTP.Controllers
             }
 
             // Make sure the authkey isn't undefined.
-            if (!user.AuthKey.IsNullOrEmpty() && !fetchedUser.AuthKey.Equals(user.AuthKey))
+            if (!fetchedUser.AuthKey.Equals(user.AuthKey))
             {
                 if (!user.AuthKey.ToLower().Equals(user.AuthKey))
                 {
@@ -263,8 +202,10 @@ namespace Spectero.daemon.HTTP.Controllers
 
             // Quick Validaation
             if (!user.Password.IsNullOrEmpty()) fetchedUser.Password = user.Password;
-            if (!user.FullName.IsNullOrEmpty()) fetchedUser.FullName = user.FullName;
             if (!user.EmailAddress.IsNullOrEmpty()) fetchedUser.EmailAddress = user.EmailAddress;
+            
+            // DAEM-204: allow null fullnames (to remove an existing entry).
+            fetchedUser.FullName = user.FullName;
             
             // The List<Role> is not equal between the two objects, i.e: changes have been proposed.
             if (!user.Roles.SequenceEqual(fetchedUser.Roles))
@@ -314,6 +255,55 @@ namespace Spectero.daemon.HTTP.Controllers
 
             // Return a healthy response.
             return Ok(_response);
+        }
+
+        [HttpGet("self", Name = "GetCurrentUserByAuthToken")]
+        public IActionResult GetCurrentUserByAuthToken()
+        {
+            _response.Result = CurrentUser();
+            return Ok(_response);
+        }
+
+
+        [HttpGet("{id}", Name = "GetUserById")]
+        public async Task<IActionResult> GetUserById(long id)
+        {
+            var user = await Db.SingleByIdAsync<User>(id);
+            if (user != null)
+            {
+                _response.Result = user;
+                return Ok(_response);
+            }
+            else
+                return NotFound(_response);
+        }
+
+        [HttpGet("", Name = "GetUsers")]
+        public async Task<IActionResult> GetUsers()
+        {
+            _response.Result = await Db.SelectAsync<User>();
+            return Ok(_response);
+        }
+
+        // This method "ensures" that there are at least n users left of a specific role.
+        // It's invoked to enforce certain constraints like "there must always be at least one SuperAdmin defined."
+        private async Task<int> EnsureRoleCount(User.Role role, int count)
+        {
+            // Counter placeholder variable.
+            var superAdmins = 0;
+
+            // Iterate over each user and count where superadmin.
+            foreach (var user in await Db.SelectAsync<User>())
+                if (user.HasRole(role))
+                    superAdmins++;
+
+            // Check if there is enough superadmins.
+            Logger.LogDebug($"There must be at least {count} users with the {role} role, found: {superAdmins}");
+            
+            if (superAdmins < count)
+                throw new Exception(string.Format("There must be at least {0} users of {1} role.", count, role));
+            
+            return count;
         }
         
         [HttpDelete("{id}", Name = "DeleteUser")]

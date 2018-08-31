@@ -114,9 +114,10 @@ namespace Spectero.daemon.HTTP.Controllers
                 {
                     "app", new Dictionary<string, object>
                     {
-                        { "version", AppConfig.version },
-                        { "restartNeeded", _restartNeeded },
-                        { "environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "production" }
+                        { "version", AppConfig.Version },
+                        { "releaseChannel", AppConfig.ReleaseChannel },
+                        { "environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "production" },
+                        { "restartNeeded", _restartNeeded }
                     }
                 },
                 {

@@ -123,7 +123,7 @@ namespace Spectero.daemon.Jobs
                        }
                    ],
                    "message": null,
-                   "version": "v1"
+                   "Version": "v1"
                }
              */
 

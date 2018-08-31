@@ -119,26 +119,32 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         public void Perform()
         {
-            if (AppConfig.updateDeadlock == true)
+            if (!IsEnabled())
+            {
+                _logger.LogError("UJ: Job enabled, but matching criterion does not match. This should not happen, silently going back to sleep.");
+                return;
+            }
+
+            if (AppConfig.UpdateDeadlock == true)
             {
                 _logger.LogWarning("UJ: Update deadlock detected - there is already an update in progress.");
                 return;
             }
 
             // Enable the deadlock.
-            AppConfig.updateDeadlock = true;
+            AppConfig.UpdateDeadlock = true;
 
             // Get the latest set of release data.
             var releaseInformation = GetReleaseInformation();
 
-            // Get version details.
+            // Get Version details.
             var runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.ReleaseChannel;
             var remoteVersion = releaseInformation.channels[runningBranch];
             var remoteBranch = remoteVersion.Split("-")[1];
 
 
             // Compare
-            if (remoteBranch == runningBranch && remoteVersion != AppConfig.version)
+            if (remoteBranch == runningBranch && SemanticVersionUpdateChecker(remoteVersion))
             {
                 // Update available.
                 var newVersion = releaseInformation.channels[remoteBranch];
@@ -148,7 +154,7 @@ namespace Spectero.daemon.Jobs
                 // Check if the target directory already exists, we will use this to determine if an update has already happened.
                 if (Directory.Exists(targetDirectory))
                 {
-                    AppConfig.updateDeadlock = false;
+                    AppConfig.UpdateDeadlock = false;
                     return;
                 }
 
@@ -165,12 +171,12 @@ namespace Spectero.daemon.Jobs
                 {
                     var msg = "A error occured while attemting to resolve the download link for the update: \n" + exception;
                     _logger.LogError(msg);
-                    AppConfig.updateDeadlock = false;
+                    AppConfig.UpdateDeadlock = false;
                     throw new InternalError(msg);
                 }
 
                 // Download
-                using (WebClient webClient = new WebClient())
+                using (var webClient = new WebClient())
                 {
                     try
                     {
@@ -181,7 +187,7 @@ namespace Spectero.daemon.Jobs
                     {
                         var msg = "The update job has failed due to a problem while downloading the update: " + exception;
                         _logger.LogError(msg);
-                        AppConfig.updateDeadlock = false;
+                        AppConfig.UpdateDeadlock = false;
                         throw new InternalError(msg);
                     }
                 }
@@ -193,8 +199,11 @@ namespace Spectero.daemon.Jobs
                 // Delete the archive after extraction.
                 File.Delete(targetArchive);
 
+                // Get the expected symlink path.
+                var latestPath = Path.Combine(RootInstallationDirectory, "latest");
+
                 // Copy the databases
-                foreach (string databasePath in GetDatabasePaths())
+                foreach (var databasePath in GetDatabasePaths())
                 {
                     var basename = new FileInfo(databasePath).Name;
                     var databaseDestPath = Path.Combine(targetDirectory, "daemon", "Database", basename);
@@ -202,8 +211,6 @@ namespace Spectero.daemon.Jobs
                     _logger.LogInformation("UJ: Migrated Database: {0} => {1}", databasePath, databaseDestPath);
                 }
 
-                // Get the expected symlink path.
-                var latestPath = Path.Combine(RootInstallationDirectory, "latest");
 
                 // Delete the symlink if it exists.
                 if (_symlink.IsSymlink(latestPath))
@@ -224,14 +231,14 @@ namespace Spectero.daemon.Jobs
 
                 // Restart the service.
                 // We'll rely on the service manager to start us back up.
-                _logger.LogInformation("The update process is complete, and the spectero service has been configured to run the latest version.\n" +
-                                       "Please restart the spectero service to utilize the latest version.\n" +
+                _logger.LogInformation("The update process is complete, and the spectero service has been configured to run the latest Version.\n" +
+                                       "Please restart the spectero service to utilize the latest Version.\n" +
                                        "The application will now shutdown.");
                 _applicationLifetime.StopApplication();
             }
 
             // Disable th deadlock and allow the next run.
-            AppConfig.updateDeadlock = false;
+            AppConfig.UpdateDeadlock = false;
         }
 
         /// <summary>
@@ -251,7 +258,7 @@ namespace Spectero.daemon.Jobs
             {
                 var msg = "UJ: Failed to get release data from the internet.\n" + exception;
                 _logger.LogError(msg);
-                AppConfig.updateDeadlock = false;
+                AppConfig.UpdateDeadlock = false;
                 throw new InternalError(msg);
             }
         }
@@ -274,5 +281,54 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         /// <returns></returns>
         private string[] GetDatabasePaths() => Directory.GetFiles(DatabaseDirectory, "*.sqlite", SearchOption.TopDirectoryOnly);
+
+        /// <summary>
+        /// Comparison function designed specifically for semantic versioning.
+        /// Ths function will handle every possible edge case for a different version, and return a bool if there's an update available
+        /// based on the data provided.
+        /// </summary>
+        /// <param name="remote"></param>
+        /// <param name="running"></param>
+        /// <returns></returns>
+        private bool SemanticVersionUpdateChecker(string remote)
+        {
+            string[] splitRemote = remote.Split(".");
+
+            // Check for semantic versioning differences.
+            if (splitRemote.Length == 3 && AppConfig.Version.Split(".").Length == 2)
+            {
+                _logger.LogWarning("The latest release is semantic versioned while the current running version release is not - an update will be forced.");
+                return true;
+            }
+            // We're already running the latest version.
+            else if (remote == AppConfig.Version)
+            {
+                return false;
+            }
+
+            // Compare the MAJOR level of semantic versioning.
+            if (int.Parse(splitRemote[0]) > AppConfig.MajorVersion)
+            {
+                _logger.LogInformation("There is a new major release available for the Spectero Daemon.");
+                return true;
+            }
+
+            // Compare the MINOR level of semantic versioning.
+            if (int.Parse(splitRemote[1]) > AppConfig.MinorVersion)
+            {
+                _logger.LogInformation("There is a new minor release available for the Spectero Daemon.");
+                return true;
+            }
+
+            // Compare the PATCH level of semantic versioning.
+            if (int.Parse(splitRemote[2]) > AppConfig.PatchVersion)
+            {
+                _logger.LogInformation("There is a new patch available for the Spectero Daemon.");
+                return true;
+            }
+
+            // Generic return, no update available although we should never reach here.
+            return false;
+        }
     }
 }

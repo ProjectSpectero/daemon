@@ -14,12 +14,10 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
-
 using System;
 using System.Data;
 using System.IO;
 using System.Net.Http;
-using FluentMigrator.Runner;
 using Hangfire;
 using Hangfire.SQLite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -50,8 +48,7 @@ using Spectero.daemon.Libraries.Core.LifetimeHandler;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
-using Spectero.daemon.Libraries.Migration;
-using Spectero.daemon.Libraries.Seeder;
+using Spectero.daemon.Libraries.PortRegistry;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Symlink;
 using Spectero.daemon.Migrations;
@@ -92,38 +89,19 @@ namespace Spectero.daemon
         public void ConfigureServices(IServiceCollection services)
         {
             // Don't build a premature service provider from IServiceCollection, it only includes the services registered when the provider is built.
-
+                
             // Root app config, this does not seem to work with complex JSON objects
             var appConfig = Configuration.GetSection("Daemon");
             services.Configure<AppConfig>(appConfig);
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-            /*
-             * FluentMigrator Explanation
-             *
-             * For the following: .ScanIn(typeof(CreateUserTable).Assembly).For.Migrations()
-             * line, we are finding the first migration with the earliest timestamp and incrementing through each
-             * migration by a form of reflection.
-             */
-            services.AddFluentMigratorCore().ConfigureRunner(
-                rb => rb
-                    .AddSQLite()
-                    .WithGlobalConnectionString(
-                        string.Format("Data Source={0}",
-                            Path.Combine(Program.GetAssemblyLocation(), appConfig["DatabaseDir"], "db.sqlite"))
-                    )
-                    .ScanIn(typeof(CreateUserTable).Assembly).For.Migrations()
+            services.AddSingleton(c =>
+                InitializeDbConnection(appConfig["DatabaseDir"], SqliteDialect.Provider)
             );
-           
-            // Add IDbConnection via ORMLite to the ServiceCollection
-            services.AddSingleton(c => InitializeDbConnection(appConfig["DatabaseDir"], SqliteDialect.Provider));
-            
-            // This depends on ORMLite, you gotta register it after.
-            services.AddSingleton<ISeedRunner, SeedRunner>();
 
             services.AddSingleton<IStatistician, Statistician>();
-
+            
             services.AddSingleton<IStatistician, Statistician>();
 
             services.AddSingleton<IAuthenticator, Authenticator>();
@@ -132,8 +110,7 @@ namespace Spectero.daemon
 
             services.AddSingleton<ICryptoService, CryptoService>();
 
-            // DISABLE THIS FOR TESTING OF FLUENTMIGRATOR
-            // services.AddSingleton<IMigration, Initialize>();
+            services.AddSingleton<IMigration, Initialize>();
 
             services.AddSingleton<IServiceConfigManager, ServiceConfigManager>();
 
@@ -145,7 +122,7 @@ namespace Spectero.daemon
                 new EngineFactory()
                     .ForFileSystem(Path.Combine(CurrentDirectory, appConfig["TemplateDirectory"]))
             );
-
+            
             // HTTP Client for Job.
             services.AddSingleton<HttpClient, HttpClient>();
 
@@ -181,15 +158,13 @@ namespace Spectero.daemon
             services.AddMemoryCache();
 
             services.AddSingleton<IRestClient>(c => new RestClient(AppConfig.ApiBaseUri));
-
+            
             services.AddSingleton<IProcessRunner, ProcessRunner>();
 
-            services.AddSingleton<IMigrator, Migrator>();
-
             services.AddSingleton<IJob, FetchCloudEngagementsJob>();
-
+            
             services.AddSingleton<IJob, DatabaseBackupJob>();
-
+            
             services.AddSingleton<IJob, UpdaterJob>();
 
             //services.AddScoped<IJob, TestJob>(); // This is mostly to test changes to the job activation infra.
@@ -202,13 +177,16 @@ namespace Spectero.daemon
 
             services.AddSingleton<ICloudHandler, CloudHandler>();
 
+            services.AddSingleton<IPortRegistry, PortRegistry>();
+
             services.AddMvc();
+
 
             var builtProvider = services.BuildServiceProvider();
             services.AddHangfire(config =>
             {
                 var connectionString = $"Data Source={appConfig["DatabaseDir"]}/jobs.sqlite;";
-
+                
                 config.UseSQLiteStorage(connectionString, new SQLiteStorageOptions());
                 config.UseNLogLogProvider();
                 // Please ENSURE that this is the VERY last call (to add services) in this method body. 
@@ -221,16 +199,16 @@ namespace Spectero.daemon
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IOptionsMonitor<AppConfig> configMonitor, IApplicationBuilder app,
             IHostingEnvironment env, ILoggerFactory loggerFactory,
-            IAutoStarter autoStarter, ISeedRunner seedRunner,
+            IMigration migration, IAutoStarter autoStarter,
             IServiceProvider serviceProvider, IApplicationLifetime applicationLifetime,
             ILifetimeHandler lifetimeHandler)
         {
             // Create the filesystem marker that says Startup is now underway.
             // This is removed in LifetimeHandler once init finishes.
             // And yeah, the logging context is NOT yet available -_-
-            if (!Utility.ManageStartupMarker())
+            if (! Utility.ManageStartupMarker())
                 Console.WriteLine($"ERROR: The startup marker ({Utility.GetCurrentStartupMarker()}) could NOT be created.");
-
+            
             var appConfig = configMonitor.CurrentValue;
 
             if (env.IsDevelopment())
@@ -260,12 +238,7 @@ namespace Spectero.daemon
             loggerFactory.ConfigureNLog(appConfig.LoggingConfig);
             app.AddNLogWeb();
 
-            // Execute the migrations in a separate scope to ensure their disposal.
-            serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateUp();
-            
-            // This always has to be after the migrations run.
-            seedRunner.Run();
-            
+            migration.Up();
             autoStarter.Startup();
 
             foreach (var implementer in serviceProvider.GetServices<IJob>())

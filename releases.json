@@ -1,7 +1,7 @@
 {
   "channels": {
     "stable": "0.1-stable",
-    "alpha": "0.2-alpha",
+    "alpha": "0.2.0-alpha",
     "beta": null
   },
   "versions": {
@@ -12,8 +12,8 @@
       "requiredDotnetCoreVersion": "2.1.2",
       "requiredInstallerRevision": 1
     },
-    "0.2-alpha": {
-      "download": "https://c.spectero.com/staging/0.2-alpha.zip",
+    "0.2.0-alpha": {
+      "download": "https://c.spectero.com/staging/0.2.0.zip",
       "altDownload": null,
       "changelog": "https://spectero.atlassian.net/wiki/spaces/docs/pages/10551297/0.2",
       "requiredDotnetCoreVersion": "2.1.2",
