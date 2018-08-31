@@ -20,7 +20,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
 {
     public interface IPortRegistry
     {
-        bool Allocate(IPAddress ip, int port, IService forwardedFor = null);
+        PortAllocation Allocate(IPAddress ip, int port, IService forwardedFor = null);
         bool IsAllocated(IPAddress ip, int port, out PortAllocation allocation);
         bool IsAllocated(string ip, int port, out PortAllocation allocation);
         bool CleanUp(IService service = null);
