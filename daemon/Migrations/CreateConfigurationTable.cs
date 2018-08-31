@@ -25,7 +25,7 @@ namespace Spectero.daemon.Migrations
         {
             Create.Table("Configuration")
                 .WithColumn("Id").AsInt32().PrimaryKey()
-                .WithColumn("Key").AsString()
+                .WithColumn("Key").AsString().Indexed("cidx_config_key").Unique()
                 .WithColumn("Value").AsString()
                 .WithColumn("CreatedDate").AsString()
                 .WithColumn("UpdatedDate").AsString();
