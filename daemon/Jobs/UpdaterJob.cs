@@ -182,17 +182,20 @@ namespace Spectero.daemon.Jobs
             if (remoteBranch == runningBranch && SemanticVersionUpdateChecker(remoteVersion))
             {
                 // Update available.
-                
+                _logger.LogDebug("UJ: Generating target paths...");
                 var newVersion = releaseInformation.channels[remoteBranch];
                 var targetDirectory = Path.Combine(RootInstallationDirectory, newVersion);
                 var targetArchive = Path.Combine(RootInstallationDirectory, string.Format("{0}.zip", newVersion));
+                _logger.LogDebug("UJ: Target paths generated successfully.");
 
                 // Generate a projected path of where the new dotnet core installation should exist - will utilize this in the future.
                 var newDotnetCorePath = Path.Combine(targetDirectory, "dotnet");
+                _logger.LogDebug("UJ: New Dotnet Core path generated: " + newDotnetCorePath);
 
                 // Check if the target directory already exists, we will use this to determine if an update has already happened.
                 if (Directory.Exists(targetDirectory))
                 {
+                    _logger.LogDebug("UJ: Target installation directory exists, thus the update will be skipped.");
                     /*
                      * Explanation
                      * There's already the directory for the updated version, at this point we should recognize we cannot modify it. 
@@ -212,7 +215,7 @@ namespace Spectero.daemon.Jobs
                 }
                 catch (Exception exception)
                 {
-                    var msg = "A error occured while attemting to resolve the download link for the update: \n" + exception;
+                    var msg = "A error occured while attempting to resolve the download link for the update: \n" + exception;
                     _logger.LogError(msg);
                     AppConfig.UpdateDeadlock = false;
                     throw new InternalError(msg);
@@ -228,7 +231,7 @@ namespace Spectero.daemon.Jobs
                     }
                     catch (WebException exception)
                     {
-                        var msg = "The update job has failed due to a problem while downloading the update: " + exception;
+                        var msg = "UJ: The update job has failed due to a problem while downloading the update:\n" + exception;
                         _logger.LogError(msg);
                         AppConfig.UpdateDeadlock = false;
                         throw new InternalError(msg);
@@ -238,20 +241,37 @@ namespace Spectero.daemon.Jobs
                 // Extract
                 _logger.LogInformation("UJ: Extracting {0} to {1}", targetArchive, targetDirectory);
                 ZipFile.ExtractToDirectory(targetArchive, targetDirectory);
-
+                _logger.LogDebug("UJ: Archive has been extracted successfully.");
+                
                 // Delete the archive after extraction.
                 File.Delete(targetArchive);
+                _logger.LogDebug("UJ: Downloaded version archive has been deleted.");
 
                 // Get the expected symlink path.
                 var latestPath = Path.Combine(RootInstallationDirectory, "latest");
+                _logger.LogDebug("UJ: Latest symlink path has been generated.");
 
                 // Copy the databases
+                _logger.LogDebug("UJ: Getting database migration information.");
+                var databasePaths = GetDatabasePaths();
+                _logger.LogDebug("UJ: {0} database(s) need to be migrated.", databasePaths.Length);
                 foreach (var databasePath in GetDatabasePaths())
                 {
-                    var basename = new FileInfo(databasePath).Name;
-                    var databaseDestPath = Path.Combine(targetDirectory, "daemon", "Database", basename);
-                    File.Copy(databasePath, databaseDestPath);
-                    _logger.LogInformation("UJ: Migrated Database: {0} => {1}", databasePath, databaseDestPath);
+                    try
+                    {
+                        var basename = new FileInfo(databasePath).Name;
+                        var databaseDestinationPath = Path.Combine(targetDirectory, "Database", basename);
+                        _logger.LogDebug("UJ: Attempting to copy database {0} to path {1}", databasePath, databaseDestinationPath);
+                        File.Copy(databasePath, databaseDestinationPath);
+                        _logger.LogInformation("UJ: Migrated Database: {0} => {1}", databasePath, databaseDestinationPath);
+                    }
+                    catch (Exception exception)
+                    {
+                        AppConfig.UpdateDeadlock = false;
+                        var msg = "UJ: A exception occured while trying to migrate a database to the new destination:\n" + exception;
+                        _logger.LogError(msg);
+                        throw exception;
+                    }
                 }
 
 
@@ -405,7 +425,7 @@ namespace Spectero.daemon.Jobs
                             AppConfig.UpdateDeadlock = false;
                             var msg = "UJ: A exception occured while trying to update dotnet core for windows\n" + exception;
                             _logger.LogError(msg);
-                            throw new Exception(msg);
+                            throw exception;
                         }
                     }
                     else if (AppConfig.isUnix)
@@ -467,7 +487,7 @@ namespace Spectero.daemon.Jobs
         {
             try
             {
-                var response = _httpClient.GetAsync("https://c.spectero.com/releases.json").Result;
+                var response = _httpClient.GetAsync("http://192.168.2.70/releases.json").Result;
 
                 var releaseData = JsonConvert.DeserializeObject<Release>(response.Content.ReadAsStringAsync().Result);
                 return releaseData;
@@ -533,7 +553,8 @@ namespace Spectero.daemon.Jobs
         /// <returns></returns>
         private bool SemanticVersionUpdateChecker(string remote)
         {
-            string[] splitRemote = remote.Split(".");
+            // Divide by the dash/hyphen, then separate each version.
+            string[] splitRemote = remote.Split("-")[0].Split(".");
 
             // Check for semantic versioning differences.
             if (splitRemote.Length == 3 && AppConfig.Version.Split(".").Length == 2)
