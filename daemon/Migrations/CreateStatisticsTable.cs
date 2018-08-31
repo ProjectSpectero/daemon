@@ -14,11 +14,26 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+using FluentMigrator;
+
 namespace Spectero.daemon.Migrations
 {
-    public interface IMigration
+    [Migration(20180822203601)]
+    public class CreateStatisticsTable : Migration
     {
-        void Up();
-        void Down();
+        public override void Up()
+        {
+            Create.Table("Statistic")
+                .WithColumn("Id").AsInt32().PrimaryKey().Nullable()
+                .WithColumn("Bytes").AsInt64()
+                .WithColumn("Directions").AsString()
+                .WithColumn("CreatedDate").AsString()
+                .WithColumn("UpdatedDate").AsString();
+        }
+
+        public override void Down()
+        {
+            Delete.Table("Statistic");
+        }
     }
 }

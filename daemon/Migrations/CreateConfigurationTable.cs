@@ -14,21 +14,26 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
-using ServiceStack.DataAnnotations;
+using FluentMigrator;
 
-namespace Spectero.daemon.Models
+namespace Spectero.daemon.Migrations
 {
-    public class Configuration : BaseModel
+    [Migration(20180822203602)]
+    public class CreateConfigurationTable : Migration
     {
-        [EnumAsInt]
-        public enum Type
+        public override void Up()
         {
-            Generic,
-            Service
+            Create.Table("Configuration")
+                .WithColumn("Id").AsInt32().PrimaryKey()
+                .WithColumn("Key").AsString()
+                .WithColumn("Value").AsString()
+                .WithColumn("CreatedDate").AsString()
+                .WithColumn("UpdatedDate").AsString();
         }
 
-        [Index(Unique = true)]
-        public string Key { get; set; }
-        public string Value { get; set; }
+        public override void Down()
+        {
+            Delete.Table("Configuration");
+        }
     }
 }

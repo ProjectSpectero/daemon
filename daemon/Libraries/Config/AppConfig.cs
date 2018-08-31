@@ -97,6 +97,8 @@ namespace Spectero.daemon.Libraries.Config
         
 
 
+        public static string FirstRunConfigName => ".firstrun";
+
         /// <summary>
         /// Simple function to detect the presence of OpenVZ hosts.
         /// </summary>
