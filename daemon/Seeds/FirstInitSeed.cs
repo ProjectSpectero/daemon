@@ -32,7 +32,6 @@ namespace Spectero.daemon.Seeds
         {
             _db = serviceProvider.GetRequiredService<IDbConnection>();
             _logger = serviceProvider.GetRequiredService<ILogger<FirstInitSeed>>();
-
             _config = serviceProvider.GetRequiredService<IOptionsMonitor<AppConfig>>().CurrentValue;
             _cryptoService = serviceProvider.GetRequiredService<ICryptoService>();
         }
@@ -47,8 +46,6 @@ namespace Spectero.daemon.Seeds
             X509Certificate2 ca = null;
 
             var localIPs = Utility.GetLocalIPs(_config.IgnoreRFC1918);
-                
-
             if (! _db.TableExists<Configuration>())           
                 throw new InternalError("Required table 'Configuration' does not exist, did the migrations run?");
                 
@@ -126,35 +123,40 @@ namespace Spectero.daemon.Seeds
                 "CN=" + "spectero", ca, null,
                 new[] {KeyPurposeID.IdKPClientAuth}, specteroCertKey);
                 
-
+            // Store CA Password
             _db.Insert(new Configuration
             {
                 Key = ConfigKeys.CeritificationAuthorityPassword,
                 Value = caPassword
             });
 
+            // Store Server Password
             _db.Insert(new Configuration
             {
                 Key = ConfigKeys.ServerCertificatePassword,
                 Value = serverPassword
             });
 
+            // Store CA
             _db.Insert(new Configuration
             {
                 Key = ConfigKeys.CertificationAuthority,
                 Value = Convert.ToBase64String(_cryptoService.GetCertificateBytes(ca, caPassword))
             });
 
+            // Store Server Certificate.
             _db.Insert(new Configuration
             {
                 Key = ConfigKeys.ServerCertificate,
                 Value = Convert.ToBase64String(_cryptoService.GetCertificateBytes(serverCertificate, serverPassword))
             });
 
+            // Store Chain.
             _db.Insert(new Configuration
             {
                 Key = ConfigKeys.ServerPFXChain,
-                Value = Convert.ToBase64String(_cryptoService.ExportCertificateChain(serverCertificate, ca)) // Yes, passwordless. Somewhat intentionally, as this is mostly consumed by 3rd party apps.
+                // Yes, passwordless. Somewhat intentionally, as this is mostly consumed by 3rd party apps.
+                Value = Convert.ToBase64String(_cryptoService.ExportCertificateChain(serverCertificate, ca)) 
             });
 
             // OpenVPN defaults
@@ -165,6 +167,7 @@ namespace Spectero.daemon.Seeds
 
             });
 
+            // Store OpenVPN Base Configuration Template.
             _db.Insert(new Configuration
             {
                 Key = ConfigKeys.OpenVPNBaseConfig,

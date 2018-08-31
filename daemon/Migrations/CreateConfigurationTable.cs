@@ -24,9 +24,9 @@ namespace Spectero.daemon.Migrations
         public override void Up()
         {
             Create.Table("Configuration")
-                .WithColumn("Id").AsInt32().PrimaryKey().Nullable()
-                .WithColumn("Key").AsString().Nullable()
-                .WithColumn("Value").AsString().Nullable()
+                .WithColumn("Id").AsInt32().PrimaryKey()
+                .WithColumn("Key").AsString()
+                .WithColumn("Value").AsString()
                 .WithColumn("CreatedDate").AsString()
                 .WithColumn("UpdatedDate").AsString();
         }

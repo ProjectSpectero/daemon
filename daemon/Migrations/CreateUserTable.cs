@@ -14,7 +14,11 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
+using System;
+using System.Collections.Generic;
 using FluentMigrator;
+using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Migrations
 {
@@ -26,7 +30,7 @@ namespace Spectero.daemon.Migrations
             Create.Table("User")
                 .WithColumn("Id").AsInt32().PrimaryKey().Nullable()
                 .WithColumn("Source").AsInt32()
-                .WithColumn("AuthKey").AsString().Indexed("uidx_user_authkey")
+                .WithColumn("AuthKey").AsString().Indexed("uidx_user_authkey").Unique()
                 .WithColumn("Roles").AsString().Nullable()
                 .WithColumn("Password").AsString()
                 .WithColumn("Cert").AsString().Nullable()

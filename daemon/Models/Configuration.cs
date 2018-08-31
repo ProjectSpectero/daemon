@@ -27,6 +27,7 @@ namespace Spectero.daemon.Models
             Service
         }
 
+        [Index(Unique = true)]
         public string Key { get; set; }
         public string Value { get; set; }
     }
