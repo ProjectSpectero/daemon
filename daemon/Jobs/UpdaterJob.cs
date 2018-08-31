@@ -28,7 +28,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Errors;
@@ -103,6 +102,20 @@ namespace Spectero.daemon.Jobs
         private readonly IProcessRunner _processRunner;
         private JObject _releaseInformation;
 
+        // Updater Variables
+        private string runningBranch;
+        private string remoteVersion;
+        private string remoteBranch;
+        private string newVersion;
+        private string targetDirectory;
+        private string targetArchive;
+        private string newDotnetCorePath;
+        private string updateMessage;
+
+        // Source Information from external properties
+        private Release releaseInformation;
+        private SourcesInformation sourcesInformation;
+
 
         /// <summary>
         /// Constructor
@@ -121,14 +134,14 @@ namespace Spectero.daemon.Jobs
             IArchitectureUtility architectureUtility)
         {
             _httpClient = httpClient;
-            
+
             // Set symlink inheritance - also needs the processrunner.
             _symlink = symlink;
             _symlink.SetProcessRunner(processRunner);
-            
+
             // Inherit the process runner into the class for when needed.
             _processRunner = processRunner;
-            
+
             _applicationLifetime = applicationLifetime;
             _logger = logger;
             _architectureUtility = architectureUtility;
@@ -170,26 +183,25 @@ namespace Spectero.daemon.Jobs
             AppConfig.UpdateDeadlock = true;
 
             // Get the latest set of release data.
-            var releaseInformation = GetReleaseInformation();
+            releaseInformation = GetReleaseInformation();
 
-            // Get Version details.
-            var runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.ReleaseChannel;
-            var remoteVersion = releaseInformation.channels[runningBranch];
-            var remoteBranch = remoteVersion.Split("-")[1];
-
+            // Assign versioning details.
+            runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.ReleaseChannel;
+            remoteVersion = releaseInformation.channels[runningBranch];
+            remoteBranch = remoteVersion.Split("-")[1];
 
             // Compare
             if (remoteBranch == runningBranch && SemanticVersionUpdateChecker(remoteVersion))
             {
                 // Update available.
                 _logger.LogDebug("UJ: Generating target paths...");
-                var newVersion = releaseInformation.channels[remoteBranch];
-                var targetDirectory = Path.Combine(RootInstallationDirectory, newVersion);
-                var targetArchive = Path.Combine(RootInstallationDirectory, string.Format("{0}.zip", newVersion));
+                newVersion = releaseInformation.channels[remoteBranch];
+                targetDirectory = Path.Combine(RootInstallationDirectory, newVersion);
+                targetArchive = Path.Combine(RootInstallationDirectory, string.Format("{0}.zip", newVersion));
                 _logger.LogDebug("UJ: Target paths generated successfully.");
 
                 // Generate a projected path of where the new dotnet core installation should exist - will utilize this in the future.
-                var newDotnetCorePath = Path.Combine(targetDirectory, "dotnet");
+                newDotnetCorePath = Path.Combine(targetDirectory, "dotnet");
                 _logger.LogDebug("UJ: New Dotnet Core path generated: " + newDotnetCorePath);
 
                 // Check if the target directory already exists, we will use this to determine if an update has already happened.
@@ -203,6 +215,10 @@ namespace Spectero.daemon.Jobs
                     AppConfig.UpdateDeadlock = false;
                     return;
                 }
+
+                // If we've made it this far without resetting the deadlock we can likely update.
+                // Go ahead and print the update message.
+                _logger.LogInformation(updateMessage);
 
                 // Log to the console that the update is available.
                 _logger.LogInformation("UJ: There is a update available for the spectero daemon: " + newVersion);
@@ -242,7 +258,7 @@ namespace Spectero.daemon.Jobs
                 _logger.LogInformation("UJ: Extracting {0} to {1}", targetArchive, targetDirectory);
                 ZipFile.ExtractToDirectory(targetArchive, targetDirectory);
                 _logger.LogDebug("UJ: Archive has been extracted successfully.");
-                
+
                 // Delete the archive after extraction.
                 File.Delete(targetArchive);
                 _logger.LogDebug("UJ: Downloaded version archive has been deleted.");
@@ -260,7 +276,7 @@ namespace Spectero.daemon.Jobs
                     try
                     {
                         var basename = new FileInfo(databasePath).Name;
-                        var databaseDestinationPath = Path.Combine(targetDirectory, "Database", basename);
+                        var databaseDestinationPath = Path.Combine(targetDirectory, "daemon", "Database", basename);
                         _logger.LogDebug("UJ: Attempting to copy database {0} to path {1}", databasePath, databaseDestinationPath);
                         File.Copy(databasePath, databaseDestinationPath);
                         _logger.LogInformation("UJ: Migrated Database: {0} => {1}", databasePath, databaseDestinationPath);
@@ -338,115 +354,83 @@ namespace Spectero.daemon.Jobs
                     };
 
                     // Run the event.
-                    var proc = _processRunner.Run(procOption);
-
-                    // TODO: MAKE THIS MORE ROBUST AFTER TESTING.
-                    // Read the lines to see if compatible. 
-                    foreach (var line in proc.Command.StandardOutput.ReadToEnd().Split("\n"))
+                    _logger.LogDebug("UJ: Executing dotnet command to get available runtimes.");
+                    try
                     {
-                        // Get the line that contains a version.
-                        var fixedLine = "";
-                        if (line.Contains("Microsoft.AspNetCore.All"))
+                        // Try to run the command and wait
+                        var proc = _processRunner.Run(procOption);
+                        proc.Command.Wait();
+
+                        // Rubber duck: check to see if we succeeded.
+                        _logger.LogDebug("UJ: Dotnet command successfully exited - will now print and iterate through each available framework.");
+
+                        // TODO: MAKE THIS MORE ROBUST AFTER TESTING.
+                        // Read the lines to see if compatible. 
+                        foreach (var line in proc.Command.StandardOutput.GetLines())
                         {
-                            // Single out the data from the installed version.
-                            fixedLine = line.Remove(0, 25); // Remove the "Microsoft.AspNetCore.All"
-                            fixedLine = fixedLine.Substring(0, 5); // Single out the version                
+                            // Rubber ducking
+                            _logger.LogDebug("UJ: Current line value: `{0}`", line);
 
-                            // Split 
-                            string[] installed = fixedLine.Split('.');
-                            string[] requirement = releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion.Split('.');
-
-                            // Compare.
-                            for (var i = 0; i != installed.Length; i++)
+                            // Get the line that contains a version.
+                            var fixedLine = "";
+                            if (line.Contains("Microsoft.AspNetCore.All"))
                             {
-                                if (int.Parse(installed[i]) < int.Parse(requirement[i]))
+                                // Rubber ducking
+                                _logger.LogDebug("UJ: Potentially found a framework that supports this version.");
+
+                                // Single out the data from the installed version.
+                                fixedLine = line.Remove(0, 25); // Remove the "Microsoft.AspNetCore.All"
+                                fixedLine = fixedLine.Substring(0, 5); // Single out the version              
+
+                                // Rubber ducking: printing the version of the fixedline
+                                _logger.LogDebug("UJ: Truncated version string comes out to: " + fixedLine);
+
+                                // Split 
+                                string[] installed = fixedLine.Split('.');
+                                string[] requirement = releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion.Split('.');
+
+                                // Compare versioning.
+                                for (var i = 0; i != installed.Length; i++)
                                 {
-                                    // The installed version cannot run the required version.
-                                    // Download a new dotnet core.
+                                    // Rubber ducking: visual version comparison.
+                                    _logger.LogDebug("UJ: Dotnet Core Version Comparison index {0} has values {1} for installed, and the requirement is {2}",
+                                        i, installed[i], requirement[i]);
+
+                                    if (int.Parse(installed[i]) < int.Parse(requirement[i]))
+                                    {
+                                        // Rubber ducking: Invalid version
+                                        _logger.LogDebug("UJ: The installed version of dotnet core is incompatible.");
+
+                                        // The installed version cannot run the required version.
+                                        // Download a new dotnet core.
+                                        DownloadDotnetCoreFramework();
+                                        goto loop_end;
+                                    }
                                 }
+
+                                // Rubber Duck: 
+                                _logger.LogDebug("UJ: The dotnet core version comparison loop did not signify that the version was incompatible.");
+
+                                // If the for loop above did nothing, we should be compatible.
+                                break;
                             }
-
-                            // Get the projected path of where dotnet core should be copied - create the directory if it does not exist..
-                            if (Directory.Exists(newDotnetCorePath)) Directory.CreateDirectory(newDotnetCorePath);
-
-                            // Create the required directories
-                            foreach (var dirPath in Directory.GetDirectories(dotnetCorePath, "*", SearchOption.AllDirectories))
-                                Directory.CreateDirectory(dirPath.Replace(dotnetCorePath, newDotnetCorePath));
-
-                            // Copy the files.
-                            foreach (var newPath in Directory.GetFiles(dotnetCorePath, "*.*", SearchOption.AllDirectories))
-                                File.Copy(newPath, newPath.Replace(dotnetCorePath, newDotnetCorePath), true);
-
-                            _logger.LogInformation("UJ: Requirement for dotnet core has been satisfied.");
                         }
+
+                        loop_end: ;
+                        _logger.LogInformation("UJ: Requirement for dotnet core has been satisfied.");
+                    }
+                    catch (Exception exception)
+                    {
+                        AppConfig.UpdateDeadlock = false;
+                        var msg = "UJ: A exception occured while trying to validate a compatible dotnet core version:\n" + exception;
+                        _logger.LogError(msg);
+                        throw exception;
                     }
                 }
                 else
                 {
-                    // Doesn't exist, download a new version.
-                    _logger.LogDebug("UJ: A usable dotnet core installation was not found, thus will be made.");
-
-                    // Get Sources.json information.
-                    var sources = GetSources();
-
-                    // Determine operating system
-                    if (AppConfig.isWindows)
-                    {
-                        // Download installer
-                        var downloadPath = Path.Combine(targetDirectory, "dotnet-installer.exe");
-                        using (var client = new WebClient())
-                        {
-                            client.DownloadFile(sources.dependencies.dotnet[
-                                releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion
-                            ].windows["default"], downloadPath);
-                        }
-
-                        // Create a process runner for the new dotnet installer
-                        var dotnetInstallerProcOptions = new ProcessOptions()
-                        {
-                            Executable = downloadPath,
-                            InvokeAsSuperuser = true,
-                            Monitor = false
-                        };
-
-                        // Attempt to run the installer.
-                        try
-                        {
-                            // Run the installer.
-                            var installerRunner = _processRunner.Run(dotnetInstallerProcOptions);
-                            installerRunner.Command.Wait();
-
-                            // If we can get past the wait, the installation succeeded.
-                            _logger.LogInformation("UJ: Dotnet Core Runtime was successfully updated to version {0}",
-                                releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion);
-                        }
-                        catch (ErrorExitCodeException exception)
-                        {
-                            AppConfig.UpdateDeadlock = false;
-                            var msg = "UJ: A exception occured while trying to update dotnet core for windows\n" + exception;
-                            _logger.LogError(msg);
-                            throw exception;
-                        }
-                    }
-                    else if (AppConfig.isUnix)
-                    {
-                        // Generate path of where zip should be saved.
-                        var downloadPath = Path.Combine(targetDirectory, "dotnet.zip");
-
-                        // Download zip
-                        using (var client = new WebClient())
-                        {
-                            client.DownloadFile(sources.dependencies.dotnet[
-                                releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion
-                            ].linux[_architectureUtility.GetArchitecture()], downloadPath);
-                        }
-
-                        // Extract
-                        ZipFile.ExtractToDirectory(downloadPath, newDotnetCorePath);
-
-                        // Delete zip
-                        File.Delete(downloadPath);
-                    }
+                    // The framework does not exist, download it.
+                    DownloadDotnetCoreFramework();
                 }
 
 
@@ -571,26 +555,102 @@ namespace Spectero.daemon.Jobs
             // Compare the MAJOR level of semantic versioning.
             if (int.Parse(splitRemote[0]) > AppConfig.MajorVersion)
             {
-                _logger.LogInformation("There is a new major release available for the Spectero Daemon.");
+                updateMessage = ("There is a new major release available for the Spectero Daemon.");
                 return true;
             }
 
             // Compare the MINOR level of semantic versioning.
             if (int.Parse(splitRemote[1]) > AppConfig.MinorVersion)
             {
-                _logger.LogInformation("There is a new minor release available for the Spectero Daemon.");
+                updateMessage = ("There is a new minor release available for the Spectero Daemon.");
                 return true;
             }
 
             // Compare the PATCH level of semantic versioning.
             if (int.Parse(splitRemote[2]) > AppConfig.PatchVersion)
             {
-                _logger.LogInformation("There is a new patch available for the Spectero Daemon.");
+                updateMessage = ("There is a new patch available for the Spectero Daemon.");
                 return true;
             }
 
             // Generic return, no update available although we should never reach here.
             return false;
+        }
+
+
+        /// <summary>
+        /// Install the latest version of the dotnet core framework
+        ///
+        /// Windows: We use the installer and the native environment variable as this is streamlined.
+        /// Linux: We use a local installation in the relative directory of the daemon.
+        /// </summary>
+        /// <exception cref="ErrorExitCodeException"></exception>
+        public void DownloadDotnetCoreFramework()
+        {
+            // Doesn't exist, download a new version.
+            _logger.LogDebug("UJ: A usable dotnet core installation was not found, thus will be made.");
+
+            // Get Sources.json information.
+            var sources = GetSources();
+
+            // Determine operating system
+            if (AppConfig.isWindows)
+            {
+                // Download installer
+                var downloadPath = Path.Combine(targetDirectory, "dotnet-installer.exe");
+                using (var client = new WebClient())
+                {
+                    client.DownloadFile(sources.dependencies.dotnet[
+                        releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion
+                    ].windows["default"], downloadPath);
+                }
+
+                // Create a process runner for the new dotnet installer
+                var dotnetInstallerProcOptions = new ProcessOptions()
+                {
+                    Executable = downloadPath,
+                    InvokeAsSuperuser = true,
+                    Monitor = false
+                };
+
+                // Attempt to run the installer.
+                try
+                {
+                    // Run the installer.
+                    var installerRunner = _processRunner.Run(dotnetInstallerProcOptions);
+                    installerRunner.Command.Wait();
+
+                    // If we can get past the wait, the installation succeeded.
+                    _logger.LogInformation("UJ: Dotnet Core Runtime was successfully updated to version {0}",
+                        releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion);
+                }
+                catch (ErrorExitCodeException exception)
+                {
+                    AppConfig.UpdateDeadlock = false;
+                    var msg = "UJ: A exception occured while trying to update dotnet core for windows\n" + exception;
+                    _logger.LogError(msg);
+                    throw exception;
+                }
+            }
+            else if (AppConfig.isUnix)
+            {
+                // Generate path of where zip should be saved.
+                var downloadPath = Path.Combine(targetDirectory, "dotnet.zip");
+
+                // Download zip
+                using (var client = new WebClient())
+                {
+                    client.DownloadFile(sources.dependencies.dotnet[
+                        releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion
+                    ].linux[_architectureUtility.GetArchitecture()], downloadPath);
+                }
+
+                // Extract
+                ZipFile.ExtractToDirectory(downloadPath, newDotnetCorePath);
+
+                // Delete zip
+                File.Delete(downloadPath);
+            }
         }
     }
 }
