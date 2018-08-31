@@ -62,7 +62,7 @@ namespace Spectero.daemon.Seeds
             _db.Insert(new Configuration
             {
                 Key = ConfigKeys.SchemaVersion,
-                Value = AppConfig.version
+                Value = AppConfig.Version
             });
 
             // Cloud Connectivity
