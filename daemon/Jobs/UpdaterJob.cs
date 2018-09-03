@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
@@ -102,6 +103,12 @@ namespace Spectero.daemon.Jobs
         private readonly IProcessRunner _processRunner;
         private JObject _releaseInformation;
 
+        // Constants
+        private string[] _validReleaseChannels = new[]
+        {
+            "staging", "stable", "beta"
+        };
+
         // Updater Variables
         private string runningBranch;
         private string remoteVersion;
@@ -167,13 +174,15 @@ namespace Spectero.daemon.Jobs
         /// </summary>
         public void Perform()
         {
+            // Check to see if we can enable the application
             if (!IsEnabled())
             {
                 _logger.LogError("UJ: Job enabled, but matching criterion does not match. This should not happen, silently going back to sleep.");
                 return;
             }
 
-            if (AppConfig.UpdateDeadlock == true)
+            // Check to see if there's already an update in progress
+            if (AppConfig.UpdateDeadlock)
             {
                 _logger.LogWarning("UJ: Update deadlock detected - there is already an update in progress.");
                 return;
@@ -185,12 +194,27 @@ namespace Spectero.daemon.Jobs
             // Get the latest set of release data.
             releaseInformation = GetReleaseInformation();
 
-            // Assign versioning details.
+            // Determine the release channel 
             runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.ReleaseChannel;
+
+            // Validate that the release channel exists.
+            if (!_validReleaseChannels.Contains(runningBranch))
+            {
+                // Let the user know
+                _logger.LogWarning("UJ: The release channel {0} does not support updates - updating will be disabled.", AppConfig.ReleaseChannel);
+
+                // Disable updating
+                _config.Updater.Enabled = false;
+
+                // Stop execution
+                return;
+            }
+
+            // Get the remainder versioning information
             remoteVersion = releaseInformation.channels[runningBranch];
             remoteBranch = remoteVersion.Split("-")[1];
 
-            // Compare
+            // Compare and make sure there's an update available.
             if (remoteBranch == runningBranch && SemanticVersionUpdateChecker(remoteVersion))
             {
                 // Update available.
