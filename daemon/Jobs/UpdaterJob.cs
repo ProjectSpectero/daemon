@@ -104,8 +104,7 @@ namespace Spectero.daemon.Jobs
         private JObject _releaseInformation;
 
         // Constants
-        private string[] _validReleaseChannels = new[]
-        {
+        private static readonly string[] _validReleaseChannels = {
             "alpha", "stable", "beta"
         };
 
