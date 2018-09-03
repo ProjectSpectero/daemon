@@ -106,7 +106,7 @@ namespace Spectero.daemon.Jobs
         // Constants
         private string[] _validReleaseChannels = new[]
         {
-            "staging", "stable", "beta"
+            "alpha", "stable", "beta"
         };
 
         // Updater Variables
@@ -201,7 +201,7 @@ namespace Spectero.daemon.Jobs
             if (!_validReleaseChannels.Contains(runningBranch))
             {
                 // Let the user know
-                _logger.LogWarning("UJ: The release channel {0} does not support updates - updating will be disabled.", AppConfig.ReleaseChannel);
+                _logger.LogWarning("UJ: The release channel {0} does not support updates - updating will be disabled.", runningBranch);
 
                 // Disable updating
                 _config.Updater.Enabled = false;
