@@ -297,6 +297,8 @@ namespace Spectero.daemon.Jobs
                 // Dotnet core placeholder variables.
                 var dotnetCorePath = "";
                 var dotnetCoreBinary = "";
+                bool forceDownloaded = false;
+
                 if (AppConfig.isWindows)
                 {
                     // Potential windows directory where files exist.
@@ -325,20 +327,26 @@ namespace Spectero.daemon.Jobs
                 else if (AppConfig.isUnix)
                 {
                     // We only perform local installs on linux, and thus the currently running version should have a copy - local variables that can be easily disposed.
-                    var _dotnetCorePath = Path.Combine(latestPath, "dotnet");
-                    var _dotnetCoreBinary = Path.Combine(dotnetCorePath, "dotnet"); // Reminder: ./dotnet is an executable.
+                    var localDotnetCorePath = Path.Combine(latestPath, "dotnet");
+                    var localDotnetCoreBinary = Path.Combine(dotnetCorePath, "dotnet"); // Reminder: ./dotnet is an executable.
 
-                    if (File.Exists(_dotnetCoreBinary))
+                    if (File.Exists(localDotnetCoreBinary))
                     {
                         // Assign the paths to the parent variables.
-                        dotnetCorePath = _dotnetCorePath;
-                        dotnetCoreBinary = _dotnetCoreBinary;
+                        dotnetCorePath = localDotnetCorePath;
+                        dotnetCoreBinary = localDotnetCoreBinary;
+                    }
+                    else
+                    {
+                        forceDownloaded = true;
+                        DownloadDotnetCoreFramework();
+                        _logger.LogInformation("UJ: Requirement for dotnet core has been satisfied by force download.");
                     }
                 }
 
 
-                // Compare dotnet versions.
-                if (dotnetCorePath != "" && dotnetCoreBinary != "")
+                // Compare dotnet versions if the variables are defined.
+                if (dotnetCorePath != "" && dotnetCoreBinary != "" && forceDownloaded == false)
                 {
                     // Exists, see what it's got.
                     _logger.LogDebug("UJ: Found dotnet core installation: " + dotnetCoreBinary);
