@@ -23,16 +23,11 @@ namespace Spectero.daemon.Seeds
 {
     public class FirstInitSeed : BaseSeed
     {
-        private readonly IDbConnection _db;
-        private readonly ILogger<FirstInitSeed> _logger;
-        private readonly AppConfig _config;
         private readonly ICryptoService _cryptoService;
 
-        public FirstInitSeed(IServiceProvider serviceProvider)
-        {
-            _db = serviceProvider.GetRequiredService<IDbConnection>();
+        public FirstInitSeed(IServiceProvider serviceProvider) : base(serviceProvider)
+        {           
             _logger = serviceProvider.GetRequiredService<ILogger<FirstInitSeed>>();
-            _config = serviceProvider.GetRequiredService<IOptionsMonitor<AppConfig>>().CurrentValue;
             _cryptoService = serviceProvider.GetRequiredService<ICryptoService>();
         }
         

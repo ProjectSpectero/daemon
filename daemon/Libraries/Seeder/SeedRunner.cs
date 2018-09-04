@@ -50,12 +50,12 @@ namespace Spectero.daemon.Libraries.Seeder
                     continue;
                 }
 
-                _logger.LogDebug($"Run validated for {seeder}, attempting to call Up().");
+                _logger.LogInformation($"Run validated for {seeder}, attempting to call Up().");
                 
                 // Prob should wrap this in a try/catch
                 init.Up();
 
-                _logger.LogDebug($"Run finished for {seeder}, adding tracking entry into the DB.");
+                _logger.LogInformation($"Run finished for {seeder}, adding tracking entry into the DB.");
                 _db.Insert(new Models.Seeder
                 {
                     Description = seeder.ToString(),
