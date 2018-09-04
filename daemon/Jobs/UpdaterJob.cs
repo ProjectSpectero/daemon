@@ -29,6 +29,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SharpCompress.Readers;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Errors;
@@ -104,7 +105,8 @@ namespace Spectero.daemon.Jobs
         private JObject _releaseInformation;
 
         // Constants
-        private static readonly string[] _validReleaseChannels = {
+        private static readonly string[] _validReleaseChannels =
+        {
             "alpha", "stable", "beta"
         };
 
@@ -176,7 +178,8 @@ namespace Spectero.daemon.Jobs
             // Check to see if we can enable the application
             if (!IsEnabled())
             {
-                _logger.LogError("UJ: Job enabled, but matching criterion does not match. This should not happen, silently going back to sleep.");
+                _logger.LogError(
+                    "UJ: Job enabled, but matching criterion does not match. This should not happen, silently going back to sleep.");
                 return;
             }
 
@@ -200,7 +203,8 @@ namespace Spectero.daemon.Jobs
             if (!_validReleaseChannels.Contains(runningBranch))
             {
                 // Let the user know
-                _logger.LogWarning("UJ: The release channel {0} does not support updates - updating will be disabled.", runningBranch);
+                _logger.LogWarning("UJ: The release channel {0} does not support updates - updating will be disabled.",
+                    runningBranch);
 
                 // Disable updating
                 _config.Updater.Enabled = false;
@@ -254,7 +258,8 @@ namespace Spectero.daemon.Jobs
                 }
                 catch (Exception exception)
                 {
-                    var msg = "A error occured while attempting to resolve the download link for the update: \n" + exception;
+                    var msg = "A error occured while attempting to resolve the download link for the update: \n" +
+                              exception;
                     _logger.LogError(msg);
                     AppConfig.UpdateDeadlock = false;
                     throw new InternalError(msg);
@@ -270,7 +275,8 @@ namespace Spectero.daemon.Jobs
                     }
                     catch (WebException exception)
                     {
-                        var msg = "UJ: The update job has failed due to a problem while downloading the update:\n" + exception;
+                        var msg = "UJ: The update job has failed due to a problem while downloading the update:\n" +
+                                  exception;
                         _logger.LogError(msg);
                         AppConfig.UpdateDeadlock = false;
                         throw new InternalError(msg);
@@ -300,14 +306,18 @@ namespace Spectero.daemon.Jobs
                     {
                         var basename = new FileInfo(databasePath).Name;
                         var databaseDestinationPath = Path.Combine(targetDirectory, "daemon", "Database", basename);
-                        _logger.LogDebug("UJ: Attempting to copy database {0} to path {1}", databasePath, databaseDestinationPath);
+                        _logger.LogDebug("UJ: Attempting to copy database {0} to path {1}", databasePath,
+                            databaseDestinationPath);
                         File.Copy(databasePath, databaseDestinationPath);
-                        _logger.LogInformation("UJ: Migrated Database: {0} => {1}", databasePath, databaseDestinationPath);
+                        _logger.LogInformation("UJ: Migrated Database: {0} => {1}", databasePath,
+                            databaseDestinationPath);
                     }
                     catch (Exception exception)
                     {
                         AppConfig.UpdateDeadlock = false;
-                        var msg = "UJ: A exception occured while trying to migrate a database to the new destination:\n" + exception;
+                        var msg =
+                            "UJ: A exception occured while trying to migrate a database to the new destination:\n" +
+                            exception;
                         _logger.LogError(msg);
                         throw exception;
                     }
@@ -351,7 +361,8 @@ namespace Spectero.daemon.Jobs
                 {
                     // We only perform local installs on linux, and thus the currently running version should have a copy - local variables that can be easily disposed.
                     var localDotnetCorePath = Path.Combine(latestPath, "dotnet");
-                    var localDotnetCoreBinary = Path.Combine(dotnetCorePath, "dotnet"); // Reminder: ./dotnet is an executable.
+                    var localDotnetCoreBinary =
+                        Path.Combine(dotnetCorePath, "dotnet"); // Reminder: ./dotnet is an executable.
 
                     if (File.Exists(localDotnetCoreBinary))
                     {
@@ -393,7 +404,8 @@ namespace Spectero.daemon.Jobs
                         proc.Command.Wait();
 
                         // Rubber duck: check to see if we succeeded.
-                        _logger.LogDebug("UJ: Dotnet command successfully exited - will now print and iterate through each available framework.");
+                        _logger.LogDebug(
+                            "UJ: Dotnet command successfully exited - will now print and iterate through each available framework.");
 
                         // TODO: MAKE THIS MORE ROBUST AFTER TESTING.
                         // Read the lines to see if compatible. 
@@ -418,13 +430,15 @@ namespace Spectero.daemon.Jobs
 
                                 // Split 
                                 string[] installed = fixedLine.Split('.');
-                                string[] requirement = releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion.Split('.');
+                                string[] requirement = releaseInformation.versions[remoteVersion]
+                                    .requiredDotnetCoreVersion.Split('.');
 
                                 // Compare versioning.
                                 for (var i = 0; i != installed.Length; i++)
                                 {
                                     // Rubber ducking: visual version comparison.
-                                    _logger.LogDebug("UJ: Dotnet Core Version Comparison index {0} has values {1} for installed, and the requirement is {2}",
+                                    _logger.LogDebug(
+                                        "UJ: Dotnet Core Version Comparison index {0} has values {1} for installed, and the requirement is {2}",
                                         i, installed[i], requirement[i]);
 
                                     if (int.Parse(installed[i]) < int.Parse(requirement[i]))
@@ -440,7 +454,8 @@ namespace Spectero.daemon.Jobs
                                 }
 
                                 // Rubber Duck: 
-                                _logger.LogDebug("UJ: The dotnet core version comparison loop did not signify that the version was incompatible.");
+                                _logger.LogDebug(
+                                    "UJ: The dotnet core version comparison loop did not signify that the version was incompatible.");
 
                                 // If the for loop above did nothing, we should be compatible.
                                 break;
@@ -453,7 +468,9 @@ namespace Spectero.daemon.Jobs
                     catch (Exception exception)
                     {
                         AppConfig.UpdateDeadlock = false;
-                        var msg = "UJ: A exception occured while trying to validate a compatible dotnet core version:\n" + exception;
+                        var msg =
+                            "UJ: A exception occured while trying to validate a compatible dotnet core version:\n" +
+                            exception;
                         _logger.LogError(msg);
                         throw exception;
                     }
@@ -477,15 +494,17 @@ namespace Spectero.daemon.Jobs
                     _logger.LogDebug("UJ: Created Symbolic Link: {0}->{1}", latestPath, targetDirectory);
                 else
                 {
-                    var msg = "Failed to create symlink, Marshal response: " + MarshalUtil.DecodeIntToString(Marshal.GetLastWin32Error());
+                    var msg = "Failed to create symlink, Marshal response: " +
+                              MarshalUtil.DecodeIntToString(Marshal.GetLastWin32Error());
                     _logger.LogError(msg);
                 }
 
                 // Restart the service.
                 // We'll rely on the service manager to start us back up.
-                _logger.LogInformation("The update process is complete, and the spectero service has been configured to run the latest version.\n" +
-                                       "Please restart the spectero service to utilize the latest Version.\n" +
-                                       "The application will now shutdown.");
+                _logger.LogInformation(
+                    "The update process is complete, and the spectero service has been configured to run the latest version.\n" +
+                    "Please restart the spectero service to utilize the latest Version.\n" +
+                    "The application will now shutdown.");
                 _applicationLifetime.StopApplication();
             }
 
@@ -502,7 +521,7 @@ namespace Spectero.daemon.Jobs
         {
             try
             {
-                var response = _httpClient.GetAsync("http://192.168.2.70/releases.json").Result;
+                var response = _httpClient.GetAsync("https://c.spectero.com/releases.json").Result;
 
                 var releaseData = JsonConvert.DeserializeObject<Release>(response.Content.ReadAsStringAsync().Result);
                 return releaseData;
@@ -525,9 +544,12 @@ namespace Spectero.daemon.Jobs
         {
             try
             {
-                var response = _httpClient.GetAsync("https://raw.githubusercontent.com/ProjectSpectero/daemon-installers/master/SOURCES.json").Result;
+                var response = _httpClient
+                    .GetAsync("https://raw.githubusercontent.com/ProjectSpectero/daemon-installers/master/SOURCES.json")
+                    .Result;
 
-                var sourcesData = JsonConvert.DeserializeObject<SourcesInformation>(response.Content.ReadAsStringAsync().Result);
+                var sourcesData =
+                    JsonConvert.DeserializeObject<SourcesInformation>(response.Content.ReadAsStringAsync().Result);
                 return sourcesData;
             }
             catch (Exception exception)
@@ -556,7 +578,8 @@ namespace Spectero.daemon.Jobs
         /// Get the paths for each database.
         /// </summary>
         /// <returns></returns>
-        private string[] GetDatabasePaths() => Directory.GetFiles(DatabaseDirectory, "*.sqlite", SearchOption.TopDirectoryOnly);
+        private string[] GetDatabasePaths() =>
+            Directory.GetFiles(DatabaseDirectory, "*.sqlite", SearchOption.TopDirectoryOnly);
 
         /// <summary>
         /// Comparison function designed specifically for semantic versioning.
@@ -574,7 +597,8 @@ namespace Spectero.daemon.Jobs
             // Check for semantic versioning differences.
             if (splitRemote.Length == 3 && AppConfig.Version.Split(".").Length == 2)
             {
-                _logger.LogWarning("The latest release is semantic versioned while the current running version release is not - an update will be forced.");
+                _logger.LogWarning(
+                    "The latest release is semantic versioned while the current running version release is not - an update will be forced.");
                 return true;
             }
             // We're already running the latest version.
@@ -665,22 +689,45 @@ namespace Spectero.daemon.Jobs
             }
             else if (AppConfig.isUnix)
             {
+                var cpuArchitecture = _architectureUtility.GetArchitecture();
+                _logger.LogDebug("UJ: Linux specific command - determined architecture is {0}", cpuArchitecture);
+
                 // Generate path of where zip should be saved.
-                var downloadPath = Path.Combine(targetDirectory, "dotnet.zip");
+                var downloadPath = Path.Combine(targetDirectory, string.Format("dotnet-{0}.tar.gz", cpuArchitecture));
 
                 // Download zip
                 using (var client = new WebClient())
                 {
                     client.DownloadFile(sources.dependencies.dotnet[
                         releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion
-                    ].linux[_architectureUtility.GetArchitecture()], downloadPath);
+                    ].linux[cpuArchitecture], downloadPath);
+
+                    // Let the console know we've downloaded the archive
+                    _logger.LogInformation("Successfully downloaded dotnet core runtime {0} archive.",
+                        releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion);
                 }
 
-                // Extract
-                ZipFile.ExtractToDirectory(downloadPath, newDotnetCorePath);
 
-                // Delete zip
+                // Create the dotnet directory.
+                if (!Directory.Exists(newDotnetCorePath)) Directory.CreateDirectory(newDotnetCorePath);
+
+                // Extract
+                using (Stream stream = File.OpenRead(downloadPath))
+                {
+                    var reader = ReaderFactory.Open(stream);
+                    while (reader.MoveToNextEntry())
+                    {
+                        if (!reader.Entry.IsDirectory) reader.WriteEntryToDirectory(newDotnetCorePath);
+                    }
+                    
+                    // tell the console that extraction was successful.
+                    _logger.LogInformation("UJ: Dotnet Core {0} has been extracted successfully.",
+                        releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion);
+                }
+
+                // Delete archive
                 File.Delete(downloadPath);
+                _logger.LogDebug("UJ: Cleanup successful.");
             }
         }
     }
