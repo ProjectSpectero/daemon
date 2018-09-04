@@ -96,14 +96,19 @@ namespace Spectero.daemon.Libraries.PortRegistry
             
                     _logger.LogDebug($"Discovered external IP (according to the NAT device) was: {_externalIP}");
                 }
-                catch (NatDeviceNotFoundException exception)
+                catch (AggregateException exception)
                 {
-                    _device = null;
-                    _natEnabled = false;
+                    if (exception.InnerException is NatDeviceNotFoundException)
+                    {
+                        _device = null;
+                        _natEnabled = false;
                 
-                    _logger.LogInformation($"No NAT devices could be found in time ({_config.NatDiscoveryTimeoutInSeconds} seconds)," +
-                                           $" either this network does not require one (direct connectivity) or UPnP is NOT enabled." +
-                                           " It may help to increase the timeout (NatDiscoveryTimeoutInSeconds in appsettings.json).");
+                        _logger.LogInformation($"No NAT devices could be found in time ({_config.NatDiscoveryTimeoutInSeconds} seconds)," +
+                                               $" either this network does not require one (direct connectivity) or UPnP is NOT enabled." +
+                                               " It may help to increase the timeout (NatDiscoveryTimeoutInSeconds in appsettings.json).");
+                    }
+                    else
+                        _logger.LogError(exception, "Unexpected exception encountered while discovering the router");                   
                 }
             }
             else
@@ -155,6 +160,76 @@ namespace Spectero.daemon.Libraries.PortRegistry
             return true;            
         }
 
+        private Dictionary<int, List<PortAllocation>> GeneratePortToIPMap()
+        {   
+            var dict = new Dictionary<int, List<PortAllocation>>();
+           
+            var listOfServiceAllocations =_serviceAllocations
+                .Values // ICollection<List<PortAllocation>>
+                .SelectMany(x => x)
+                .ToList();         
+                
+            foreach (var allocation in listOfServiceAllocations)
+            {
+                if(dict.TryGetValue(allocation.Port, out var existingList))
+                    existingList.Add(allocation);
+                else
+                {
+                    var newList = new List<PortAllocation> {allocation};
+                    dict.Add(allocation.Port, newList);
+                }
+            }
+
+            foreach (var allocation in _appAllocations)
+            {
+                // DRY violation ;V
+                if(dict.TryGetValue(allocation.Port, out var existingList))
+                    existingList.Add(allocation);
+                else
+                {
+                    var newList = new List<PortAllocation> {allocation};
+                    dict.Add(allocation.Port, newList);
+                }
+            }
+
+            return dict;
+        }
+
+        private Dictionary<IPAddress, List<PortAllocation>> GenerateIPToPortMap()
+        {
+            var dict = new Dictionary<IPAddress, List<PortAllocation>>();
+
+            var listOfServiceAllocations =_serviceAllocations
+                .Values // ICollection<List<PortAllocation>>
+                .SelectMany(x => x)
+                .ToList();
+
+            foreach (var allocation in listOfServiceAllocations)
+            {
+                if(dict.TryGetValue(allocation.IP, out var existingList))
+                    existingList.Add(allocation);
+                else
+                {
+                    var newList = new List<PortAllocation> {allocation};
+                    dict.Add(allocation.IP, newList);
+                }
+            }
+
+            foreach (var allocation in _appAllocations)
+            {
+                // DRY violation ;V
+                if(dict.TryGetValue(allocation.IP, out var existingList))
+                    existingList.Add(allocation);
+                else
+                {
+                    var newList = new List<PortAllocation> {allocation};
+                    dict.Add(allocation.IP, newList);
+                }
+            }
+
+            return dict;
+        }
+
         public PortAllocation Allocate(IPAddress ip, int port, TransportProtocol protocol, IService forwardedFor = null)
         {
             if (IsAllocated(ip, port, protocol, out var allocation))
@@ -203,6 +278,24 @@ namespace Spectero.daemon.Libraries.PortRegistry
 
         public bool IsAllocated(IPAddress ip, int port, TransportProtocol protocol, out PortAllocation allocation)
         {
+            // Special handling is needed for 0.0.0.0 / :: listeners
+            if (ip.Equals(IPAddress.Any) || ip.Equals(IPAddress.IPv6Any))
+            {
+                // Anything existing on the requested port at all (with the same protocol) is a no-no for global listeners.
+                var portMap = GeneratePortToIPMap();
+                
+                if (portMap.TryGetValue(port, out var existingAllocations))
+                {
+                    foreach (var existingAllocation in existingAllocations)
+                    {
+                        if (existingAllocation.Protocol != protocol) continue;
+                        
+                        allocation = existingAllocation;
+                        return false;
+                    }
+                }
+            }
+            
             var matchingServiceAllocations = _serviceAllocations.Where(x => x.Value.Any(p => p.IP.Equals(ip) && p.Port == port && p.Protocol == protocol))
                 .SelectMany(p => p.Value)
                 .ToArray();
