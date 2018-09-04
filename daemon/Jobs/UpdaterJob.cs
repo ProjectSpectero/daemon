@@ -48,6 +48,7 @@ namespace Spectero.daemon.Jobs
         public bool Enabled { get; set; }
         public string ReleaseChannel { get; set; }
         public string Frequency { get; set; }
+        public string ReleaseServer { get; set; }
     }
 
     /// <summary>
@@ -521,7 +522,9 @@ namespace Spectero.daemon.Jobs
         {
             try
             {
-                var response = _httpClient.GetAsync("https://c.spectero.com/releases.json").Result;
+                var response = _httpClient.GetAsync(
+                    (_config.Updater.ReleaseServer == null) ? string.Format("{0}/releases.json", _config.Updater.ReleaseServer) : "https://c.spectero.com/releases.json"
+                ).Result;
 
                 var releaseData = JsonConvert.DeserializeObject<Release>(response.Content.ReadAsStringAsync().Result);
                 return releaseData;
