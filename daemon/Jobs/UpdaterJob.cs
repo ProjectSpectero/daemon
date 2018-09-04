@@ -664,6 +664,7 @@ namespace Spectero.daemon.Jobs
                 var dotnetInstallerProcOptions = new ProcessOptions()
                 {
                     Executable = downloadPath,
+                    Arguments = new[] {"/install", "/passive", "/norestart", "/q"},
                     InvokeAsSuperuser = true,
                     Monitor = false
                 };
@@ -719,7 +720,7 @@ namespace Spectero.daemon.Jobs
                     {
                         if (!reader.Entry.IsDirectory) reader.WriteEntryToDirectory(newDotnetCorePath);
                     }
-                    
+
                     // tell the console that extraction was successful.
                     _logger.LogInformation("UJ: Dotnet Core {0} has been extracted successfully.",
                         releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion);
