@@ -14,15 +14,16 @@
 */
 
 using System.Net;
+using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.PortRegistry
 {
     public interface IPortRegistry
     {
-        PortAllocation Allocate(IPAddress ip, int port, IService forwardedFor = null);
-        bool IsAllocated(IPAddress ip, int port, out PortAllocation allocation);
-        bool IsAllocated(string ip, int port, out PortAllocation allocation);
+        PortAllocation Allocate(IPAddress ip, int port, TransportProtocol protocol, IService forwardedFor = null);
+        bool IsAllocated(IPAddress ip, int port, TransportProtocol protocol, out PortAllocation allocation);
+        bool IsAllocated(string ip, int port, TransportProtocol protocol, out PortAllocation allocation);
         bool CleanUp(IService service = null);
     }
 }
