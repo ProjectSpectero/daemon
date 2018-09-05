@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using Spectero.daemon.Jobs;
+using Spectero.daemon.Libraries.PortRegistry;
 
 namespace Spectero.daemon.Libraries.Config
 {
@@ -60,8 +61,9 @@ namespace Spectero.daemon.Libraries.Config
         public bool LogCommonProxyEngineErrors { get; set; }
         public bool IgnoreRFC1918 { get; set; }
         public bool HaltStartupIfServiceInitFails { get; set; }
-        public int NatDiscoveryTimeoutInSeconds { get; set; }
 
+        public PortRegistryConfig PortRegistry { get; set; }
+        
         // Job Configurations.
         public BackupConfiguration Backups { get; set; }
         public UpdaterConfiguration Updater { get; set; }
@@ -94,8 +96,6 @@ namespace Spectero.daemon.Libraries.Config
         }
 
         public static string CloudConnectDefaultAuthKey => "cloud";
-        
-
 
         public static string FirstRunConfigName => ".firstrun";
 

@@ -36,6 +36,12 @@ namespace Spectero.daemon.Libraries.PortRegistry
         public TransportProtocol Protocol { get; set; }
         public IService Service { get; set; }        
     }
+
+    public class PortRegistryConfig
+    {
+        public bool NATEnabled { get; set; }
+        public int NATDiscoveryTimeoutInSeconds { get; set; }
+    }
     
     public class PortRegistry : IPortRegistry
     {
@@ -69,6 +75,15 @@ namespace Spectero.daemon.Libraries.PortRegistry
             
             _serviceAllocations = new ConcurrentDictionary<IService, List<PortAllocation>>();
             _appAllocations = new List<PortAllocation>();
+
+            if (!_config.PortRegistry.NATEnabled)
+            {
+                _isInitialized = true;
+                _device = null;
+                _natEnabled = false;
+                
+                _logger.LogDebug("NAT disabled in config, disabling propagation to router.");
+            }
         }
 
         // Separated from the constructor because this method may take a long time before timing out.
@@ -81,7 +96,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
                 _logger.LogDebug("Starting the NAT discovery process.");
             
                 var nat = new NatDiscoverer();
-                var cancellationToken = new CancellationTokenSource(_config.NatDiscoveryTimeoutInSeconds * 1000);
+                var cancellationToken = new CancellationTokenSource(_config.PortRegistry.NATDiscoveryTimeoutInSeconds * 1000);
 
                 try
                 {
@@ -100,7 +115,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
                         _device = null;
                         _natEnabled = false;
                 
-                        _logger.LogInformation($"No NAT devices could be found in time ({_config.NatDiscoveryTimeoutInSeconds} seconds)," +
+                        _logger.LogInformation($"No NAT devices could be found in time ({_config.PortRegistry.NATDiscoveryTimeoutInSeconds} seconds)," +
                                                $" either this network does not require one (direct connectivity) or UPnP is NOT enabled." +
                                                " It may help to increase the timeout (NatDiscoveryTimeoutInSeconds in appsettings.json).");
                     }
