@@ -133,7 +133,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
             if (! _isInitialized)
                 Initialize();
 
-            if (!_natEnabled)
+            if (! _natEnabled)
             {
                 _logger.LogDebug($"Propagation requested for PortAllocation -> ({allocation.IP}:{allocation.Port} @ {allocation.Protocol}), but NAT is disabled!");
                 return false;
@@ -244,6 +244,8 @@ namespace Spectero.daemon.Libraries.PortRegistry
 
         public PortAllocation Allocate(IPAddress ip, int port, TransportProtocol protocol, IService forwardedFor = null)
         {
+            _logger.LogDebug($"Allocation requested for {ip}:{port} @ {protocol} for svc: {forwardedFor?.GetType()?.ToString() ?? "internal"}");
+            
             if (IsAllocated(ip, port, protocol, out var allocation))
             {
                 var belongsTo = allocation?.Service?.GetType().ToString() ?? "internally to the daemon.";

@@ -95,8 +95,13 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
                 //Loop through and listen on all defined IP <-> port pairs
                 foreach (var listener in _proxyConfig.listeners)
                 {
-                    var endpoint = new ExplicitProxyEndPoint(IPAddress.Parse(listener.Item1), listener.Item2,
-                        false);
+                    var ipAddress = IPAddress.Parse(listener.Item1);
+                    var port = listener.Item2;
+
+                    // Yep, there's a chance of an exception. We want it to happen if config is bogus, no handling.
+                    _portRegistry.Allocate(ipAddress, port, TransportProtocol.TCP, this);
+
+                    var endpoint = new ExplicitProxyEndPoint(ipAddress, port, false);
 
                     endpoint.BeforeTunnelConnectRequest += OnTunnelConnectRequest;
                     endpoint.BeforeTunnelConnectResponse += OnTunnelConnectResponse;
@@ -133,6 +138,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
             if (_state == ServiceState.Running)
             {
                 _proxyServer.Stop();
+                _portRegistry.CleanUp(this);
                 _state = ServiceState.Halted;
             }
             LogState("Stop");

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.PortRegistry;
 
 namespace Spectero.daemon.Libraries.Services
 {
@@ -16,6 +17,7 @@ namespace Spectero.daemon.Libraries.Services
         internal readonly AppConfig _appConfig;
         internal readonly ILogger<IService> _logger;
         internal readonly IDbConnection _db;
+        internal readonly IPortRegistry _portRegistry;
         internal readonly IAuthenticator _authenticator;
         internal readonly IEnumerable<IPNetwork> _localNetworks;
         internal readonly IEnumerable<IPAddress> _localAddresses;
@@ -25,6 +27,7 @@ namespace Spectero.daemon.Libraries.Services
             _appConfig = serviceProvider.GetRequiredService<IOptionsMonitor<AppConfig>>().CurrentValue;
             _db = serviceProvider.GetRequiredService<IDbConnection>();
             _authenticator = serviceProvider.GetRequiredService<IAuthenticator>();
+            _portRegistry = serviceProvider.GetRequiredService<IPortRegistry>();
 
             _logger = serviceProvider.GetRequiredService<ILogger<IService>>();
             

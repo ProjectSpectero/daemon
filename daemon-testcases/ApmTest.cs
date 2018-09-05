@@ -27,7 +27,7 @@ namespace daemon_testcases
       */
 
     [TestFixture]
-    public class ApmUnitTest : BaseUnitTest
+    public class ApmTest : BaseUnitTest
     {
         [Test]
         public void IsSerializable()
