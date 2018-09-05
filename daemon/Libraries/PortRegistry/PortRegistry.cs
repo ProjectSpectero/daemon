@@ -69,9 +69,6 @@ namespace Spectero.daemon.Libraries.PortRegistry
             
             _serviceAllocations = new ConcurrentDictionary<IService, List<PortAllocation>>();
             _appAllocations = new List<PortAllocation>();
-            
-            // Init internal state(s).
-            Initialize();
         }
 
         // Separated from the constructor because this method may take a long time before timing out.

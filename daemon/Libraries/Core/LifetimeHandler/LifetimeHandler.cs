@@ -14,10 +14,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
+using System.Net;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
+using Spectero.daemon.Libraries.PortRegistry;
 using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.Core.LifetimeHandler
@@ -28,19 +31,31 @@ namespace Spectero.daemon.Libraries.Core.LifetimeHandler
         private readonly AppConfig _config;
         private readonly IServiceManager _serviceManager;
         private readonly IProcessRunner _processRunner;
+        private readonly IAutoStarter _autoStarter;
+        private readonly IPortRegistry _portRegistry;
         
         public LifetimeHandler(IOptionsMonitor<AppConfig> configurationMonitor, ILogger<ILifetimeHandler> logger,
-            IServiceManager serviceManager, IProcessRunner processRunner)
+            IServiceManager serviceManager, IProcessRunner processRunner,
+            IAutoStarter autoStarter, IPortRegistry portRegistry)
         {
             _config = configurationMonitor.CurrentValue;
             _logger = logger;
             _serviceManager = serviceManager;
             _processRunner = processRunner;
+            _autoStarter = autoStarter;
+            _portRegistry = portRegistry;
         }
 
         public void OnStarted()
         {
             _logger.LogDebug("Processing events that are registered for ApplicationStarted");
+            
+            // First thing to do here would be to register the app's own port into the port registry.
+            // TODO: Actually figure out the listening IP + port pair(s), and use those. See https://stackoverflow.com/questions/52176480/kestrel-get-access-to-ipport-pairs-its-listening-on
+            _portRegistry.Allocate(IPAddress.Any, 6024, TransportProtocol.TCP);
+            
+            // Start all the system services that provide resources.
+            _autoStarter.Startup();
             
             // Remove the filesystem marker that signifies ongoing startup
             if(! Utility.ManageStartupMarker(true))
