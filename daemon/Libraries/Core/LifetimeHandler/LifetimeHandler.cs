@@ -15,7 +15,9 @@
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
 
+using System;
 using System.Net;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;
@@ -46,13 +48,25 @@ namespace Spectero.daemon.Libraries.Core.LifetimeHandler
             _portRegistry = portRegistry;
         }
 
+        private void RegisterInternalListeners()
+        {
+            _logger.LogDebug("Registering internal ports with the PortRegistry.");
+
+            // This is a List<string> with this format: https://puu.sh/Bqof2/be55d5dd52.png
+            foreach (var listener in Program.ServerAddressesFeature.Addresses)
+            {
+                var uri = new Uri(listener);
+
+                // We register our internal allocation, and lay claim to the ip+port pairs.
+                _portRegistry.Allocate(IPAddress.Parse(uri.Host), uri.Port, TransportProtocol.TCP);
+            }
+        }
+
         public void OnStarted()
         {
             _logger.LogDebug("Processing events that are registered for ApplicationStarted");
-            
-            // First thing to do here would be to register the app's own port into the port registry.
-            // TODO: Actually figure out the listening IP + port pair(s), and use those. See https://stackoverflow.com/questions/52176480/kestrel-get-access-to-ipport-pairs-its-listening-on
-            _portRegistry.Allocate(IPAddress.Any, 6024, TransportProtocol.TCP);
+           
+            RegisterInternalListeners();
             
             // Start all the system services that provide resources.
             _autoStarter.Startup();
