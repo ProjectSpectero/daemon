@@ -141,12 +141,13 @@ namespace Spectero.daemon.Libraries.PortRegistry
         {
             if (! _isInitialized)
                 Initialize();
+            
+            _logger.LogDebug($"Propagation of PortAllocation requested -> {allocation.IP}:{allocation.Port} @ {allocation.Protocol} belonging to svc: {allocation.Service?.GetType().Name ?? "internal"}");
 
             if (! _natEnabled)
             {
-                _logger.LogDebug($"Propagation requested for PortAllocation -> ({allocation.IP}:{allocation.Port} @ {allocation.Protocol}), but NAT is disabled!");
+                _logger.LogDebug("Propagation requested but NAT is disabled!");
                 return false;
-                
             }
             
             Protocol translatedProtocol;
@@ -188,6 +189,14 @@ namespace Spectero.daemon.Libraries.PortRegistry
         
         private bool RecallFromRouter(PortAllocation allocation)
         {
+            _logger.LogDebug($"De-propagation of PortAllocation requested -> {allocation.IP}:{allocation.Port} @ {allocation.Protocol} belonging to svc: {allocation.Service?.GetType().Name ?? "internal"}");
+
+            if (!_natEnabled)
+            {
+                _logger.LogDebug("De-propagation requested, but NAT is NOT enabled!");
+                return false;
+            }
+            
             try
             {
                 _device
@@ -390,7 +399,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
 
         public bool CleanUp(IService service = null)
         {
-            _logger.LogDebug($"Cleanup called by svc: {service?.GetType()}");
+            _logger.LogDebug($"Cleanup called by svc: {service?.GetType().Name ?? "internal"}");
             
             // This means we're gonna be removing allocations belonging to a specific service.
             if (service != null &&
