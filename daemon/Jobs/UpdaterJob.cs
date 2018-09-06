@@ -193,12 +193,15 @@ namespace Spectero.daemon.Jobs
 
             // Enable the deadlock.
             AppConfig.UpdateDeadlock = true;
-
+            _logger.LogDebug("Deadlock enabled");
+            
             // Get the latest set of release data.
             releaseInformation = GetReleaseInformation();
+            _logger.LogDebug("Got release information");
 
             // Determine the release channel 
             runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.ReleaseChannel;
+            _logger.LogDebug("The running branch is " + runningBranch);
 
             // Validate that the release channel exists.
             if (!_validReleaseChannels.Contains(runningBranch))
@@ -213,10 +216,14 @@ namespace Spectero.daemon.Jobs
                 // Stop execution
                 return;
             }
+            
+            _logger.LogDebug("determined valid channel");
 
             // Get the remainder versioning information
             remoteVersion = releaseInformation.channels[runningBranch];
             remoteBranch = remoteVersion.Split("-")[1];
+            
+            _logger.LogDebug("Got remainder versioning information");
 
             // Compare and make sure there's an update available.
             if (remoteBranch == runningBranch && SemanticVersionUpdateChecker(remoteVersion))
@@ -508,6 +515,15 @@ namespace Spectero.daemon.Jobs
                     "The application will now shutdown.");
                 _applicationLifetime.StopApplication();
             }
+            else
+            {
+                _logger.LogDebug("Something isn't right");
+                _logger.LogDebug("Remote Branch: " + remoteBranch);
+                _logger.LogDebug("Running Branch: " + runningBranch);
+                _logger.LogDebug("Remote Version: " + remoteVersion);
+                _logger.LogDebug("Running Version: " + AppConfig.Version);
+                _logger.LogDebug("Semantic version: " + SemanticVersionUpdateChecker(remoteVersion));
+            }
 
             // Disable the deadlock and allow the next run.
             AppConfig.UpdateDeadlock = false;
@@ -520,21 +536,28 @@ namespace Spectero.daemon.Jobs
         /// <exception cref="InternalError"></exception>
         private Release GetReleaseInformation()
         {
+            string rs = null;
             try
             {
+                _logger.LogDebug("Got into catch block");
+                 rs = (_config.Updater.ReleaseServer != null)
+                    ? string.Format("{0}/releases.json", _config.Updater.ReleaseServer)
+                    : "https://c.spectero.com/releases.json";
                 var response = _httpClient.GetAsync(
-                    (_config.Updater.ReleaseServer == null) ? string.Format("{0}/releases.json", _config.Updater.ReleaseServer) : "https://c.spectero.com/releases.json"
+                    rs
                 ).Result;
+                _logger.LogDebug("Release Server: " + rs);
+                _logger.LogDebug("GOT RELEASE INFORMATION!!!!!!!!!!");
 
                 var releaseData = JsonConvert.DeserializeObject<Release>(response.Content.ReadAsStringAsync().Result);
                 return releaseData;
             }
             catch (Exception exception)
             {
-                var msg = "UJ: Failed to get release data from the internet.\n" + exception;
+                var msg = "UJ: Failed to get release data from the internet ("+rs+").\n" + exception;
                 _logger.LogError(msg);
                 AppConfig.UpdateDeadlock = false;
-                throw new InternalError(msg);
+                throw exception;
             }
         }
 
@@ -560,7 +583,7 @@ namespace Spectero.daemon.Jobs
                 var msg = "UJ: Failed to get source information from github.\n" + exception;
                 _logger.LogError(msg);
                 AppConfig.UpdateDeadlock = false;
-                throw new InternalError(msg);
+                throw exception;
             }
         }
 
@@ -594,45 +617,55 @@ namespace Spectero.daemon.Jobs
         /// <returns></returns>
         private bool SemanticVersionUpdateChecker(string remote)
         {
-            // Divide by the dash/hyphen, then separate each version.
-            string[] splitRemote = remote.Split("-")[0].Split(".");
+            try
+            {
+                // Divide by the dash/hyphen, then separate each version.
+                string[] splitRemote = remote.Split("-")[0].Split(".");
 
-            // Check for semantic versioning differences.
-            if (splitRemote.Length == 3 && AppConfig.Version.Split(".").Length == 2)
-            {
-                _logger.LogWarning(
-                    "The latest release is semantic versioned while the current running version release is not - an update will be forced.");
-                return true;
-            }
-            // We're already running the latest version.
-            else if (remote == AppConfig.Version)
-            {
+                // Check for semantic versioning differences.
+                if (splitRemote.Length == 3 && AppConfig.Version.Split(".").Length == 2)
+                {
+                    _logger.LogWarning(
+                        "The latest release is semantic versioned while the current running version release is not - an update will be forced.");
+                    return true;
+                }
+                // We're already running the latest version.
+                else if (remote == AppConfig.Version)
+                {
+                    return false;
+                }
+
+                // Compare the MAJOR level of semantic versioning.
+                if (int.Parse(splitRemote[0]) > AppConfig.MajorVersion)
+                {
+                    updateMessage = ("There is a new major release available for the Spectero Daemon.");
+                    return true;
+                }
+
+                // Compare the MINOR level of semantic versioning.
+                if (int.Parse(splitRemote[1]) > AppConfig.MinorVersion)
+                {
+                    updateMessage = ("There is a new minor release available for the Spectero Daemon.");
+                    return true;
+                }
+
+                // Compare the PATCH level of semantic versioning.
+                if (int.Parse(splitRemote[2]) > AppConfig.PatchVersion)
+                {
+                    updateMessage = ("There is a new patch available for the Spectero Daemon.");
+                    return true;
+                }
+
+                // Generic return, no update available although we should never reach here.
                 return false;
             }
-
-            // Compare the MAJOR level of semantic versioning.
-            if (int.Parse(splitRemote[0]) > AppConfig.MajorVersion)
+            catch (Exception exception)
             {
-                updateMessage = ("There is a new major release available for the Spectero Daemon.");
-                return true;
+                AppConfig.UpdateDeadlock = false;
+                var msg = "UJ: A exception occured while trying to parse semantic versioning\n" + exception;
+                _logger.LogError(msg);
+                throw exception;
             }
-
-            // Compare the MINOR level of semantic versioning.
-            if (int.Parse(splitRemote[1]) > AppConfig.MinorVersion)
-            {
-                updateMessage = ("There is a new minor release available for the Spectero Daemon.");
-                return true;
-            }
-
-            // Compare the PATCH level of semantic versioning.
-            if (int.Parse(splitRemote[2]) > AppConfig.PatchVersion)
-            {
-                updateMessage = ("There is a new patch available for the Spectero Daemon.");
-                return true;
-            }
-
-            // Generic return, no update available although we should never reach here.
-            return false;
         }
 
 
