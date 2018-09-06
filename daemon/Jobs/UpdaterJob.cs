@@ -479,8 +479,11 @@ namespace Spectero.daemon.Jobs
                 }
                 else
                 {
-                    // The framework does not exist, download it.
-                    DownloadDotnetCoreFramework();
+                    if (AppConfig.isWindows)
+                    {
+                        // The framework does not exist, download it.
+                        DownloadDotnetCoreFramework();
+                    }
                 }
 
 
