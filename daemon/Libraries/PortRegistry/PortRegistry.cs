@@ -21,6 +21,7 @@ using System.Net;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Open.Nat;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
@@ -31,10 +32,17 @@ namespace Spectero.daemon.Libraries.PortRegistry
 {
     public class PortAllocation
     {
+        [JsonConverter(typeof(ToStringJsonConverter))]
         public IPAddress IP { get; set; }
+        
         public int Port { get; set; }
         public TransportProtocol Protocol { get; set; }
+        public bool Forwarded { get; set; }
+        
+        [JsonConverter(typeof(ClassNameJsonConverter))]
         public IService Service { get; set; }
+        
+        [JsonIgnore]
         public Mapping Mapping { get; set; }
     }
 
@@ -165,6 +173,9 @@ namespace Spectero.daemon.Libraries.PortRegistry
                     .CreatePortMapAsync(mapping)
                     .Wait();
 
+                // Mark it accordingly since we succeeded in propagating it to the router.
+                allocation.Forwarded = true;
+
             }
             catch (Exception e)
             {
@@ -190,6 +201,17 @@ namespace Spectero.daemon.Libraries.PortRegistry
                 _logger.LogError(e, $"Could not de-propagate PortAllocation from router -> {allocation.IP}:{allocation.Port} @ {allocation.Protocol} belonging to svc: {allocation.Service?.GetType()}");
                 return false;
             }
+        }
+
+        public IEnumerable<PortAllocation> GetAllAllocations()
+        {
+            var allAllocations = _serviceAllocations.Values
+                .SelectMany(x => x) // Flatten
+                .ToList();
+                
+            allAllocations.AddRange(_appAllocations);
+
+            return allAllocations;
         }
 
         private Dictionary<int, List<PortAllocation>> GeneratePortToIPMap()
@@ -392,14 +414,8 @@ namespace Spectero.daemon.Libraries.PortRegistry
 
             _logger.LogDebug("Registry cleanup requested, removing all allocations!");
                 
-            // We are to simply to remove every single allocation
-            var allAllocations = _serviceAllocations.Values
-                .SelectMany(x => x) // Flatten
-                .ToList();
-                
-            allAllocations.AddRange(_appAllocations);
-
-            foreach (var allocation in allAllocations)
+            // We are to simply to remove/recall every single allocation
+            foreach (var allocation in GetAllAllocations())
             {
                 RecallFromRouter(allocation);
             }

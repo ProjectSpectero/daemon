@@ -13,19 +13,25 @@
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
 
-using System.Collections.Generic;
-using System.Net;
-using Spectero.daemon.Libraries.Core;
-using Spectero.daemon.Libraries.Services;
+using System;
+using Newtonsoft.Json;
 
-namespace Spectero.daemon.Libraries.PortRegistry
+public class ToStringJsonConverter : JsonConverter
 {
-    public interface IPortRegistry
+    public override bool CanConvert(Type objectType)
     {
-        PortAllocation Allocate(IPAddress ip, int port, TransportProtocol protocol, IService forwardedFor = null);
-        bool IsAllocated(IPAddress ip, int port, TransportProtocol protocol, out PortAllocation allocation);
-        bool IsAllocated(string ip, int port, TransportProtocol protocol, out PortAllocation allocation);
-        IEnumerable<PortAllocation> GetAllAllocations();
-        bool CleanUp(IService service = null);
+        return true;
+    }
+
+    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    {
+        writer.WriteValue(value.ToString());
+    }
+
+    public override bool CanRead => false;
+
+    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    {
+        throw new NotImplementedException();
     }
 }
