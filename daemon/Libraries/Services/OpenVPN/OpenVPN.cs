@@ -26,6 +26,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ServiceStack;
 using Spectero.daemon.Libraries.Config;
+using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Firewall;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
@@ -88,7 +89,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
             // Check if configurations are passed.
             if (_vpnConfig == null || !_vpnConfig.Any())
-                throw new InvalidOperationException("OpenVPN init: config list was null.");
+                throw new InternalError("OpenVPN init: config list was null.");
 
             // Get the default network interace.
             var defaultNetworkInterface = _firewall.GetDefaultInterface();
@@ -105,6 +106,14 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             // Iterate through each pending configuration.
             foreach (var configHolder in configDictionary)
             {
+                var pocoConfig = configHolder.Key;
+                
+                // Let's start the process off by registering the required port(s) on the port registry.
+                // Possibility of lots of exceptions here, but that's alright. Anything failing should halt service startup.
+                // ReSharper disable twice PossibleInvalidOperationException
+                _portRegistry.Allocate(IPAddress.Parse(pocoConfig.Listener.IPAddress), (int) pocoConfig.Listener.Port,
+                    (TransportProtocol) pocoConfig.Listener.Protocol, this);
+                
                 // Get the properly formatted path of where the configuration will be stored..
                 var onDiskName = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".ovpn");
 
@@ -122,7 +131,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 StartDaemon(onDiskName);
                 
                 // Create MASQ rules for each config.
-                _firewall.Rules.Masquerade(configHolder.Key.Listener.Network, defaultNetworkInterface.Name);
+                _firewall.Rules.Masquerade(pocoConfig.Listener.Network, defaultNetworkInterface.Name);
             }
         }
 
@@ -291,6 +300,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _configsOnDisk.Clear();
 
             _state = ServiceState.Halted;
+            
+            // Cleanup all of our port allocations so they may be re-allocated as needed.
+            _portRegistry.CleanUp(this);
             
             LogState("Stop");
         }

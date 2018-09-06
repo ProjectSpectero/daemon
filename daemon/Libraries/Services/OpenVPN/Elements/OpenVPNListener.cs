@@ -26,6 +26,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN.Elements
         // This *should* be modelled as an IPAddress, but that just incurs additional serialization/deserialization overhead.
         public string IPAddress;
 
+        // The Nullable<T> wrapping is so Valit works with it, since this is a "value type" as far as C# is concerned.
+        // Quite annoying baggage wise, but it works.
+        // This means that before usage, you need to cast it to their concrete versions (and also run the risk of dealing with InvalidOperationException)
         public int? Port;
         public int? ManagementPort;
         public TransportProtocol? Protocol;
