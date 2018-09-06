@@ -119,7 +119,7 @@ namespace Spectero.daemon.Libraries.Services.HTTPProxy
 
                 _proxyServer.Start();
                 _state = ServiceState.Running;
-                _logger.LogInformation($"HTTPProxy: now listening on {_proxyConfig.listeners.Count} endpoints.");
+                _logger.LogInformation($"HTTPProxy: now listening on {_proxyConfig.listeners.Count} endpoint(s).");
             }
             LogState("Start");
         }

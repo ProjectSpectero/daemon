@@ -34,7 +34,8 @@ namespace Spectero.daemon.Libraries.PortRegistry
         public IPAddress IP { get; set; }
         public int Port { get; set; }
         public TransportProtocol Protocol { get; set; }
-        public IService Service { get; set; }        
+        public IService Service { get; set; }
+        public Mapping Mapping { get; set; }
     }
 
     public class PortRegistryConfig
@@ -158,8 +159,10 @@ namespace Spectero.daemon.Libraries.PortRegistry
             try
             {
                 // Let's try to make the actual mapping.
+                var mapping = new Mapping(translatedProtocol, allocation.Port, allocation.Port, description);
+                
                 _device
-                    .CreatePortMapAsync(new Mapping(translatedProtocol, allocation.Port, allocation.Port, description))
+                    .CreatePortMapAsync(mapping)
                     .Wait();
 
             }
@@ -170,6 +173,23 @@ namespace Spectero.daemon.Libraries.PortRegistry
             }
             
             return true;            
+        }
+        
+        private bool RecallFromRouter(PortAllocation allocation)
+        {
+            try
+            {
+                _device
+                    .DeletePortMapAsync(allocation.Mapping)
+                    .Wait();
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"Could not de-propagate PortAllocation from router -> {allocation.IP}:{allocation.Port} @ {allocation.Protocol} belonging to svc: {allocation.Service?.GetType()}");
+                return false;
+            }
         }
 
         private Dictionary<int, List<PortAllocation>> GeneratePortToIPMap()
@@ -348,9 +368,48 @@ namespace Spectero.daemon.Libraries.PortRegistry
 
         public bool CleanUp(IService service = null)
         {
-            throw new System.NotImplementedException();
+            _logger.LogDebug($"Cleanup called by svc: {service?.GetType()}");
+            
+            // This means we're gonna be removing allocations belonging to a specific service.
+            if (service != null &&
+                _serviceAllocations.TryGetValue(service, out var allocations))
+            {
+                if (! _natEnabled)
+                    _logger.LogDebug($"De-propagation of {allocations.Count} mapping(s) requested, but NAT is disabled! Doing nothing.");
+                else
+                {
+                    foreach (var portAllocation in allocations)
+                    {
+                        RecallFromRouter(portAllocation);
+                    }
+                }
+
+                if (_serviceAllocations.TryRemove(service, out _)) return true;
+                
+                _logger.LogError($"Attempted svc-flush for {service.GetType()}, but could not remove from the concurrent map! Try restarting the Spectero Daemon.");
+                return false;
+            }
+
+            _logger.LogDebug("Registry cleanup requested, removing all allocations!");
+                
+            // We are to simply to remove every single allocation
+            var allAllocations = _serviceAllocations.Values
+                .SelectMany(x => x) // Flatten
+                .ToList();
+                
+            allAllocations.AddRange(_appAllocations);
+
+            foreach (var allocation in allAllocations)
+            {
+                RecallFromRouter(allocation);
+            }
+                
+            // Remove all internal references as well, resetting these to empty dictionaries / lists.
+            _serviceAllocations.Clear();
+            _appAllocations.Clear();
+
+            return true;
         }
-        
         
     }
 }
