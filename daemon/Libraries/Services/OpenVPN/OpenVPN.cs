@@ -16,21 +16,16 @@
 */
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using ServiceStack;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
-using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Firewall;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
-using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
 
 namespace Spectero.daemon.Libraries.Services.OpenVPN

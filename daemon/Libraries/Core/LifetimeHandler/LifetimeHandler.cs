@@ -87,7 +87,10 @@ namespace Spectero.daemon.Libraries.Core.LifetimeHandler
         public void OnStopped()
         {
             _logger.LogDebug("Processing events that are registered for ApplicationStopped");
+            // Remove all tracked 3rd party command(s).
             _processRunner.TerminateAllTrackedCommands();
+            // Remove all port mapping(s).
+            _portRegistry.CleanUp();
         }
     }
 }
