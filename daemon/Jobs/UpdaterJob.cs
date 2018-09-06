@@ -514,12 +514,7 @@ namespace Spectero.daemon.Jobs
             }
             else
             {
-                _logger.LogDebug("Something isn't right");
-                _logger.LogDebug("Remote Branch: " + remoteBranch);
-                _logger.LogDebug("Running Branch: " + runningBranch);
-                _logger.LogDebug("Remote Version: " + remoteVersion);
-                _logger.LogDebug("Running Version: " + AppConfig.Version);
-                _logger.LogDebug("Semantic version: " + SemanticVersionUpdateChecker(remoteVersion));
+                // Developer note: No update available!
             }
 
             // Disable the deadlock and allow the next run.
