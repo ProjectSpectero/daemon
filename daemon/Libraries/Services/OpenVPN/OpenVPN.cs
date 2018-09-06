@@ -64,7 +64,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Initializes the class with all of it's passed arguments.
         /// </summary>
         /// <param name="serviceProvider"></param>
-        public OpenVPN(IServiceProvider serviceProvider)
+        public OpenVPN(IServiceProvider serviceProvider) : base(serviceProvider)
         {
             // Inherit the objects.
             _logger = serviceProvider.GetRequiredService<ILogger<OpenVPN>>();
