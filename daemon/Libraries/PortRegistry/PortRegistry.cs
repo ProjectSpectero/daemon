@@ -137,12 +137,17 @@ namespace Spectero.daemon.Libraries.PortRegistry
 
         }
 
+        private void LogAllocation(string action, PortAllocation allocation)
+        {
+            _logger.LogDebug($"{action} of PortAllocation requested -> {allocation.IP}:{allocation.Port} @ {allocation.Protocol} belonging to svc: {allocation.Service?.GetType().Name ?? "internal"}");
+        }
+
         private bool PropagateToRouter(PortAllocation allocation)
         {
             if (! _isInitialized)
                 Initialize();
             
-            _logger.LogDebug($"Propagation of PortAllocation requested -> {allocation.IP}:{allocation.Port} @ {allocation.Protocol} belonging to svc: {allocation.Service?.GetType().Name ?? "internal"}");
+            LogAllocation("Propagation", allocation);
 
             if (! _natEnabled)
             {
@@ -176,6 +181,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
 
                 // Mark it accordingly since we succeeded in propagating it to the router.
                 allocation.Forwarded = true;
+                allocation.Mapping = mapping;
 
             }
             catch (Exception e)
@@ -189,7 +195,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
         
         private bool RecallFromRouter(PortAllocation allocation)
         {
-            _logger.LogDebug($"De-propagation of PortAllocation requested -> {allocation.IP}:{allocation.Port} @ {allocation.Protocol} belonging to svc: {allocation.Service?.GetType().Name ?? "internal"}");
+            LogAllocation("De-propagation", allocation);
 
             if (!_natEnabled)
             {
@@ -294,9 +300,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
         }
 
         public PortAllocation Allocate(IPAddress ip, int port, TransportProtocol protocol, IService forwardedFor = null)
-        {
-            _logger.LogDebug($"Allocation requested for {ip}:{port} @ {protocol} for svc: {forwardedFor?.GetType()?.ToString() ?? "internal"}");
-            
+        {            
             if (IsAllocated(ip, port, protocol, out var allocation))
             {
                 var belongsTo = allocation?.Service?.GetType().ToString() ?? "internally to the daemon.";
@@ -311,6 +315,8 @@ namespace Spectero.daemon.Libraries.PortRegistry
                 Protocol = protocol,
                 Service = forwardedFor
             };
+            
+            LogAllocation("Allocation", portAllocation);
             
             // Where it needs to go is determined by whether we're doing it on behalf of a service, or for the overall app itself.
             if (forwardedFor != null)
@@ -417,7 +423,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
 
                 if (_serviceAllocations.TryRemove(service, out _)) return true;
                 
-                _logger.LogError($"Attempted svc-flush for {service.GetType()}, but could not remove from the concurrent map! Try restarting the Spectero Daemon.");
+                _logger.LogError($"Attempted svc-flush for {service.GetType().Name}, but could not remove from the concurrent map! Try restarting the Spectero Daemon.");
                 return false;
             }
 
