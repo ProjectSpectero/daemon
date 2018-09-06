@@ -531,15 +531,12 @@ namespace Spectero.daemon.Jobs
             string rs = null;
             try
             {
-                _logger.LogDebug("Got into catch block");
                 rs = (_config.Updater.ReleaseServer != null)
                     ? string.Format("{0}/releases.json", _config.Updater.ReleaseServer)
                     : "https://c.spectero.com/releases.json";
                 var response = _httpClient.GetAsync(
                     rs
                 ).Result;
-                _logger.LogDebug("Release Server: " + rs);
-                _logger.LogDebug("GOT RELEASE INFORMATION!!!!!!!!!!");
 
                 var releaseData = JsonConvert.DeserializeObject<Release>(response.Content.ReadAsStringAsync().Result);
                 return releaseData;
