@@ -193,12 +193,10 @@ namespace Spectero.daemon.Jobs
 
             // Enable the deadlock.
             AppConfig.UpdateDeadlock = true;
-            _logger.LogDebug("Deadlock enabled");
-            
+
             // Get the latest set of release data.
             releaseInformation = GetReleaseInformation();
-            _logger.LogDebug("Got release information");
-
+            
             // Determine the release channel 
             runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.ReleaseChannel;
             _logger.LogDebug("The running branch is " + runningBranch);
@@ -216,14 +214,10 @@ namespace Spectero.daemon.Jobs
                 // Stop execution
                 return;
             }
-            
-            _logger.LogDebug("determined valid channel");
 
             // Get the remainder versioning information
             remoteVersion = releaseInformation.channels[runningBranch];
             remoteBranch = remoteVersion.Split("-")[1];
-            
-            _logger.LogDebug("Got remainder versioning information");
 
             // Compare and make sure there's an update available.
             if (remoteBranch == runningBranch && SemanticVersionUpdateChecker(remoteVersion))
@@ -540,7 +534,7 @@ namespace Spectero.daemon.Jobs
             try
             {
                 _logger.LogDebug("Got into catch block");
-                 rs = (_config.Updater.ReleaseServer != null)
+                rs = (_config.Updater.ReleaseServer != null)
                     ? string.Format("{0}/releases.json", _config.Updater.ReleaseServer)
                     : "https://c.spectero.com/releases.json";
                 var response = _httpClient.GetAsync(
@@ -554,7 +548,7 @@ namespace Spectero.daemon.Jobs
             }
             catch (Exception exception)
             {
-                var msg = "UJ: Failed to get release data from the internet ("+rs+").\n" + exception;
+                var msg = "UJ: Failed to get release data from the internet (" + rs + ").\n" + exception;
                 _logger.LogError(msg);
                 AppConfig.UpdateDeadlock = false;
                 throw exception;
