@@ -202,6 +202,12 @@ namespace Spectero.daemon.Libraries.PortRegistry
                 _logger.LogDebug("De-propagation requested, but NAT is NOT enabled!");
                 return false;
             }
+
+            if (!allocation.Forwarded)
+            {
+                _logger.LogWarning("De-propagation of a non-forwarded allocation requested, doing nothing.");
+                return false;
+            }
             
             try
             {
@@ -362,12 +368,14 @@ namespace Spectero.daemon.Libraries.PortRegistry
                         if (existingAllocation.Protocol != protocol) continue;
                         
                         allocation = existingAllocation;
-                        return false;
+                        return true;
                     }
                 }
             }
             
-            var matchingServiceAllocations = _serviceAllocations.Where(x => x.Value.Any(p => p.IP.Equals(ip) && p.Port == port && p.Protocol == protocol))
+            var matchingServiceAllocations = _serviceAllocations.Where(x => x.Value.Any(p => ( p.IP.Equals(ip) || p.IP.Equals(IPAddress.Any) || p.IP.Equals(IPAddress.IPv6Any) )
+                                                                                             && p.Port == port 
+                                                                                             && p.Protocol == protocol))
                 .SelectMany(p => p.Value)
                 .ToArray();
 
@@ -380,7 +388,9 @@ namespace Spectero.daemon.Libraries.PortRegistry
             
             // If we got here, it wasn't found as a service allocation.
             var matchingApplicationAllocations =
-                _appAllocations.Where(x => x.IP.Equals(ip) && x.Port == port && x.Protocol == protocol)
+                _appAllocations.Where(x => ( x.IP.Equals(ip) || x.IP.Equals(IPAddress.Any) || x.IP.Equals(IPAddress.IPv6Any) )
+                                           && x.Port == port
+                                           && x.Protocol == protocol)
                 .ToArray();
 
             if (matchingApplicationAllocations.Any())
@@ -411,14 +421,9 @@ namespace Spectero.daemon.Libraries.PortRegistry
             if (service != null &&
                 _serviceAllocations.TryGetValue(service, out var allocations))
             {
-                if (! _natEnabled)
-                    _logger.LogDebug($"De-propagation of {allocations.Count} mapping(s) requested, but NAT is disabled! Doing nothing.");
-                else
+                foreach (var portAllocation in allocations)
                 {
-                    foreach (var portAllocation in allocations)
-                    {
-                        RecallFromRouter(portAllocation);
-                    }
+                    RecallFromRouter(portAllocation);
                 }
 
                 if (_serviceAllocations.TryRemove(service, out _)) return true;
