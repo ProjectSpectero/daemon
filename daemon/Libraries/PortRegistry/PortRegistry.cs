@@ -18,6 +18,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -305,6 +306,13 @@ namespace Spectero.daemon.Libraries.PortRegistry
             return dict;
         }
 
+        private static bool DoesIPCollide(IPAddress first, IPAddress second)
+        {
+            var wildcardTest = first.Equals(second.AddressFamily == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Any : IPAddress.Any);
+
+            return (first.Equals(second) || wildcardTest);
+        }
+
         public PortAllocation Allocate(IPAddress ip, int port, TransportProtocol protocol, IService forwardedFor = null)
         {            
             if (IsAllocated(ip, port, protocol, out var allocation))
@@ -373,7 +381,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
                 }
             }
             
-            var matchingServiceAllocations = _serviceAllocations.Where(x => x.Value.Any(p => ( p.IP.Equals(ip) || p.IP.Equals(IPAddress.Any) || p.IP.Equals(IPAddress.IPv6Any) )
+            var matchingServiceAllocations = _serviceAllocations.Where(x => x.Value.Any(p => DoesIPCollide(p.IP, ip)
                                                                                              && p.Port == port 
                                                                                              && p.Protocol == protocol))
                 .SelectMany(p => p.Value)
@@ -388,7 +396,7 @@ namespace Spectero.daemon.Libraries.PortRegistry
             
             // If we got here, it wasn't found as a service allocation.
             var matchingApplicationAllocations =
-                _appAllocations.Where(x => ( x.IP.Equals(ip) || x.IP.Equals(IPAddress.Any) || x.IP.Equals(IPAddress.IPv6Any) )
+                _appAllocations.Where(x => DoesIPCollide(x.IP, ip)
                                            && x.Port == port
                                            && x.Protocol == protocol)
                 .ToArray();
