@@ -225,7 +225,7 @@ namespace Spectero.daemon.Jobs
                 _logger.LogDebug("UJ: Generating target paths...");
                 newVersion = releaseInformation.channels[remoteBranch];
                 targetDirectory = Path.Combine(RootInstallationDirectory, newVersion);
-                targetArchive = Path.Combine(RootInstallationDirectory, string.Format("{0}.zip", newVersion));
+                targetArchive = Path.Combine(RootInstallationDirectory, $"{newVersion}.zip");
                 _logger.LogDebug("UJ: Target paths generated successfully.");
 
                 // Generate a projected path of where the new dotnet core installation should exist - will utilize this in the future.
