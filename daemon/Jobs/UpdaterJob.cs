@@ -48,7 +48,6 @@ namespace Spectero.daemon.Jobs
         public bool Enabled { get; set; }
         public string ReleaseChannel { get; set; }
         public string Frequency { get; set; }
-        public string ReleaseServer { get; set; }
     }
 
     /// <summary>
@@ -528,22 +527,16 @@ namespace Spectero.daemon.Jobs
         /// <exception cref="InternalError"></exception>
         private Release GetReleaseInformation()
         {
-            string rs = null;
+            string releaseServer = "https://c.spectero.com/releases.json";
             try
             {
-                rs = (_config.Updater.ReleaseServer != null)
-                    ? string.Format("{0}/releases.json", _config.Updater.ReleaseServer)
-                    : "https://c.spectero.com/releases.json";
-                var response = _httpClient.GetAsync(
-                    rs
-                ).Result;
-
+                var response = _httpClient.GetAsync(releaseServer).Result;
                 var releaseData = JsonConvert.DeserializeObject<Release>(response.Content.ReadAsStringAsync().Result);
                 return releaseData;
             }
             catch (Exception exception)
             {
-                var msg = "UJ: Failed to get release data from the internet (" + rs + ").\n" + exception;
+                var msg = $"UJ: Failed to get release data from the internet ({releaseServer}).\n" + exception;
                 _logger.LogError(msg);
                 AppConfig.UpdateDeadlock = false;
                 throw exception;
