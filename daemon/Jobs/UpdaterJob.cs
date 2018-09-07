@@ -195,7 +195,7 @@ namespace Spectero.daemon.Jobs
 
             // Get the latest set of release data.
             releaseInformation = GetReleaseInformation();
-            
+
             // Determine the release channel 
             runningBranch = _config.Updater.ReleaseChannel ?? AppConfig.ReleaseChannel;
             _logger.LogDebug("The running branch is " + runningBranch);
@@ -259,11 +259,12 @@ namespace Spectero.daemon.Jobs
                 }
                 catch (Exception exception)
                 {
-                    var msg = "A error occured while attempting to resolve the download link for the update: \n" +
-                              exception;
-                    _logger.LogError(msg);
+                    // Remove the deadlock
                     AppConfig.UpdateDeadlock = false;
-                    throw new InternalError(msg);
+
+                    // Log and throw.
+                    _logger.LogError(exception, "A error occured while attempting to resolve the download link for the update.");
+                    throw exception;
                 }
 
                 // Download
@@ -276,11 +277,12 @@ namespace Spectero.daemon.Jobs
                     }
                     catch (WebException exception)
                     {
-                        var msg = "UJ: The update job has failed due to a problem while downloading the update:\n" +
-                                  exception;
-                        _logger.LogError(msg);
+                        // Remove the deadlock
                         AppConfig.UpdateDeadlock = false;
-                        throw new InternalError(msg);
+
+                        // Log and throw.
+                        _logger.LogError(exception, "UJ: The update job has failed due to a problem while downloading the update.");
+                        throw exception;
                     }
                 }
 
@@ -315,11 +317,11 @@ namespace Spectero.daemon.Jobs
                     }
                     catch (Exception exception)
                     {
+                        // Remove the deadlock
                         AppConfig.UpdateDeadlock = false;
-                        var msg =
-                            "UJ: A exception occured while trying to migrate a database to the new destination:\n" +
-                            exception;
-                        _logger.LogError(msg);
+
+                        // Log and throw.
+                        _logger.LogError(exception, "UJ: A exception occured while trying to migrate a database to the new destination.");
                         throw exception;
                     }
                 }
@@ -455,8 +457,7 @@ namespace Spectero.daemon.Jobs
                                 }
 
                                 // Rubber Duck: 
-                                _logger.LogDebug(
-                                    "UJ: The dotnet core version comparison loop did not signify that the version was incompatible.");
+                                _logger.LogDebug("UJ: The dotnet core version comparison loop did not signify that the version was incompatible.");
 
                                 // If the for loop above did nothing, we should be compatible.
                                 break;
@@ -468,11 +469,11 @@ namespace Spectero.daemon.Jobs
                     }
                     catch (Exception exception)
                     {
+                        // Remove the deadlock.
                         AppConfig.UpdateDeadlock = false;
-                        var msg =
-                            "UJ: A exception occured while trying to validate a compatible dotnet core version:\n" +
-                            exception;
-                        _logger.LogError(msg);
+
+                        // Log and throw.
+                        _logger.LogError(exception, "UJ: A exception occured while trying to validate a compatible dotnet core version:\n");
                         throw exception;
                     }
                 }
@@ -536,9 +537,11 @@ namespace Spectero.daemon.Jobs
             }
             catch (Exception exception)
             {
-                var msg = $"UJ: Failed to get release data from the internet ({releaseServer}).\n" + exception;
-                _logger.LogError(msg);
+                // Remove the deadlock
                 AppConfig.UpdateDeadlock = false;
+
+                // Log and throw.
+                _logger.LogError(exception, $"UJ: Failed to get release data from the internet ({releaseServer}).");
                 throw exception;
             }
         }
@@ -552,19 +555,17 @@ namespace Spectero.daemon.Jobs
         {
             try
             {
-                var response = _httpClient
-                    .GetAsync("https://raw.githubusercontent.com/ProjectSpectero/daemon-installers/master/SOURCES.json")
-                    .Result;
-
-                var sourcesData =
-                    JsonConvert.DeserializeObject<SourcesInformation>(response.Content.ReadAsStringAsync().Result);
+                var response = _httpClient.GetAsync("https://raw.githubusercontent.com/ProjectSpectero/daemon-installers/master/SOURCES.json").Result;
+                var sourcesData = JsonConvert.DeserializeObject<SourcesInformation>(response.Content.ReadAsStringAsync().Result);
                 return sourcesData;
             }
             catch (Exception exception)
             {
-                var msg = "UJ: Failed to get source information from github.\n" + exception;
-                _logger.LogError(msg);
+                // Remove the deadlock
                 AppConfig.UpdateDeadlock = false;
+
+                // Log and throw
+                _logger.LogError(exception, "UJ: Failed to get source information from github.");
                 throw exception;
             }
         }
@@ -573,14 +574,14 @@ namespace Spectero.daemon.Jobs
         /// Get the root installation directory for the spectero daemons.
         /// This will include each versions and the latest symlink.
         /// </summary>
-        private string RootInstallationDirectory => Directory.GetParent(
-            Directory.GetParent(Program.GetAssemblyLocation()).FullName
-        ).FullName;
+        private string RootInstallationDirectory =>
+            Directory.GetParent(Directory.GetParent(Program.GetAssemblyLocation()).FullName).FullName;
 
         /// <summary>
         /// Get the directory of the database.
         /// </summary>
-        private string DatabaseDirectory => Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir);
+        private string DatabaseDirectory =>
+            Path.Combine(Program.GetAssemblyLocation(), _config.DatabaseDir);
 
         /// <summary>
         /// Get the paths for each database.
@@ -643,9 +644,11 @@ namespace Spectero.daemon.Jobs
             }
             catch (Exception exception)
             {
+                // Disable the deadlock
                 AppConfig.UpdateDeadlock = false;
-                var msg = "UJ: A exception occured while trying to parse semantic versioning\n" + exception;
-                _logger.LogError(msg);
+                
+                // Log and throw
+                _logger.LogError(exception, "UJ: A exception occured while trying to parse semantic versioning");
                 throw exception;
             }
         }
@@ -700,9 +703,12 @@ namespace Spectero.daemon.Jobs
                 }
                 catch (ErrorExitCodeException exception)
                 {
+                    // Remove the deadlock.
                     AppConfig.UpdateDeadlock = false;
-                    var msg = "UJ: A exception occured while trying to update dotnet core for windows\n" + exception;
-                    _logger.LogError(msg);
+                    
+                    
+                    var msg = "UJ: A exception occured while trying to update dotnet core for windows" + exception;
+                    _logger.LogError(exception, "UJ: A exception occured while trying to update dotnet core for windows");
                     throw exception;
                 }
             }
