@@ -20,7 +20,7 @@ namespace Spectero.daemon.Models.Opaque
 {
     public class OpaqueBase : IOpaqueModel
     {
-        public string FormatValidationError(string errorKey, string field, string data = null)
+        public static string FormatValidationError(string errorKey, string field, string data = null)
         {
             return errorKey + ":" + field + ":" + data;
         }

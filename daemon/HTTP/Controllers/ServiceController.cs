@@ -16,12 +16,14 @@
 */
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Data;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -31,11 +33,13 @@ using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.OutgoingIPResolver;
 using Spectero.daemon.Libraries.Core.Statistics;
+using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services;
 using Spectero.daemon.Libraries.Services.HTTPProxy;
 using Spectero.daemon.Libraries.Services.OpenVPN;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Spectero.daemon.Models;
+using Spectero.daemon.Models.Opaque;
 using Spectero.daemon.Models.Opaque.Requests;
 using Messages = Spectero.daemon.Libraries.Core.Constants.Messages;
 using Utility = Spectero.daemon.Libraries.Core.Utility;
@@ -108,14 +112,13 @@ namespace Spectero.daemon.HTTP.Controllers
         [HttpPut("OpenVPN/config", Name = "HandleOpenVPNConfigUpdate")]
         public async Task<IActionResult> HandleOpenVPNConfigUpdate([FromBody] OpenVPNConfigUpdateRequest config)
         {
-            if (!ModelState.IsValid || !config.Validate(out var errors))
-            {
-                _response.Errors.Add(Errors.VALIDATION_FAILED, errors);
-                return BadRequest(_response);
-            }
+            if (! ModelState.IsValid || config == null)
+                throw new DisclosableError(why: Errors.MISSING_BODY);
+
+            config.Validate(out _, throwsExceptions: true);
             
             // OK bob, the basic schema is valid. Let's do some semantics checks now.
-            // There is also no need to coppy result.ErrorMessages out into our buffer this time. If we're here, that means it all passed already.
+            // There is also no need to copy result.ErrorMessages out into our buffer this time. If we're here, that means it all passed already.
 	        
             // Let's check the listeners.
             var networksAlreadySeen = new List<IPNetwork>();
@@ -123,28 +126,31 @@ namespace Spectero.daemon.HTTP.Controllers
             var listenersAlreadySeen = new Dictionary<int,
                 List<OpenVPNListener>>();
 	        
-            var errorEncountered = false;
+            var foundErrors = new List<string>();
 	        
             foreach (var listener in config.Listeners)
             {
+                var currentIndex = config.Listeners.IndexOf(listener);
+                
                 var parsedNetwork = IPNetwork.Parse(listener.Network);
                 var parsedAddress = IPAddress.Parse(listener.IPAddress);
 
                 foreach (var network in networksAlreadySeen)
                 {
                     Logger.LogDebug($"Checking if {network} overlaps with any already defined networks: {networksAlreadySeen.Count} already seen.");
+                    
                     // Uh oh, we got an overlap. No bueno.
-                    if (! network.Contains(parsedNetwork) && ! network.Equals(parsedNetwork)) continue;;
+                    if (! network.Contains(parsedNetwork) && ! network.Equals(parsedNetwork)) continue;
 			        
-                    _response.Errors.Add(Errors.FIELD_OVERLAP, $"listeners.network:{network},{parsedNetwork}");
-                    errorEncountered = true;
+                    foundErrors.Add(OpaqueBase.FormatValidationError(Errors.FIELD_OVERLAP, $"listeners.{currentIndex}", $"{network},{parsedNetwork}"));
+
                     break;
                 }
                 
                 networksAlreadySeen.Add(parsedNetwork);
 		        
                 // If we got here, that means listeners do not have network overlaps.
-                if (!errorEncountered)
+                if (! foundErrors.Any())
                 {
                     // Now, let's check for port overlaps / same listener being defined multiple times
                     listenersAlreadySeen.TryGetValue(listener.Port.Value, out var listOfexistingListenersOnPort);
@@ -162,16 +168,16 @@ namespace Spectero.daemon.HTTP.Controllers
                             
                             if (abstractedListener.IPAddress.Equals(IPAddress.Any.ToString()))
                             {
-                                _response.Errors.Add(Errors.PORT_CONFLICT_FOUND, "0.0.0.0");
-                                errorEncountered = true;
+                                foundErrors.Add(OpaqueBase.FormatValidationError(Errors.PORT_CONFLICT_FOUND, $"listeners.{currentIndex}", $"{listener.Port.Value},0.0.0.0"));
+
                                 break;
                             }
 
                             // Duplicate listener found
                             if (abstractedListener.IPAddress.Equals(listener.IPAddress))
                             {
-                                _response.Errors.Add(Errors.DUPLICATE_IP_AS_LISTENER_REQUEST, listener.IPAddress);
-                                errorEncountered = true;
+                                foundErrors.Add(OpaqueBase.FormatValidationError(Errors.DUPLICATE_IP_AS_LISTENER_REQUEST, $"listeners.{currentIndex}", $"{listener.IPAddress}"));
+
                                 break;
                             }
                         }
@@ -187,13 +193,16 @@ namespace Spectero.daemon.HTTP.Controllers
                 }
             }
 
-            if (HasErrors())
+            if (foundErrors.Any())
             {
-                return BadRequest(_response);
+                // OK, second phase validation has failed.
+                throw new ValidationError(foundErrors.ToImmutableArray());
             }
 
             var baseConfig = new OpenVPNConfig (null, null)
             {
+                // ReSharper disable thrice PossibleInvalidOperationException
+                // ^ Why? Because data is validated before coming here.
                 AllowMultipleConnectionsFromSameClient = config.AllowMultipleConnectionsFromSameClient.Value,
                 ClientToClient = config.ClientToClient.Value,
                 MaxClients = config.MaxClients.Value,
@@ -235,23 +244,26 @@ namespace Spectero.daemon.HTTP.Controllers
         [HttpPut("HTTPProxy/config", Name = "HandleHTTPProxyConfigUpdate")]
         public async Task<IActionResult> HandleHttpProxyConfigUpdate([FromBody] HTTPConfig config)
         {
+            // ModelState takes care of checking if the field map succeeded. This means mode | allowed.d | banned.d do not need manual checking
             if (! ModelState.IsValid || config.listeners.IsNullOrEmpty())
-            {
-                // ModelState takes care of checking if the field map succeeded. This means mode | allowed.d | banned.d do not need manual checking
-                _response.Errors.Add(Errors.MISSING_BODY, "");
-                return BadRequest(_response);
-            }
+                throw new DisclosableError(why: Errors.MISSING_BODY);
                 
-            var currentConfig = (HTTPConfig) _serviceConfigManager.Generate(Utility.GetServiceType("HTTPProxy")).First();
+            // We are a single instance service.
+            var currentConfig = (HTTPConfig) _serviceConfigManager
+                .Generate(Utility.GetServiceType("HTTPProxy"))
+                .First();
 
             var localAvailableIPs = Utility.GetLocalIPs();
             var availableIPs = localAvailableIPs as IPAddress[] ?? localAvailableIPs.ToArray();
 
             var consumedListenerMap = new Dictionary<int, List<IPAddress>>();
+            var encounteredErrors = new List<string>();
 
             // Check if all listeners are valid
             foreach (var listener in config.listeners)
             {
+                var currentIndex = config.listeners.IndexOf(listener);
+                
                 if (IPAddress.TryParse(listener.Item1, out var holder))
                 {
                     var ipChecked = AppConfig.BindToUnbound || availableIPs.Contains(holder) || holder.Equals(IPAddress.Any);
@@ -265,28 +277,31 @@ namespace Spectero.daemon.HTTP.Controllers
                         {
                             if (ipAddress.Equals(IPAddress.Any))
                             {
-                                _response.Errors.Add(Errors.PORT_CONFLICT_FOUND, "0.0.0.0");
+                                encounteredErrors.Add(OpaqueBase.FormatValidationError(Errors.PORT_CONFLICT_FOUND, $"listeners.{currentIndex}.item1", $"0.0.0.0, {listener.Item2}"));
+
                                 break;
                             }
 
                             // Duplicate listener found
                             if (ipAddress.Equals(holder))
                             {
-                                _response.Errors.Add(Errors.DUPLICATE_IP_AS_LISTENER_REQUEST, listener.Item1);
+                                encounteredErrors.Add(OpaqueBase.FormatValidationError(Errors.DUPLICATE_IP_AS_LISTENER_REQUEST, $"listeners.{currentIndex}.item1", listener.Item1));
+
                                 break;
                             }
                         }
 
                     if (!ipChecked)
                     {
-                        _response.Errors.Add(Errors.INVALID_IP_AS_LISTENER_REQUEST, listener.Item1);
+                        encounteredErrors.Add(OpaqueBase.FormatValidationError(Errors.INVALID_IP_AS_LISTENER_REQUEST, $"listeners.{currentIndex}.item1", listener.Item1));
+
                         break;
                     }
 
 
                     if (!portChecked)
                     {
-                        _response.Errors.Add(Errors.INVALID_PORT_AS_LISTENER_REQUEST, listener.Item2);
+                        encounteredErrors.Add(OpaqueBase.FormatValidationError(Errors.INVALID_PORT_AS_LISTENER_REQUEST, $"listeners.{currentIndex}.item2", listener.Item2.ToString()));
                         break;
                     }
 
@@ -303,16 +318,17 @@ namespace Spectero.daemon.HTTP.Controllers
                 }
                 else
                 {
-                    _response.Errors.Add(Errors.MALFORMED_IP_AS_LISTENER_REQUEST, listener.Item1);
+                    encounteredErrors.Add(OpaqueBase.FormatValidationError(Errors.MALFORMED_IP_AS_LISTENER_REQUEST, $"listeners.{currentIndex}.item1", listener.Item1));
+
                     break;
                 }
                    
             }
 
-            if (HasErrors())
+            if (encounteredErrors.Any())
             {
                 Logger.LogError("CCHH: Invalid listener request found.");
-                return BadRequest(_response);
+                throw new ValidationError(encounteredErrors.ToImmutableArray());
             }
 
             if (config.listeners != currentConfig.listeners ||
