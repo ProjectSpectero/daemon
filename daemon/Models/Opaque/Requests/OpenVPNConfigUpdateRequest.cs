@@ -17,8 +17,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Net;
 using Spectero.daemon.Libraries.Core.Constants;
+using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Libraries.Services.OpenVPN.Elements;
 using Valit;
 
@@ -63,7 +65,8 @@ namespace Spectero.daemon.Models.Opaque.Requests
         public IEnumerable<RedirectGatewayOptions> RedirectGateway;
         public IEnumerable<OpenVPNListener> Listeners;
 
-        public bool Validate(out ImmutableArray<string> errors, CRUDOperation operation = CRUDOperation.Create)
+        public bool Validate(out ImmutableArray<string> errors, CRUDOperation operation = CRUDOperation.Create,
+	        bool throwsExceptions = false)
         {
 
             var builder = ImmutableArray.CreateBuilder<string>();
@@ -78,6 +81,9 @@ namespace Spectero.daemon.Models.Opaque.Requests
 						.WithMessage(FormatValidationError(Errors.FIELD_MINLENGTH, "1")))
 	            // IPAddress / IPNetwork validation, after this, no further "TryParse" is required.
 	            .EnsureFor(m => m.Listeners, OpenVPNListener.validator)
+	            .Ensure(m => m.Listeners, _ => _
+					.Satisfies(x => x.Count() <= Defaults.DefinableOpenVPNListenerCount)
+						.WithMessage(FormatValidationError(Errors.ENTITY_BOUND_REACHED, $"listeners:{Defaults.DefinableOpenVPNListenerCount}")))						
 	            .Ensure(m => m.AllowMultipleConnectionsFromSameClient, _ => _
 					.Required()
 						.WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "allowMultipleConnectionsFromSameClient")))
@@ -88,9 +94,9 @@ namespace Spectero.daemon.Models.Opaque.Requests
 					.Required()
 						.WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "maxClients"))
 					.IsGreaterThanOrEqualTo(512)
-						.WithMessage(FormatValidationError(Errors.FIELD_MINLENGTH, "512"))
+						.WithMessage(FormatValidationError(Errors.FIELD_MINLENGTH, "maxClients", "512"))
 		            .IsLessThanOrEqualTo(2048)
-						.WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "2048")))
+						.WithMessage(FormatValidationError(Errors.FIELD_MAXLENGTH, "maxClients", "2048")))
 				.Ensure(m => m.DhcpOptions, _ => _
 					.Required()
 						.WithMessage(FormatValidationError(Errors.FIELD_REQUIRED, "dhcpOptions")))
@@ -108,6 +114,9 @@ namespace Spectero.daemon.Models.Opaque.Requests
 
 	        
 	        errors = result.ErrorMessages;
+	        
+	        if (! result.Succeeded && throwsExceptions)
+				throw new ValidationError(errors);
 
 	        return result.Succeeded;
 	       

@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using Spectero.daemon.Jobs;
+using Spectero.daemon.Libraries.PortRegistry;
 
 namespace Spectero.daemon.Libraries.Config
 {
@@ -36,7 +37,6 @@ namespace Spectero.daemon.Libraries.Config
         public string DatabaseDir { get; set; }
         public double AuthCacheMinutes { get; set; }
         public bool LocalSubnetBanEnabled { get; set; }
-        public Dictionary<string, Dictionary<string, string>> Defaults { get; set; }
         public int PasswordCostLowerThreshold { get; set; }
         public int JWTTokenExpiryInMinutes { get; set; }
         public int JWTRefreshTokenDelta { get; set; }
@@ -62,6 +62,8 @@ namespace Spectero.daemon.Libraries.Config
         public bool IgnoreRFC1918 { get; set; }
         public bool HaltStartupIfServiceInitFails { get; set; }
 
+        public PortRegistryConfig PortRegistry { get; set; }
+        
         // Job Configurations.
         public BackupConfiguration Backups { get; set; }
         public UpdaterConfiguration Updater { get; set; }
@@ -95,8 +97,8 @@ namespace Spectero.daemon.Libraries.Config
         }
 
         public static string CloudConnectDefaultAuthKey => "cloud";
-        
 
+        public static string FirstRunConfigName => ".firstrun";
 
         /// <summary>
         /// Simple function to detect the presence of OpenVZ hosts.

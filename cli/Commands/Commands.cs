@@ -37,6 +37,9 @@ namespace Spectero.daemon.CLI.Commands
 
         [Command(typeof(ManuallyConnectToSpecteroCloud), Description = "Manually Connect Daemon to Spectero Cloud")]
         manual,
+        
+        [Command(typeof(Shutdown), Description = "Shutdown the spectero daemon")]
+        shutdown,
 
         [Command(typeof(ViewCloudConnectivityStatus), Description = "See the current state of connectivity to the Spectero Cloud")]
         status,
@@ -48,14 +51,6 @@ namespace Spectero.daemon.CLI.Commands
         version,
         
         [Command(typeof(InlineFileAuth), Description = "Service specific authentication helper, meant for invocation by 3rd party binary: OpenVPN")]
-        fileauth,
-
-        /*
-         * Shutdown command
-         * Commenting out for AUTH requirement.
-         * 
-         * [Command(typeof(Shutdown), Description = "Shutdown the spectero daemon")]
-         * shutdown,
-         */
+        fileauth
     }
 }

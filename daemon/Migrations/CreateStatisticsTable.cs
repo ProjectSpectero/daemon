@@ -14,20 +14,26 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
-using System.Collections.Immutable;
+using FluentMigrator;
 
-namespace Spectero.daemon.Models.Opaque
+namespace Spectero.daemon.Migrations
 {
-    public class OpaqueBase : IOpaqueModel
+    [Migration(20180822203601)]
+    public class CreateStatisticsTable : Migration
     {
-        public static string FormatValidationError(string errorKey, string field, string data = null)
+        public override void Up()
         {
-            return errorKey + ":" + field + ":" + data;
+            Create.Table("Statistic")
+                .WithColumn("Id").AsInt32().PrimaryKey().Nullable()
+                .WithColumn("Bytes").AsInt64()
+                .WithColumn("Directions").AsString()
+                .WithColumn("CreatedDate").AsString()
+                .WithColumn("UpdatedDate").AsString();
         }
 
-        public bool Validate(out ImmutableArray<string> errors, CRUDOperation operation = CRUDOperation.Create)
+        public override void Down()
         {
-            throw new System.NotImplementedException();
+            Delete.Table("Statistic");
         }
     }
 }

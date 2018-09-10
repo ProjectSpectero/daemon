@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Spectero.daemon.HTTP.Filters;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Constants;
 
@@ -38,6 +39,8 @@ namespace Spectero.daemon.HTTP.Controllers
             _applicationLifetime = applicationLifetime;
         }
 
+        [AllowAnonymous]
+        [ServiceFilter(typeof(EnforceLocalOnlyAccess))]
         [HttpPost("shutdown", Name = "ShutdownApplication")]
         public IActionResult Shutdown()
         {

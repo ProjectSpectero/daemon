@@ -33,6 +33,8 @@ namespace Spectero.daemon.Libraries.Core.Constants
         public const string FIELD_INVALID_RANGE = "FIELD_INVALID_RANGE";
         public const string FIELD_OVERLAP = "FIELD_OVERLAP";
         public const string FIELD_RESERVED = "FIELD_RESERVED";
+        public const string ENTITY_BOUND_REACHED = "ENTITY_BOUND_REACHED";
+        public const string MODEL_BINDING_FAILED = "MODEL_BINDING_FAILED";
 
         public const string MISSING_BODY = "MISSING_BODY";
         public const string USER_NOT_FOUND = "USER_NOT_FOUND";

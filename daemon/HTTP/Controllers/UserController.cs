@@ -78,15 +78,11 @@ namespace Spectero.daemon.HTTP.Controllers
         public async Task<IActionResult> Create([FromBody] User user)
         {
             // Check to see if the model state is valid.
-            if (!ModelState.IsValid || !user.Validate(out var errors))
-            {
-                if (errors == null)
-                    _response.Errors.Add(Errors.MISSING_BODY, "");
-                else
-                    _response.Errors.Add(Errors.VALIDATION_FAILED, errors);
-                
-                return BadRequest(_response);
-            }
+            if (! ModelState.IsValid || user == null)
+                throw new DisclosableError(why: Errors.MISSING_BODY);
+            
+            if (! user.Validate(out var errors))
+                throw new ValidationError(errors);
 
             if ((user.HasRole(Models.User.Role.SuperAdmin) ||
                  user.HasRole(Models.User.Role.WebApi)) && !CurrentUser().HasRole(Models.User.Role.SuperAdmin))
@@ -149,18 +145,15 @@ namespace Spectero.daemon.HTTP.Controllers
         [HttpPut("{id}", Name = "UpdateUser")]
         public async Task<IActionResult> UpdateUser(long id, [FromBody] User user)
         {
+            // Check to see if the model state is valid.
+            if (! ModelState.IsValid || user == null)
+                throw new DisclosableError(why: Errors.MISSING_BODY);
+            
+            if (! user.Validate(out var errors, CRUDOperation.Update))
+                throw new ValidationError(errors);
+            
             User fetchedUser = null;
 
-            // Check to see if the model state is valid.
-            if (!ModelState.IsValid || !user.Validate(out var errors, CRUDOperation.Update))
-            {
-                if (errors == null)
-                    _response.Errors.Add(Errors.MISSING_BODY, "");
-                else
-                    _response.Errors.Add(Errors.VALIDATION_FAILED, errors);
-                
-                return BadRequest(_response);
-            }
 
             // Get the provided user.
             fetchedUser = await Db.SingleByIdAsync<User>(id);

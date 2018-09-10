@@ -1,4 +1,4 @@
-/*
+﻿/*
     Spectero Daemon - Daemon Component to the Spectero Solution
     Copyright (C)  2017 Spectero, Inc.
 
@@ -14,33 +14,26 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
-using System;
-using Newtonsoft.Json;
-using NUnit.Framework;
-using Spectero.daemon.Libraries.APM;
+using FluentMigrator;
 
-namespace daemon_testcases
+namespace Spectero.daemon.Migrations
 {
-    /*
-     * Application Performance Management
-     * This class is dedicated to testing the serialization of the host's operating system dictionary set.
-      */
-
-    [TestFixture]
-    public class ApmUnitTest : BaseUnitTest
+    [Migration(20180822203602)]
+    public class CreateConfigurationTable : Migration
     {
-        [Test]
-        public void IsSerializable()
+        public override void Up()
         {
-            // Instantiate new APM
-            var localApm = new Apm();
+            Create.Table("Configuration")
+                .WithColumn("Id").AsInt32().PrimaryKey()
+                .WithColumn("Key").AsString().Indexed("cidx_config_key").Unique()
+                .WithColumn("Value").AsString()
+                .WithColumn("CreatedDate").AsString()
+                .WithColumn("UpdatedDate").AsString();
+        }
 
-            // Get the details we need
-            var details = localApm.GetAllDetails();
-
-            // Here's what matters, can we serialize it?
-            // Printed out too, so we can visually inspect output.
-            Console.WriteLine(JsonConvert.SerializeObject(details, Formatting.Indented));
+        public override void Down()
+        {
+            Delete.Table("Configuration");
         }
     }
 }

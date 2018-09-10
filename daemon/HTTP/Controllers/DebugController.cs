@@ -32,6 +32,7 @@ using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
 using Spectero.daemon.Libraries.Errors;
+using Spectero.daemon.Libraries.PortRegistry;
 using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.HTTP.Controllers
@@ -50,19 +51,20 @@ namespace Spectero.daemon.HTTP.Controllers
         private readonly IRazorLightEngine _engine;
         private readonly IIdentityProvider _identity;
         private readonly IProcessRunner _processRunner;
+        private readonly IPortRegistry _portRegistry;
 
         public DebugController(IOptionsSnapshot<AppConfig> appConfig, ILogger<DebugController> logger,
             IDbConnection db, IServiceManager serviceManager,
             IServiceConfigManager serviceConfigManager, IStatistician statistician,
             IIdentityProvider identityProvider, IRazorLightEngine engine,
-            IProcessRunner processRunner)
+            IProcessRunner processRunner, IPortRegistry portRegistry)
             : base(appConfig, logger, db)
         {
             _engine = engine;
             _identity = identityProvider;
             _serviceConfigManager = serviceConfigManager;
             _processRunner = processRunner;
-
+            _portRegistry = portRegistry;
         }
         
         
@@ -90,6 +92,7 @@ namespace Spectero.daemon.HTTP.Controllers
                         throw new DisclosableError();
             }    
        }
+        
 
         [HttpGet("network/{type?}", Name = "DebugNetworkDiscovery")]
         public async Task<IActionResult> DebugNetworkDiscovery(string type = "")
@@ -98,6 +101,9 @@ namespace Spectero.daemon.HTTP.Controllers
             {
                     case "ips":
                         _response.Result = Utility.GetLocalIPs().Select(x => x.ToString()).ToList();
+                        break;
+                    
+                    case "nat":
                         break;
                         
                     default:

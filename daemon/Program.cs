@@ -19,14 +19,19 @@ using System.IO;
 using System.Reflection;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 
 namespace Spectero.daemon
 {
     public class Program
     {
+        public static IServerAddressesFeature ServerAddressesFeature;
+        
         public static void Main(string[] args)
-        {            
-            BuildWebHost(args).Run();
+        {
+            var host = BuildWebHost(args);
+            ServerAddressesFeature = host.ServerFeatures.Get<IServerAddressesFeature>();
+            host.Run();
         }
 
         private static IWebHost BuildWebHost(string[] args)

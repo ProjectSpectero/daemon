@@ -6,6 +6,7 @@ After=network.target
 WorkingDirectory=/opt/spectero/latest/daemon
 EnvironmentFile=/opt/spectero/latest/daemon/Tooling/Linux/lin-env
 ExecStart=/usr/bin/dotnet daemon.dll
+ExecStop=/usr/local/bin/spectero cli shutdown
 TimeoutSec=infinity
 Restart=on-failure
 RestartSec=60

@@ -13,16 +13,19 @@
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
 
+using System.Collections.Generic;
 using System.Net;
+using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.PortRegistry
 {
     public interface IPortRegistry
     {
-        bool Allocate(IPAddress ip, int port, IService forwardedFor = null);
-        bool IsAllocated(IPAddress ip, int port, out PortAllocation allocation);
-        bool IsAllocated(string ip, int port, out PortAllocation allocation);
+        PortAllocation Allocate(IPAddress ip, int port, TransportProtocol protocol, IService forwardedFor = null);
+        bool IsAllocated(IPAddress ip, int port, TransportProtocol protocol, out PortAllocation allocation);
+        bool IsAllocated(string ip, int port, TransportProtocol protocol, out PortAllocation allocation);
+        IEnumerable<PortAllocation> GetAllAllocations();
         bool CleanUp(IService service = null);
     }
 }
