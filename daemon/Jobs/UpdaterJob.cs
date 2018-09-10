@@ -143,9 +143,8 @@ namespace Spectero.daemon.Jobs
         {
             _httpClient = httpClient;
 
-            // Set symlink inheritance - also needs the processrunner.
+            // Set symlink inheritance.
             _symlink = symlink;
-            _symlink.SetProcessRunner(processRunner);
 
             // Inherit the process runner into the class for when needed.
             _processRunner = processRunner;
@@ -433,8 +432,7 @@ namespace Spectero.daemon.Jobs
 
                                 // Split 
                                 string[] installed = fixedLine.Split('.');
-                                string[] requirement = releaseInformation.versions[remoteVersion]
-                                    .requiredDotnetCoreVersion.Split('.');
+                                string[] requirement = releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion.Split('.');
 
                                 // Compare versioning.
                                 for (var i = 0; i != installed.Length; i++)
@@ -646,7 +644,7 @@ namespace Spectero.daemon.Jobs
             {
                 // Disable the deadlock
                 AppConfig.UpdateDeadlock = false;
-                
+
                 // Log and throw
                 _logger.LogError(exception, "UJ: A exception occured while trying to parse semantic versioning");
                 throw exception;
@@ -705,8 +703,8 @@ namespace Spectero.daemon.Jobs
                 {
                     // Remove the deadlock.
                     AppConfig.UpdateDeadlock = false;
-                    
-                    
+
+
                     var msg = "UJ: A exception occured while trying to update dotnet core for windows" + exception;
                     _logger.LogError(exception, "UJ: A exception occured while trying to update dotnet core for windows");
                     throw exception;
