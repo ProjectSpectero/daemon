@@ -200,7 +200,7 @@ namespace Spectero.daemon.Jobs
             _logger.LogDebug("The running branch is " + runningBranch);
 
             // Validate that the release channel exists.
-            if (!_validReleaseChannels.Contains(runningBranch))
+            if (!IsValidReleaseChannel(runningBranch))
             {
                 // Let the user know
                 _logger.LogWarning("UJ: The release channel {0} does not support updates - updating will be disabled.",
@@ -752,6 +752,16 @@ namespace Spectero.daemon.Jobs
                 File.Delete(downloadPath);
                 _logger.LogDebug("UJ: Cleanup successful.");
             }
+        }
+
+        /// <summary>
+        /// Helper function to determine if the release channel is a valid one.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsValidReleaseChannel(string branch)
+        {
+            string[] validChannels = releaseInformation.versions.Keys.ToArray();
+            return validChannels.Contains(branch);
         }
     }
 }
