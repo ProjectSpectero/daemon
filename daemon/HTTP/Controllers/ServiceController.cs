@@ -142,7 +142,7 @@ namespace Spectero.daemon.HTTP.Controllers
                     // Uh oh, we got an overlap. No bueno.
                     if (! network.Contains(parsedNetwork) && ! network.Equals(parsedNetwork)) continue;
 			        
-                    foundErrors.Add(OpaqueBase.FormatValidationError(Errors.FIELD_OVERLAP, $"listeners.{currentIndex}", $"{network},{parsedNetwork}"));
+                    foundErrors.Add(OpaqueBase.FormatValidationError(Errors.FIELD_OVERLAP, $"listeners.{currentIndex}.network", $"{network},{parsedNetwork}"));
 
                     break;
                 }
@@ -168,7 +168,7 @@ namespace Spectero.daemon.HTTP.Controllers
                             
                             if (abstractedListener.IPAddress.Equals(IPAddress.Any.ToString()))
                             {
-                                foundErrors.Add(OpaqueBase.FormatValidationError(Errors.PORT_CONFLICT_FOUND, $"listeners.{currentIndex}", $"{listener.Port.Value},0.0.0.0"));
+                                foundErrors.Add(OpaqueBase.FormatValidationError(Errors.PORT_CONFLICT_FOUND, $"listeners.{currentIndex}.port", $"{listener.Port.Value},0.0.0.0"));
 
                                 break;
                             }
@@ -176,7 +176,7 @@ namespace Spectero.daemon.HTTP.Controllers
                             // Duplicate listener found
                             if (abstractedListener.IPAddress.Equals(listener.IPAddress))
                             {
-                                foundErrors.Add(OpaqueBase.FormatValidationError(Errors.DUPLICATE_IP_AS_LISTENER_REQUEST, $"listeners.{currentIndex}", $"{listener.IPAddress}"));
+                                foundErrors.Add(OpaqueBase.FormatValidationError(Errors.DUPLICATE_IP_AS_LISTENER_REQUEST, $"listeners.{currentIndex}.ipAddress", $"{listener.IPAddress}"));
 
                                 break;
                             }
