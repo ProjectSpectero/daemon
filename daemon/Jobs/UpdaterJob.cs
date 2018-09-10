@@ -110,6 +110,8 @@ namespace Spectero.daemon.Jobs
             "alpha", "stable", "beta"
         };
 
+        private const string ReleaseServer = "https://c.spectero.com/releases.json";
+
         // Updater Variables
         private string runningBranch;
         private string remoteVersion;
@@ -526,10 +528,9 @@ namespace Spectero.daemon.Jobs
         /// <exception cref="InternalError"></exception>
         private Release GetReleaseInformation()
         {
-            string releaseServer = "https://c.spectero.com/releases.json";
             try
             {
-                var response = _httpClient.GetAsync(releaseServer).Result;
+                var response = _httpClient.GetAsync(ReleaseServer).Result;
                 var releaseData = JsonConvert.DeserializeObject<Release>(response.Content.ReadAsStringAsync().Result);
                 return releaseData;
             }
@@ -539,7 +540,7 @@ namespace Spectero.daemon.Jobs
                 AppConfig.UpdateDeadlock = false;
 
                 // Log and throw.
-                _logger.LogError(exception, $"UJ: Failed to get release data from the internet ({releaseServer}).");
+                _logger.LogError(exception, $"UJ: Failed to get release data from the internet ({ReleaseServer}).");
                 throw exception;
             }
         }
