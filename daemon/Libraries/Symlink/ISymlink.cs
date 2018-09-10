@@ -12,7 +12,6 @@ namespace Spectero.daemon.Libraries.Symlink
         ISymlinkEnvironment GetEnvironment();
         
         // Process Runner
-        void SetProcessRunner(IProcessRunner processRunner);
         IProcessRunner GetProcessRunner();
     }
 }

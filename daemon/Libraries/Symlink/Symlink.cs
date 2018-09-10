@@ -23,18 +23,21 @@ namespace Spectero.daemon.Libraries.Symlink
 {
     public class Symlink : ISymlink
     {
-        private ISymlinkEnvironment _environment;
-        private IProcessRunner _processRunner;
+        private readonly ISymlinkEnvironment _environment;
+        private readonly IProcessRunner _processRunner;
 
         public enum SymbolicLink
         {
             File = 0,
             Directory = 1,
-            WithoutEvevation = 2
         }
 
-        public Symlink()
+        public Symlink(IProcessRunner processRunner)
         {
+            // Inheritance
+            _processRunner = processRunner;
+
+            // Assign based on the OS.
             if (AppConfig.isWindows) _environment = new Windows(this);
             if (AppConfig.isUnix) _environment = new Unix(this);
         }
@@ -77,14 +80,5 @@ namespace Spectero.daemon.Libraries.Symlink
         /// </summary>
         /// <returns></returns>
         public IProcessRunner GetProcessRunner() => _processRunner;
-
-        /// <summary>
-        /// Set the process runner for the class.
-        /// </summary>
-        /// <param name="processRunner"></param>
-        public void SetProcessRunner(IProcessRunner processRunner)
-        {
-            _processRunner = processRunner;
-        }
     }
 }
