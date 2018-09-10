@@ -471,7 +471,7 @@ namespace Spectero.daemon.Jobs
                         AppConfig.UpdateDeadlock = false;
 
                         // Log and throw.
-                        _logger.LogError(exception, "UJ: A exception occured while trying to validate a compatible dotnet core version:\n");
+                        _logger.LogError(exception, "UJ: A exception occured while trying to validate a compatible dotnet core version.");
                         throw exception;
                     }
                 }
