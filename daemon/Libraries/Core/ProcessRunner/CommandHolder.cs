@@ -15,6 +15,7 @@
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
 using System.Threading;
+using Newtonsoft.Json;
 using Spectero.daemon.Libraries.Services;
 using Command = Medallion.Shell.Command;
 
@@ -22,9 +23,15 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 {
     public class CommandHolder
     {
+        [JsonIgnore]
         public Command Command { get; set; }
+        
         public ProcessOptions Options { get; set; }
+        
+        [JsonConverter(typeof(ClassNameJsonConverter))]
         public IService Caller { get; set; }
+        
+        [JsonIgnore]
         public Thread MonitoringThread { get; set; }
     }
 }

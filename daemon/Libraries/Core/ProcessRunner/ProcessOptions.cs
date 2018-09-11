@@ -16,6 +16,7 @@
 */
 using System;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner
 {
@@ -54,6 +55,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 
         // This is the function that we'll attach to the STDOUT/STDERR streams.
         // We'll also bundle a default implementation in the ProcessRunner if this is null which just `Log.Debug`s the generated data.
+        [JsonIgnore]
         public StreamProcessor streamProcessor = new StreamProcessor();
 
         // The working directory of where the OpenVPN Configuration should have its diffie hellman keys.

@@ -40,6 +40,7 @@ namespace Spectero.daemon.Libraries.Core
                 RequireUppercase = true
             });
         }
+        
         public static string GenerateRandomPassword(PasswordOptions opts = null)
         {
             if (opts == null) opts = new PasswordOptions()
@@ -52,7 +53,7 @@ namespace Spectero.daemon.Libraries.Core
                 RequireUppercase = true
             };
 
-            string[] randomChars = new[] {
+            var randomChars = new[] {
                 "ABCDEFGHJKLMNOPQRSTUVWXYZ",    // uppercase 
                 "abcdefghijkmnopqrstuvwxyz",    // lowercase
                 "0123456789",                   // digits
@@ -77,10 +78,10 @@ namespace Spectero.daemon.Libraries.Core
                 chars.Insert(rand.Next(0, chars.Count),
                     randomChars[3][rand.Next(0, randomChars[3].Length)]);
 
-            for (int i = chars.Count; i < opts.RequiredLength
+            for (var i = chars.Count; i < opts.RequiredLength
                                       || chars.Distinct().Count() < opts.RequiredUniqueChars; i++)
             {
-                string rcs = randomChars[rand.Next(0, randomChars.Length)];
+                var rcs = randomChars[rand.Next(0, randomChars.Length)];
                 chars.Insert(rand.Next(0, chars.Count),
                     rcs[rand.Next(0, rcs.Length)]);
             }

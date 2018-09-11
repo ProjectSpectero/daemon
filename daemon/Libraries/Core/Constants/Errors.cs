@@ -72,6 +72,7 @@ namespace Spectero.daemon.Libraries.Core.Constants
         public const string U_WOT_M8 = "U_WOT_M8";
 
         public const string SERVICE_ACCESS_DENIED = "SERVICE_ACCESS_DENIED";
+        public const string ILLEGAL_ACTION = "ILLEGAL_ACTION";
 
     }
 }
