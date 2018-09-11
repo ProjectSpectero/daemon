@@ -24,26 +24,15 @@ namespace Spectero.daemon.Libraries.Utilities.Architecture
 
         public string GetArchitecture()
         {
-            // Architecture gathered placeholder
-            string returnableString = null;
-
             // Test each OS.
-            if (AppConfig.isWindows) returnableString = GetWindowsArchitecture();
-            if (AppConfig.isLinux) returnableString = GetLinuxArchitecture();
-            if (AppConfig.isUnix) returnableString = GetUnixArchitecture();
+            if (AppConfig.isWindows) return GetWindowsArchitecture();
+            if (AppConfig.isLinux) return GetLinuxArchitecture();
+            if (AppConfig.isUnix) return GetUnixArchitecture();
 
-            if (returnableString != null)
-            {
-                // Log:
-                _logger.LogInformation($"AU: The system architecture is {returnableString}.");
-                return returnableString;
-            }
-            else
-            {
-                var err = "The ArchitectureUtility failed to gather a architecture for this operating system.";
-                _logger.LogWarning(err);
-                throw new InternalError(err);
-            }
+            // If we get to this point, throw an error.
+            var err = "The ArchitectureUtility failed to gather a architecture for this operating system.";
+            _logger.LogWarning(err);
+            throw new InternalError(err);
         }
 
         /// <summary>
@@ -90,6 +79,7 @@ namespace Spectero.daemon.Libraries.Utilities.Architecture
 
                 // Trim the result and return.
                 var cmdOut = proc.Command.StandardOutput.ReadToEnd().Trim();
+                PrintArchitecture(cmdOut);
                 return cmdOut;
             }
             catch (ErrorExitCodeException exception)
@@ -98,6 +88,9 @@ namespace Spectero.daemon.Libraries.Utilities.Architecture
                 {
                     // Running the command manually failed - get creative and check if we're on a raspberry pi.
                     var boolResult = File.Exists("/proc/device-tree/model") ? "armv7l" : "x86_64";
+
+                    // Print the arch.
+                    PrintArchitecture(boolResult);
 
                     // If the file exists, we're a raspberry pi and thus some ARM.
                     return boolResult;
@@ -123,8 +116,19 @@ namespace Spectero.daemon.Libraries.Utilities.Architecture
             // Identification
             _logger.LogDebug("AU: The system environment appears to be Windows.");
 
+            // Get the arch
+            var archFound = Environment.Is64BitOperatingSystem ? "x86_64" : "x86";
+
+            // Log
+            PrintArchitecture(archFound);
+
             // Return the data we want.
-            return Environment.Is64BitOperatingSystem ? "x86_64" : "x86";
+            return archFound;
+        }
+
+        private void PrintArchitecture(string arch)
+        {
+            _logger.LogInformation($"AU: The system architecture is {arch}.");
         }
     }
 }
