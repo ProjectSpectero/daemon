@@ -761,7 +761,7 @@ namespace Spectero.daemon.Jobs
         /// <returns></returns>
         public bool IsValidReleaseChannel(string branch)
         {
-            string[] validChannels = releaseInformation.versions.Keys.ToArray();
+            string[] validChannels = releaseInformation.channels.Keys.ToArray();
             return validChannels.Contains(branch);
         }
     }
