@@ -765,7 +765,7 @@ namespace Spectero.daemon.Jobs
                 var chmodProcessOptions = new ProcessOptions()
                 {
                     Executable = "chmod",
-                    Arguments = new[] {"775", Path.Combine(newDotnetCorePath, "dotnet")}
+                    Arguments = new[] {"+x", Path.Combine(newDotnetCorePath, "dotnet")}
                 };
 
                 try
