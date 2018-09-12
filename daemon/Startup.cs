@@ -72,7 +72,7 @@ namespace Spectero.daemon
         {
             Directory.SetCurrentDirectory(CurrentDirectory);
 
-            // Build the configuration.]
+            // Build the configuration.
             Configuration = BuildConfiguration(env.EnvironmentName);
         }
 
