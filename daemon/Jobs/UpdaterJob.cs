@@ -48,6 +48,7 @@ namespace Spectero.daemon.Jobs
         public bool Enabled { get; set; }
         public string ReleaseChannel { get; set; }
         public string Frequency { get; set; }
+        public bool UpdateDeadlock { get; set; }
     }
 
     /// <summary>
@@ -172,6 +173,18 @@ namespace Spectero.daemon.Jobs
         public bool IsEnabled() => _config.Updater.Enabled;
 
         /// <summary>
+        /// Getter to see if the deadlock is enabled.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsDeadlocked() => _config.Updater.UpdateDeadlock;
+
+        /// <summary>
+        /// Quick property to set the deadlock state.
+        /// </summary>
+        /// <param name="boolOperation"></param>
+        public void SetDeadlock(bool boolOperation) => _config.Updater.UpdateDeadlock = boolOperation;
+
+        /// <summary>
         /// Routine of the job.
         /// </summary>
         public void Perform()
@@ -185,14 +198,14 @@ namespace Spectero.daemon.Jobs
             }
 
             // Check to see if there's already an update in progress
-            if (AppConfig.UpdateDeadlock)
+            if (IsDeadlocked())
             {
                 _logger.LogWarning("UJ: Update deadlock detected - there is already an update in progress.");
                 return;
             }
 
             // Enable the deadlock.
-            AppConfig.UpdateDeadlock = true;
+            SetDeadlock(true);
 
             // Get the latest set of release data.
             releaseInformation = GetReleaseInformation();
@@ -241,7 +254,7 @@ namespace Spectero.daemon.Jobs
                      * Explanation
                      * There's already the directory for the updated version, at this point we should recognize we cannot modify it. 
                      */
-                    AppConfig.UpdateDeadlock = false;
+                    SetDeadlock(false);
                     return;
                 }
 
@@ -261,7 +274,7 @@ namespace Spectero.daemon.Jobs
                 catch (Exception exception)
                 {
                     // Remove the deadlock
-                    AppConfig.UpdateDeadlock = false;
+                    SetDeadlock(false);
 
                     // Log and throw.
                     _logger.LogError(exception, "A error occured while attempting to resolve the download link for the update.");
@@ -279,7 +292,7 @@ namespace Spectero.daemon.Jobs
                     catch (WebException exception)
                     {
                         // Remove the deadlock
-                        AppConfig.UpdateDeadlock = false;
+                        SetDeadlock(false);
 
                         // Log and throw.
                         _logger.LogError(exception, "UJ: The update job has failed due to a problem while downloading the update.");
@@ -319,7 +332,7 @@ namespace Spectero.daemon.Jobs
                     catch (Exception exception)
                     {
                         // Remove the deadlock
-                        AppConfig.UpdateDeadlock = false;
+                        SetDeadlock(false);
 
                         // Log and throw.
                         _logger.LogError(exception, "UJ: A exception occured while trying to migrate a database to the new destination.");
@@ -470,7 +483,7 @@ namespace Spectero.daemon.Jobs
                     catch (Exception exception)
                     {
                         // Remove the deadlock.
-                        AppConfig.UpdateDeadlock = false;
+                        SetDeadlock(false);
 
                         // Log and throw.
                         _logger.LogError(exception, "UJ: A exception occured while trying to validate a compatible dotnet core version.");
@@ -518,7 +531,7 @@ namespace Spectero.daemon.Jobs
             }
 
             // Disable the deadlock and allow the next run.
-            AppConfig.UpdateDeadlock = false;
+            SetDeadlock(false);
         }
 
         /// <summary>
@@ -537,7 +550,7 @@ namespace Spectero.daemon.Jobs
             catch (Exception exception)
             {
                 // Remove the deadlock
-                AppConfig.UpdateDeadlock = false;
+                SetDeadlock(false);
 
                 // Log and throw.
                 _logger.LogError(exception, $"UJ: Failed to get release data from the internet ({ReleaseServer}).");
@@ -561,7 +574,7 @@ namespace Spectero.daemon.Jobs
             catch (Exception exception)
             {
                 // Remove the deadlock
-                AppConfig.UpdateDeadlock = false;
+                SetDeadlock(false);
 
                 // Log and throw
                 _logger.LogError(exception, "UJ: Failed to get source information from github.");
@@ -644,7 +657,7 @@ namespace Spectero.daemon.Jobs
             catch (Exception exception)
             {
                 // Disable the deadlock
-                AppConfig.UpdateDeadlock = false;
+                SetDeadlock(false);
 
                 // Log and throw
                 _logger.LogError(exception, "UJ: A exception occured while trying to parse semantic versioning");
@@ -703,7 +716,7 @@ namespace Spectero.daemon.Jobs
                 catch (ErrorExitCodeException exception)
                 {
                     // Remove the deadlock.
-                    AppConfig.UpdateDeadlock = false;
+                    SetDeadlock(false);
 
                     // Log and throw.
                     _logger.LogError(exception, "UJ: A exception occured while trying to update dotnet core for windows");
@@ -763,7 +776,7 @@ namespace Spectero.daemon.Jobs
                 catch (ErrorExitCodeException exception)
                 {
                     // Remove the deadlock.
-                    AppConfig.UpdateDeadlock = false;
+                    SetDeadlock(false);
 
                     // Log and throw.
                     _logger.LogError(exception, "UJ: A exception occured while trying to update dotnet core for windows");

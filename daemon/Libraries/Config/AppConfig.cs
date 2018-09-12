@@ -26,13 +26,6 @@ namespace Spectero.daemon.Libraries.Config
 {
     public class AppConfig
     {
-        /*
-         * Update Deadlock
-         * Used by the updating job to explictly check if the job is already running.
-         * Will prevent the job from running multiple times.
-         */
-        public static bool UpdateDeadlock = false;
-
         public string BlockedRedirectUri { get; set; }
         public string DatabaseDir { get; set; }
         public double AuthCacheMinutes { get; set; }
