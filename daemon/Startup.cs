@@ -72,7 +72,7 @@ namespace Spectero.daemon
         {
             Directory.SetCurrentDirectory(CurrentDirectory);
 
-            // Build the configuration.
+            // Build the configuration.]
             Configuration = BuildConfiguration(env.EnvironmentName);
         }
 
@@ -123,8 +123,6 @@ namespace Spectero.daemon
             
             // This depends on ORMLite, you gotta register it after.
             services.AddSingleton<ISeedRunner, SeedRunner>();
-
-            services.AddSingleton<IStatistician, Statistician>();
 
             services.AddSingleton<IStatistician, Statistician>();
 
@@ -190,7 +188,8 @@ namespace Spectero.daemon
             // Service Utility to get System Architecture.
             services.AddSingleton<IArchitectureUtility, ArchitectureUtility>();
 
-            services.AddSingleton<IMigrator, Migrator>();
+            // Old migrator
+            //services.AddSingleton<IMigrator, Migrator>();
 
             services.AddSingleton<IJob, FetchCloudEngagementsJob>();
 
