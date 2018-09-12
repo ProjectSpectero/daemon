@@ -705,8 +705,7 @@ namespace Spectero.daemon.Jobs
                     // Remove the deadlock.
                     AppConfig.UpdateDeadlock = false;
 
-
-                    var msg = "UJ: A exception occured while trying to update dotnet core for windows" + exception;
+                    // Log and throw.
                     _logger.LogError(exception, "UJ: A exception occured while trying to update dotnet core for windows");
                     throw exception;
                 }
@@ -747,6 +746,28 @@ namespace Spectero.daemon.Jobs
                     // tell the console that extraction was successful.
                     _logger.LogInformation("UJ: Dotnet Core {0} has been extracted successfully.",
                         releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion);
+                }
+
+                // Chmod
+                var chmodProcessOptions = new ProcessOptions()
+                {
+                    Executable = "chmod",
+                    Arguments = new[] {"775", Path.Combine(newDotnetCorePath, "dotnet")}
+                };
+
+                try
+                {
+                    _processRunner.Run(chmodProcessOptions).Command.Wait();
+                    _logger.LogDebug("UJ: Fixed permissions of dotnet core binary.");
+                }
+                catch (ErrorExitCodeException exception)
+                {
+                    // Remove the deadlock.
+                    AppConfig.UpdateDeadlock = false;
+
+                    // Log and throw.
+                    _logger.LogError(exception, "UJ: A exception occured while trying to update dotnet core for windows");
+                    throw exception;
                 }
 
                 // Delete archive
