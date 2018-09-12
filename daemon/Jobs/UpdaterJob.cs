@@ -29,6 +29,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SharpCompress.Archives.Tar;
+using SharpCompress.Common.Tar;
 using SharpCompress.Readers;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
@@ -732,34 +734,39 @@ namespace Spectero.daemon.Jobs
                 var downloadPath = Path.Combine(targetDirectory, string.Format("dotnet-{0}.tar.gz", cpuArchitecture));
 
                 // Download zip
-                using (var client = new WebClient())
-                {
-                    client.DownloadFile(sources.dependencies.dotnet[
-                        releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion
-                    ].linux[cpuArchitecture], downloadPath);
+                var client = new WebClient();
+                client.DownloadFile(sources.dependencies.dotnet[
+                    releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion
+                ].linux[cpuArchitecture], downloadPath);
 
-                    // Let the console know we've downloaded the archive
-                    _logger.LogInformation("Successfully downloaded dotnet core runtime {0} archive.",
-                        releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion);
-                }
-
+                // Let the console know we've downloaded the archive
+                _logger.LogInformation("Successfully downloaded dotnet core runtime {0} archive.",
+                    releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion);
 
                 // Create the dotnet directory.
                 if (!Directory.Exists(newDotnetCorePath)) Directory.CreateDirectory(newDotnetCorePath);
 
                 // Extract
-                using (Stream stream = File.OpenRead(downloadPath))
+                try
                 {
-                    var reader = ReaderFactory.Open(stream);
-                    while (reader.MoveToNextEntry())
+                    var tarProcessOptions = new ProcessOptions()
                     {
-                        if (!reader.Entry.IsDirectory) reader.WriteEntryToDirectory(newDotnetCorePath);
-                    }
-
-                    // tell the console that extraction was successful.
-                    _logger.LogInformation("UJ: Dotnet Core {0} has been extracted successfully.",
-                        releaseInformation.versions[remoteVersion].requiredDotnetCoreVersion);
+                        Executable = "tar",
+                        Arguments = new[] {"-xf", downloadPath, "-C", newDotnetCorePath}
+                    };
+                    _processRunner.Run(tarProcessOptions).Command.Wait();
+                    _logger.LogInformation("UJ: Successfully extracted dotnet core.");
                 }
+                catch (ErrorExitCodeException exception)
+                {
+                    // Remove the deadlock
+                    SetDeadlock(false);
+
+                    // Log and throw.
+                    _logger.LogError(exception, "UJ: Failed to extract dotnet core.");
+                    throw exception;
+                }
+
 
                 // Chmod
                 var chmodProcessOptions = new ProcessOptions()
