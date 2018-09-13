@@ -26,13 +26,6 @@ namespace Spectero.daemon.Libraries.Config
 {
     public class AppConfig
     {
-        /*
-         * Update Deadlock
-         * Used by the updating job to explictly check if the job is already running.
-         * Will prevent the job from running multiple times.
-         */
-        public static bool UpdateDeadlock = false;
-
         public string BlockedRedirectUri { get; set; }
         public string DatabaseDir { get; set; }
         public double AuthCacheMinutes { get; set; }
@@ -70,12 +63,13 @@ namespace Spectero.daemon.Libraries.Config
 
         // Versoning Information.
         public static string Version => "0.2.0";
+        public static string ReleaseChannel => "CHANNEL_PLACEHOLDER";
         
         public static int MajorVersion => int.Parse(Version.Split(".")[0]); 
         public static int MinorVersion => int.Parse(Version.Split(".")[1]); 
         public static int PatchVersion => int.Parse(Version.Split(".")[2]); 
         
-        public static string ReleaseChannel => "CHANNEL_PLACEHOLDER";
+
 
         public static string ApiBaseUri
         {

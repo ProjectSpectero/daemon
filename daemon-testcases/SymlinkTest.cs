@@ -1,4 +1,21 @@
-﻿using System.IO;
+﻿/*
+    Spectero Daemon - Daemon Component to the Spectero Solution
+    Copyright (C)  2017 Spectero, Inc.
+
+    Spectero Daemon is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Spectero Daemon is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
+*/
+
+using System.IO;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -36,13 +53,13 @@ namespace daemon_testcases
             var tempPathSymlink = Path.Combine(tempPath, "symlink");
 
             // Initialize the Symlink Library
-            var symlinkLib = new Symlink {processRunner = _runner};
-            
+            var symlinkLib = new Symlink(_runner);
+
             // Try to create the symlink.
-            if (symlinkLib.Environment.Create(tempPathSymlink, tempPath))
+            if (symlinkLib.GetEnvironment().Create(tempPathSymlink, tempPath))
             {
                 // Symlink creation was successful - delete it and pass.
-                symlinkLib.Environment.Delete(tempPathSymlink);
+                symlinkLib.GetEnvironment().Delete(tempPathSymlink);
             }
             else
             {

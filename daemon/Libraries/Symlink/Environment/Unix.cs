@@ -42,7 +42,7 @@ namespace Spectero.daemon.Libraries.Symlink
 
             try
             {
-                _parent.processRunner.Run(procOptions).Command.Wait();
+                _parent.GetProcessRunner().Run(procOptions).Command.Wait();
                 return true;
             }
             catch (ErrorExitCodeException exception)
@@ -63,7 +63,7 @@ namespace Spectero.daemon.Libraries.Symlink
 
             try
             {
-                _parent.processRunner.Run(procOptions).Command.Wait();
+                _parent.GetProcessRunner().Run(procOptions).Command.Wait();
                 return true;    
             }
             catch (ErrorExitCodeException exception)
