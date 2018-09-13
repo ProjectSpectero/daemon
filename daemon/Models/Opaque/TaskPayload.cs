@@ -14,12 +14,16 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
+using System.Collections.Generic;
+
 namespace Spectero.daemon.Models.Opaque
 {
-    public class TaskPayload
+    public class TaskPayload : OpaqueBase
     {
         public string AuthKey { get; set; }
         public string Password { get; set; }
-        public string Ext { get; set; }
+        public string Config { get; set; }
+        public Dictionary<string, string> Ext { get; set; }
     }
 }
