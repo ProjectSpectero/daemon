@@ -116,16 +116,16 @@ namespace Spectero.daemon.HTTP.Controllers
             throw new NotImplementedException();
         }
 
-        [HttpPost("{id}/{action}")]
-        public IActionResult Manage(string id, string action)
+        [HttpPost("{id}/{requestedAction}")]
+        public IActionResult Manage(string id, string requestedAction)
         {
             if (!_repository.TryGetValue(id, out var taskDescriptor))
                 return NotFound();
 
-            if (!allowedManagementActions.Any(x => x.Equals(action)))
+            if (!allowedManagementActions.Any(x => x.Equals(requestedAction)))
                 throw new ValidationError(
-                    ImmutableArray.Create(OpaqueBase.FormatValidationError(Errors.FIELD_INVALID, "action",
-                        action)));
+                    ImmutableArray.Create(OpaqueBase.FormatValidationError(Errors.FIELD_INVALID, "requestedAction",
+                        requestedAction)));
 
 
             switch (taskDescriptor.Status)
@@ -133,18 +133,18 @@ namespace Spectero.daemon.HTTP.Controllers
                     case TaskStatus.HALTED:
                     case TaskStatus.PENDING:
                     case TaskStatus.FINISHED:
-                        if (action.Equals("stop"))
+                        if (requestedAction.Equals("stop"))
                             throw new DisclosableError(Errors.ILLEGAL_ACTION);
                         break;
                     
                     case TaskStatus.RUNNING:
-                        if (action.Equals("start"))
+                        if (requestedAction.Equals("start"))
                             throw new DisclosableError(Errors.ILLEGAL_ACTION);
                         break;
             }
             
             
-            // TODO: Apply that "action" to the task.
+            // TODO: Apply that "requestedAction" to the task.
             throw new NotImplementedException();
         }
         
