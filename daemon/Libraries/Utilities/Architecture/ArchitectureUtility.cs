@@ -1,13 +1,10 @@
 using System;
 using System.IO;
-using Hangfire.Logging;
 using Medallion.Shell;
 using Microsoft.Extensions.Logging;
-using NLog;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Errors;
-using ILogger = NLog.ILogger;
 
 namespace Spectero.daemon.Libraries.Utilities.Architecture
 {

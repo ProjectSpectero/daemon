@@ -16,14 +16,41 @@
 */
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 
-namespace Spectero.daemon.Models.Opaque.Requests
+namespace Spectero.daemon.Models.Opaque
 {
-    public class TaskCreationRequest : OpaqueBase
+    public class TaskDescriptor : OpaqueBase
     {
+        // Unique identifier for this task.
+        public string Id { get; set; }
+        
+        // The exact type of task that's being created
         [JsonConverter(typeof(StringEnumConverter))]
         public TaskType Type { get; set; }
         
+        [JsonConverter(typeof(StringEnumConverter))]
+        public TaskStatus Status { get; set; }
+        
+        // The payload in string form, this will be selectively parsed to get what we need out of it.
         public TaskPayload Payload { get; set; }
+        
+        // If this is a task that requires managing an external process
+        public CommandHolder Command { get; set; }
+    }
+    
+    public enum TaskType
+    {
+        // ReSharper disable once InconsistentNaming
+        ConnectToOpenVPNServer,
+        SetAsSystemProxy
+    }
+    
+    public enum TaskStatus
+    {
+        PENDING,
+        RUNNING,
+        HALTED,
+        FINISHED
     }
 }

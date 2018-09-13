@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509;
 using ServiceStack.OrmLite;
@@ -15,7 +13,6 @@ using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
 using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Crypto;
-using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Models;
 

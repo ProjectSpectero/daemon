@@ -15,10 +15,7 @@
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
 
-using System;
-using System.Collections.Generic;
 using FluentMigrator;
-using Spectero.daemon.Models;
 
 namespace Spectero.daemon.Migrations
 {

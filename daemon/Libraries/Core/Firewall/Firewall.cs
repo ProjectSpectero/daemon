@@ -17,7 +17,6 @@
 using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core.Firewall.Environments;
-using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.Core.Firewall
 {

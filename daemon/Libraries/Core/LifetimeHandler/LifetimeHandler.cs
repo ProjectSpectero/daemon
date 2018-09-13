@@ -17,7 +17,6 @@
 
 using System;
 using System.Net;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectero.daemon.Libraries.Config;

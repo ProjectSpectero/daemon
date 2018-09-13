@@ -23,8 +23,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Spectero.daemon.HTTP.Filters;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
@@ -35,41 +33,7 @@ using Spectero.daemon.Models.Opaque;
 using Spectero.daemon.Models.Opaque.Requests;
 
 namespace Spectero.daemon.HTTP.Controllers
-{
-    public class TaskDescriptor
-    {
-        // Unique identifier for this task.
-        public string Id { get; set; }
-        
-        // The exact type of task that's being created
-        [JsonConverter(typeof(StringEnumConverter))]
-        public TaskType Type { get; set; }
-        
-        [JsonConverter(typeof(StringEnumConverter))]
-        public TaskStatus Status { get; set; }
-        
-        // The payload in string form, this will be selectively parsed to get what we need out of it.
-        public string Payload { get; set; }
-        
-        // If this is a task that requires managing an external process
-        public CommandHolder Command { get; set; }
-    }
-
-    public enum TaskType
-    {
-        // ReSharper disable once InconsistentNaming
-        ConnectOpenVPN,
-        SetAsSystemProxy
-    }
-
-    public enum TaskStatus
-    {
-        PENDING,
-        RUNNING,
-        HALTED,
-        FINISHED
-    }
-    
+{   
     [AllowAnonymous]
     [ServiceFilter(typeof(EnforceLocalOnlyAccess))]
     [Route("v1/[controller]")]
@@ -79,7 +43,7 @@ namespace Spectero.daemon.HTTP.Controllers
         private readonly IProcessRunner _processRunner;
         private readonly ConcurrentDictionary<string, TaskDescriptor> _repository;
         
-        private readonly string[] allowedManagementActions = new[] {"start", "stop"};
+        private readonly string[] allowedManagementActions = {"start", "stop"};
         
         public TaskController(IOptionsSnapshot<AppConfig> appConfig, ILogger<TaskController> logger,
             IDbConnection db, IProcessRunner processRunner) : base(appConfig, logger, db)
@@ -113,7 +77,7 @@ namespace Spectero.daemon.HTTP.Controllers
         public IActionResult Create([FromBody] TaskCreationRequest creationRequest)
         {
             // TODO: Need to implement this.
-            throw new NotImplementedException();
+            return Ok(creationRequest);
         }
 
         [HttpPost("{id}/{requestedAction}")]

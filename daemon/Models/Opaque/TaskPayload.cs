@@ -14,16 +14,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-
-namespace Spectero.daemon.Models.Opaque.Requests
+namespace Spectero.daemon.Models.Opaque
 {
-    public class TaskCreationRequest : OpaqueBase
+    public class TaskPayload
     {
-        [JsonConverter(typeof(StringEnumConverter))]
-        public TaskType Type { get; set; }
-        
-        public TaskPayload Payload { get; set; }
+        public string AuthKey { get; set; }
+        public string Password { get; set; }
+        public string Ext { get; set; }
     }
 }
