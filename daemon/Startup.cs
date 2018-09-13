@@ -131,9 +131,6 @@ namespace Spectero.daemon
 
             services.AddSingleton<ICryptoService, CryptoService>();
 
-            // DISABLE THIS FOR TESTING OF FLUENTMIGRATOR
-            // services.AddSingleton<IMigration, Initialize>();
-
             services.AddSingleton<IServiceConfigManager, ServiceConfigManager>();
 
             services.AddSingleton<IServiceManager, ServiceManager>();
@@ -186,9 +183,6 @@ namespace Spectero.daemon
             
             // Service Utility to get System Architecture.
             services.AddSingleton<IArchitectureUtility, ArchitectureUtility>();
-
-            // Old migrator
-            //services.AddSingleton<IMigrator, Migrator>();
 
             services.AddSingleton<IJob, FetchCloudEngagementsJob>();
 

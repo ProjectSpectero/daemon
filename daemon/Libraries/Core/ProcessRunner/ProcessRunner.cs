@@ -206,7 +206,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                             commandHolder.Command.Process.Close();
 
                             // Stop tracking the command.
-                            _runningCommands.Remove(commandHolder);
+                            Untrack(commandHolder);
                         }
                     }
                 }
@@ -276,17 +276,11 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         public bool Untrack(CommandHolder commandHolder)
         {
             // Check to see if the process is already being tracked.
-            if (_runningCommands.Contains(commandHolder))
-            {
-                // The process is being tracked, remove it.
-                _runningCommands.Remove(commandHolder);
-                return true;
-            }
-            else
-            {
-                // The process is not being tracked.
-                return false;
-            }
+            if (!_runningCommands.Contains(commandHolder)) return false;
+            
+            // The process is being tracked, remove it.
+            _runningCommands.Remove(commandHolder);
+            return true;
         }
 
         /// <summary>
