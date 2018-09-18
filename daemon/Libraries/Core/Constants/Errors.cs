@@ -73,6 +73,7 @@ namespace Spectero.daemon.Libraries.Core.Constants
 
         public const string SERVICE_ACCESS_DENIED = "SERVICE_ACCESS_DENIED";
         public const string ILLEGAL_ACTION = "ILLEGAL_ACTION";
+        public const string PLATFORM_INVALID = "PLATFORM_INVALID";
 
     }
 }

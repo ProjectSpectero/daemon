@@ -28,6 +28,7 @@ using Spectero.daemon.HTTP.Filters;
 using Spectero.daemon.Libraries.Config;
 using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Authenticator;
+using Spectero.daemon.Libraries.Core.Constants;
 using Spectero.daemon.Libraries.Core.Identity;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Core.Statistics;
@@ -110,6 +111,26 @@ namespace Spectero.daemon.HTTP.Controllers
                         _response.Result = Utility.GetLocalRanges(Logger).Select(x => x.ToString()).ToList();
                         break;
             }
+
+            return Ok(_response);
+        }
+
+        [HttpGet("permissions/runas")]
+        public IActionResult DebugWindowsSuperExecution()
+        {
+            if (! AppConfig.isWindows)
+                throw new DisclosableError(Errors.PLATFORM_INVALID);
+            
+            var options = new ProcessOptions()
+            {
+                Executable = @"C:\Windows\System32\net.exe",
+                Arguments = new [] {"session"},
+                InvokeAsSuperuser = true
+            };
+                
+            _processRunner.Run(options).Command.Wait();
+
+            _response.Result = "Everything went better than expected :)";
 
             return Ok(_response);
         }
