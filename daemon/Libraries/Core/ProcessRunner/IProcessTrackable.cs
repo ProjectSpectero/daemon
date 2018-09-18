@@ -1,4 +1,4 @@
-﻿/*
+/*
     Spectero Daemon - Daemon Component to the Spectero Solution
     Copyright (C)  2017 Spectero, Inc.
 
@@ -14,24 +14,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
-using System.Threading;
-using Newtonsoft.Json;
+
 using Spectero.daemon.Libraries.Services;
-using Command = Medallion.Shell.Command;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner
 {
-    public class CommandHolder
+    public interface IProcessTrackable
     {
-        [JsonIgnore]
-        public Command Command { get; set; }
-        
-        public ProcessOptions Options { get; set; }
-        
-        [JsonConverter(typeof(ClassNameJsonConverter))]
-        public IProcessTrackable Caller { get; set; }
-        
-        [JsonIgnore]
-        public Thread MonitoringThread { get; set; }
+        ServiceState GetState();
     }
 }

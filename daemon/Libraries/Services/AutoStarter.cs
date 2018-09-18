@@ -47,12 +47,7 @@ namespace Spectero.daemon.Libraries.Services
                 var service = entry.Value.GetType().Name;
 
                 if (service.Equals("OpenVPN") && !AppConfig.isLinux)
-                {
-                    // TODO: Enable OpenVPN in non-Linux platforms when readay.
-                    _logger.LogInformation("Autostart: Skipping OpenVPN auto-start on non-Linux system, implementation is incomplete.");
-                    continue;
-                }
-
+                    _logger.LogInformation("Autostart: Attempting to init OpenVPN on non-Linux system, implementation is incomplete and may be broken.");
 
                 var result = _manager.Process(service, "start", out var error);
 
