@@ -18,6 +18,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Data;
+using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -110,8 +111,18 @@ namespace Spectero.daemon.HTTP.Controllers
             // TODO: Apply that "requestedAction" to the task.
             throw new NotImplementedException();
         }
-        
-        
+
+        public IActionResult ExecuteConfiguration()
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), "PasswordUtils");
+            if (Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
+            
+            var openvpnConfigurationProcOptions = new ProcessOptions()
+            {
+                
+                WorkingDirectory = tempDir
+            };
+        }
         
         
     }

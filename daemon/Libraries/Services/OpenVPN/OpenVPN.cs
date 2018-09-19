@@ -14,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,6 +28,7 @@ using Spectero.daemon.Libraries.Core;
 using Spectero.daemon.Libraries.Core.Firewall;
 using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Errors;
+using Spectero.daemon.Utilities.OpenVPN;
 
 namespace Spectero.daemon.Libraries.Services.OpenVPN
 {
@@ -44,7 +46,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         // Class variables that will be modified.
         private ServiceState _state = ServiceState.Halted;
         private IEnumerable<OpenVPNConfig> _vpnConfig;
-        
+
 
         /// <summary>
         /// Standard Constructor
@@ -63,7 +65,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         {
             // Inherit the objects.
             _logger = serviceProvider.GetRequiredService<ILogger<OpenVPN>>();
-            
+
             _processRunner = serviceProvider.GetRequiredService<IProcessRunner>();
 
             // This is tracked so we can clean it up when stopping (assuming managed stop).
@@ -102,13 +104,13 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             foreach (var configHolder in configDictionary)
             {
                 var pocoConfig = configHolder.Key;
-                
+
                 // Let's start the process off by registering the required port(s) on the port registry.
                 // Possibility of lots of exceptions here, but that's alright. Anything failing should halt service startup.
                 // ReSharper disable twice PossibleInvalidOperationException
                 _portRegistry.Allocate(IPAddress.Parse(pocoConfig.Listener.IPAddress), (int) pocoConfig.Listener.Port,
                     (TransportProtocol) pocoConfig.Listener.Protocol, this);
-                
+
                 // Get the properly formatted path of where the configuration will be stored..
                 var onDiskName = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".ovpn");
 
@@ -124,83 +126,9 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
 
                 // At this stage, we have the configs ready and on disk. Let us simply bootstrap the processes.
                 StartDaemon(onDiskName);
-                
+
                 // Create MASQ rules for each config.
                 _firewall.Rules.Masquerade(pocoConfig.Listener.Network, defaultNetworkInterface.Name);
-            }
-        }
-
-        /// <summary>
-        /// Determine the absolute path of OpenVPN.
-        /// </summary>
-        /// <returns></returns>
-        private string DetermineBinaryPath()
-        {
-            // Placeholder variable to store the path.
-            string binaryPath = null;
-
-            // Check Linux/OS X Operating system for OpenVPN Installation.
-            if (AppConfig.isUnix)
-            {
-                // Attempt to properly find the path of OpenVPN
-                try
-                {
-                    var whichArray = new[] {"which", "openvpn"};
-                    var whichFinder = Medallion.Shell.Command.Run("sudo", whichArray);
-
-                    // Parse the output and get the absolute path.
-                    var ovpnPath = whichFinder.StandardOutput.GetLines().ToList()[0];
-                    _logger.LogDebug("OpenVPN was found: {0}", ovpnPath);
-                    binaryPath = ovpnPath;
-                }
-                catch (Exception)
-                {
-                    // OpenVPN wasn't found.
-                }
-            }
-            // Windows - Check Program Files Installations.
-            else if (AppConfig.isWindows)
-            {
-                // Potential installation paths of OpenVPN.
-                string[] potentialOpenVpnPaths =
-                {
-                    "C:\\Program Files (x86)\\OpenVPN\\bin\\openvpn.exe",
-                    "C:\\Program Files\\OpenVPN\\bin\\openvpn.exe",
-                };
-
-                // Iterate through each potential path and find what exists.
-                foreach (var currentOpenVpnPath in potentialOpenVpnPaths)
-                {
-                    if (!File.Exists(currentOpenVpnPath)) continue;
-                    _logger.LogDebug("OpenVPN was found: {0}", currentOpenVpnPath);
-                    binaryPath = currentOpenVpnPath;
-                    break;
-                }
-            }
-            else
-            {
-                throw new PlatformNotSupportedException(
-                    "OpenVPN: This daemon does not know how to initialize OpenVPN on this platform."
-                );
-            }
-
-            CheckBinaryPath(binaryPath);
-
-            // Return the found path.
-            return binaryPath;
-        }
-
-        private void CheckBinaryPath(string binaryPath)
-        {
-            if (binaryPath.IsNullOrEmpty())
-            {
-                _logger.LogError(
-                    "OpenVPN init: we couldn't find the OpenVPN binary. Please make sure it is installed " +
-                    "(for Unix: use your package manager), for Windows: download and install the binary distribution."
-                );
-
-                // TODO: Dress this up properly to make disclosing just what the hell went wrong easier.
-                throw new InternalError();
             }
         }
 
@@ -211,12 +139,27 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// Before Startup, we need to set the effective working directory to "3rdParty/OpenVPN"
         /// </summary>
         /// <param name="configPath"></param>
-        private void StartDaemon(string configPath) =>
+        private void StartDaemon(string configPath)
+        {
+            var binaryPath = OpenVPNUtils.DetermineBinaryPath();
+            if (binaryPath.IsNullOrEmpty())
+            {
+                _logger.LogError(
+                    "OpenVPN init: we couldn't find the OpenVPN binary. Please make sure it is installed " +
+                    "(for Unix: use your package manager), for Windows: download and install the binary distribution."
+                );
+                throw new InternalError();
+            }
+            else
+            {
+                _logger.LogDebug($"OpenVPN was found: {binaryPath}");
+            }
+
             _processRunner.Run(
                 // Instructions
                 new ProcessOptions()
                 {
-                    Executable = DetermineBinaryPath(),
+                    Executable = OpenVPNUtils.DetermineBinaryPath(),
                     Arguments = new[] {configPath},
                     Daemonized = true,
                     Monitor = true,
@@ -229,6 +172,8 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                 // The calling object.
                 this
             );
+        }
+
 
         /// <summary>
         /// Start the OpenVPN Service from the provided List{IServiceConfig}.
@@ -237,20 +182,20 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public override void Start(IEnumerable<IServiceConfig> serviceConfig = null)
         {
             LogState("Start");
-            
+
             var allowedStates = new[] {ServiceState.Halted, ServiceState.Restarting};
-            if (! allowedStates.Any(x => x == _state))
+            if (!allowedStates.Any(x => x == _state))
             {
                 _logger.LogError($"OpenVPN: cowardly refusing start because current state ({_state}) does not allow OpenVPN startup.");
                 return;
             }
-            
+
             _state = ServiceState.Running;
             Initialize(serviceConfig);
 
             LogState("Start");
         }
-            
+
 
         /// <summary>
         /// Restart the OpenVPN Service.
@@ -280,10 +225,10 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public override void Stop()
         {
             LogState("Stop");
-            
+
             // We should probably think about if we want this to throw an exception instead, because the invocation would effectively be illegal at that stage.
             if (_state != ServiceState.Running) return;
-            
+
             // Stop all running configurations
             _processRunner.CloseAllBelongingToService(this);
 
@@ -295,10 +240,10 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             _configsOnDisk.Clear();
 
             _state = ServiceState.Halted;
-            
+
             // Cleanup all of our port allocations so they may be re-allocated as needed.
             _portRegistry.CleanUp(this);
-            
+
             LogState("Stop");
         }
 
@@ -332,12 +277,10 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         public override void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false)
         {
             if (config == null) return;
-            
+
             _vpnConfig = config as List<OpenVPNConfig>;
             if (restartNeeded)
                 ReStart();
-
         }
-            
     }
 }
