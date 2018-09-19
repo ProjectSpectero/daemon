@@ -144,15 +144,10 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
             var binaryPath = OpenVPNUtils.DetermineBinaryPath();
             if (binaryPath.IsNullOrEmpty())
             {
-                _logger.LogError(
+                throw new InternalError(
                     "OpenVPN init: we couldn't find the OpenVPN binary. Please make sure it is installed " +
                     "(for Unix: use your package manager), for Windows: download and install the binary distribution."
                 );
-                throw new InternalError();
-            }
-            else
-            {
-                _logger.LogDebug($"OpenVPN was found: {binaryPath}");
             }
 
             _processRunner.Run(
