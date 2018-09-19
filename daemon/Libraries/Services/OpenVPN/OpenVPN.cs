@@ -136,7 +136,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
         /// <returns></returns>
         private string DetermineBinaryPath()
         {
-            // Placeholder varaiuble to store the path.
+            // Placeholder variable to store the path.
             string binaryPath = null;
 
             // Check Linux/OS X Operating system for OpenVPN Installation.
