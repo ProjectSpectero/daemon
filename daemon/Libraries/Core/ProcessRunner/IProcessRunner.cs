@@ -14,17 +14,16 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
-using Spectero.daemon.Libraries.Services;
 
 namespace Spectero.daemon.Libraries.Core.ProcessRunner
 {
     public interface IProcessRunner
     {
         // The first one contains all details about how to run and configure the 3rd party binary, the 2nd one is for monitoring/such synchronization only.
-        CommandHolder Run(ProcessOptions processOptions, IService caller = null);
+        CommandHolder Run(ProcessOptions processOptions, IProcessTrackable caller = null);
 
         void CloseAllTrackedCommands();
-        void CloseAllBelongingToService(IService service, bool force = false);
+        void CloseAllBelongingToService(IProcessTrackable service, bool force = false);
         void TerminateAllTrackedCommands();
         void RestartAllTrackedCommands(bool force);
     }

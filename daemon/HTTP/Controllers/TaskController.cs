@@ -94,14 +94,13 @@ namespace Spectero.daemon.HTTP.Controllers
 
             switch (taskDescriptor.Status)
             {
-                    case TaskStatus.HALTED:
-                    case TaskStatus.PENDING:
-                    case TaskStatus.FINISHED:
+                    case TaskStatus.Pending:
+                    case TaskStatus.Finished:
                         if (requestedAction.Equals("stop"))
                             throw new DisclosableError(Errors.ILLEGAL_ACTION);
                         break;
                     
-                    case TaskStatus.RUNNING:
+                    case TaskStatus.Running:
                         if (requestedAction.Equals("start"))
                             throw new DisclosableError(Errors.ILLEGAL_ACTION);
                         break;

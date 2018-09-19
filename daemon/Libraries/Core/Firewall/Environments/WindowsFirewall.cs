@@ -18,27 +18,39 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
+using Microsoft.Extensions.Logging;
 using Spectero.daemon.Libraries.Core.Firewall.Rule;
 
 namespace Spectero.daemon.Libraries.Core.Firewall.Environments
 {
     public class WindowsFirewall : IFirewallEnvironment
     {
-        private Firewall _parent;
+        private readonly Firewall _parent;
+        private readonly ILogger<object> _logger;
+        private readonly List<NetworkRule> _rules;
 
         public WindowsFirewall(Firewall parent)
         {
             _parent = parent;
+            _logger = _parent.GetLogger();
+            _rules = new List<NetworkRule>();
         }
 
         public NetworkRule Masquerade(string network, string networkInterface)
         {
-            throw new NotImplementedException();
+            _logger.LogWarning($"Masquerade rule requested for {network} on {networkInterface}, but there is NO NAT/MASQUERADE support on this platform (Windows) yet!");
+            
+            // TODO: actually make masquerade work on Windows.
+            return new NetworkRule()
+            {
+                Interface = network,
+                Network = network
+            };
         }
 
         public void DisableMasquerade(NetworkRule networkRule)
         {
-            throw new NotImplementedException();
+            _logger.LogWarning($"Removal of masquerade rule requested for {networkRule.Network} on {networkRule.Interface}, but there is NO NAT/MASQUERADE support on this platform (Windows) yet!");
         }
 
         public NetworkRule SourceNetworkAddressTranslation(string network, string networkInterface)
@@ -74,9 +86,6 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Environments
             };
         }
 
-        public List<NetworkRule> GetNetworkRules()
-        {
-            throw new NotImplementedException();
-        }
+        public List<NetworkRule> GetNetworkRules() => _rules;
     }
 }

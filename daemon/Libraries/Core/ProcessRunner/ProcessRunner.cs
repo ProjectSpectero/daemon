@@ -51,7 +51,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// <param name="processOptions"></param>
         /// <param name="caller"></param>
         /// <returns></returns>
-        public CommandHolder Run(ProcessOptions processOptions, IService caller = null)
+        public CommandHolder Run(ProcessOptions processOptions, IProcessTrackable caller = null)
         {
             // Convert the options into a new command holder.
             CommandHolder commandHolder = null;
@@ -166,7 +166,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             return commandHolder;
         }
 
-        public void Monitor(CommandHolder commandHolder, IService service)
+        public void Monitor(CommandHolder commandHolder, IProcessTrackable service)
         {
             // Wait for it to be tracked.
             while (!_runningCommands.Contains(commandHolder)) Thread.Sleep(100);
@@ -290,11 +290,11 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         public List<CommandHolder> GetRunningCommands() => _runningCommands;
 
         /// <summary>
-        /// Get the IService caller object of the provided CommandHolder.
+        /// Get the IProcessTrackable caller object of the provided CommandHolder.
         /// </summary>
         /// <param name="referencedCommandHolder"></param>
         /// <returns></returns>
-        public IService GetCommandCallerService(CommandHolder referencedCommandHolder) =>
+        public IProcessTrackable GetCommandCallerService(CommandHolder referencedCommandHolder) =>
             referencedCommandHolder.Caller;
 
         /// <summary>
@@ -317,9 +317,9 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             }
         }
 
-        public void CloseAllBelongingToService(IService service, bool force = false)
+        public void CloseAllBelongingToService(IProcessTrackable service, bool force = false)
         {
-            // This is a particularly bad (and heavy) implementation. We should probably keep a Map<IService, CommandHolder> to make this easier.
+            // This is a particularly bad (and heavy) implementation. We should probably keep a Map<IProcessTrackable, CommandHolder> to make this easier.
             // Not bothering with it right now, however.
 
             // Why this? Because you cannot operate on the same Collection you're iterating.

@@ -15,17 +15,17 @@
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
 using System.Collections.Generic;
+using Spectero.daemon.Libraries.Core.ProcessRunner;
 
 namespace Spectero.daemon.Libraries.Services
 {
-    public interface IService
+    public interface IService : IProcessTrackable
     {
         void Start(IEnumerable<IServiceConfig> serviceConfig = null);
         void ReStart(IEnumerable<IServiceConfig> serviceConfig = null);
         void Stop();
         void Reload(IEnumerable<IServiceConfig> serviceConfig);
         void LogState(string caller);
-        ServiceState GetState();
         IEnumerable<IServiceConfig> GetConfig();
         void SetConfig(IEnumerable<IServiceConfig> config, bool restartNeeded = false);
     }
