@@ -126,7 +126,7 @@ namespace Spectero.daemon.HTTP.Controllers
 
         private TaskDescriptor ConnectToOpenVPNServer(TaskCreationRequest request)
         {
-            var tempDir = Path.Combine(Path.GetTempPath(), PasswordUtils.GeneratePassword(8, 0));
+            var tempDir = Path.Combine("spectero-openvpn-", Path.GetTempPath(), PasswordUtils.GeneratePassword(8, 0));
             if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
 
             // Generate a GUID
@@ -158,20 +158,20 @@ namespace Spectero.daemon.HTTP.Controllers
                 Monitor = true
             };
 
-            // Run and get a command holder.
-            var commandHolder = _processRunner.Run(openvpnConfigurationProcOptions);
-
             // Create a descriptor
             var descriptor = new TaskDescriptor()
             {
                 Id = GenerateTaskIdentifier(),
                 Status = TaskStatus.Running,
-                Command = commandHolder,
                 Type = TaskType.ConnectToOpenVPNServer,
                 Payload = request.Payload
             };
+            
+            // Run and get a command holder.
+            var commandHolder = _processRunner.Run(openvpnConfigurationProcOptions, descriptor);
 
-
+            descriptor.Command = commandHolder;
+            
             // Track
             _repository.TryAdd(descriptor.Id, descriptor);
 
