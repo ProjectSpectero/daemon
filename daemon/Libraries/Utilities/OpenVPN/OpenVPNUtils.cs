@@ -1,8 +1,24 @@
+/*
+    Spectero Daemon - Daemon Component to the Spectero Solution
+    Copyright (C)  2017 Spectero, Inc.
+
+    Spectero Daemon is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Spectero Daemon is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
+*/
 using System;
 using System.IO;
 using System.Linq;
+using Medallion.Shell;
 using Spectero.daemon.Libraries.Config;
-using Spectero.daemon.Libraries.Errors;
 
 namespace Spectero.daemon.Utilities.OpenVPN
 {
@@ -24,11 +40,11 @@ namespace Spectero.daemon.Utilities.OpenVPN
                 try
                 {
                     var whichArray = new[] {"which", "openvpn"};
-                    var whichFinder = Medallion.Shell.Command.Run("sudo", whichArray);
+                    var whichFinder = Command.Run("sudo", whichArray);
 
                     // Parse the output and get the absolute path.
                     var ovpnPath = whichFinder.StandardOutput.GetLines().ToList()[0];
-                    
+
                     binaryPath = ovpnPath;
                 }
                 catch (Exception)
@@ -50,7 +66,7 @@ namespace Spectero.daemon.Utilities.OpenVPN
                 foreach (var currentOpenVpnPath in potentialOpenVpnPaths)
                 {
                     if (!File.Exists(currentOpenVpnPath)) continue;
-                   
+
                     binaryPath = currentOpenVpnPath;
                     break;
                 }
@@ -61,11 +77,9 @@ namespace Spectero.daemon.Utilities.OpenVPN
                     "OpenVPN: This daemon does not know how to initialize OpenVPN on this platform."
                 );
             }
-            
+
             // Return the found path.
             return binaryPath;
         }
-
-       
     }
 }

@@ -23,7 +23,6 @@ namespace Spectero.daemon.Models.Opaque.Requests
     {
         [JsonConverter(typeof(StringEnumConverter))]
         public TaskType Type { get; set; }
-        
         public TaskPayload Payload { get; set; }
     }
 }

@@ -14,6 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
@@ -32,9 +33,10 @@ using Spectero.daemon.Libraries.Core.ProcessRunner;
 using Spectero.daemon.Libraries.Errors;
 using Spectero.daemon.Models.Opaque;
 using Spectero.daemon.Models.Opaque.Requests;
+using Spectero.daemon.Utilities.OpenVPN;
 
 namespace Spectero.daemon.HTTP.Controllers
-{   
+{
     [AllowAnonymous]
     [ServiceFilter(typeof(EnforceLocalOnlyAccess))]
     [Route("v1/[controller]")]
@@ -43,9 +45,9 @@ namespace Spectero.daemon.HTTP.Controllers
     {
         private readonly IProcessRunner _processRunner;
         private readonly ConcurrentDictionary<string, TaskDescriptor> _repository;
-        
+
         private readonly string[] allowedManagementActions = {"start", "stop"};
-        
+
         public TaskController(IOptionsSnapshot<AppConfig> appConfig, ILogger<TaskController> logger,
             IDbConnection db, IProcessRunner processRunner) : base(appConfig, logger, db)
         {
@@ -77,8 +79,17 @@ namespace Spectero.daemon.HTTP.Controllers
         [HttpPost]
         public IActionResult Create([FromBody] TaskCreationRequest creationRequest)
         {
-            // TODO: Need to implement this.
-            return Ok(creationRequest);
+            switch (creationRequest.Type)
+            {
+                case TaskType.ConnectToOpenVPNServer:
+                    return Ok(ConnectToOpenVPNServer(creationRequest));
+
+                case TaskType.SetAsSystemProxy:
+                    throw new NotImplementedException("There is currently no implementation for the system proxy.");
+
+                default:
+                    return BadRequest("This request type cannot be handled.");
+            }
         }
 
         [HttpPost("{id}/{requestedAction}")]
@@ -95,35 +106,76 @@ namespace Spectero.daemon.HTTP.Controllers
 
             switch (taskDescriptor.Status)
             {
-                    case TaskStatus.Pending:
-                    case TaskStatus.Finished:
-                        if (requestedAction.Equals("stop"))
-                            throw new DisclosableError(Errors.ILLEGAL_ACTION);
-                        break;
-                    
-                    case TaskStatus.Running:
-                        if (requestedAction.Equals("start"))
-                            throw new DisclosableError(Errors.ILLEGAL_ACTION);
-                        break;
+                case TaskStatus.Pending:
+                case TaskStatus.Finished:
+                    if (requestedAction.Equals("stop"))
+                        throw new DisclosableError(Errors.ILLEGAL_ACTION);
+                    break;
+
+                case TaskStatus.Running:
+                    if (requestedAction.Equals("start"))
+                        throw new DisclosableError(Errors.ILLEGAL_ACTION);
+                    break;
             }
-            
-            
+
+
             // TODO: Apply that "requestedAction" to the task.
             throw new NotImplementedException();
         }
 
-        public IActionResult ExecuteConfiguration()
+
+        private TaskDescriptor ConnectToOpenVPNServer(TaskCreationRequest request)
         {
-            var tempDir = Path.Combine(Path.GetTempPath(), "PasswordUtils");
-            if (Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
-            
+            var tempDir = Path.Combine(Path.GetTempPath(), PasswordUtils.GeneratePassword(8, 0));
+            if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
+
+            // Generate a GUID
+            var guid = Guid.NewGuid();
+
+            // Filenames
+            var openvpnConfig = Path.Combine(tempDir, $"{guid}.ovpn");
+            var openvpnConfigAuthfile = Path.Combine(tempDir, $"authfile-{guid}");
+
+            // Write the configuration
+            using (var ovpnConfig = new StreamWriter(openvpnConfig, false))
+                ovpnConfig.Write(request.Payload.Config);
+
+            // Write the authentication information
+            using (var ovpnConfig = new StreamWriter(openvpnConfigAuthfile, false))
+            {
+                ovpnConfig.WriteLine(request.Payload.AuthKey);
+                ovpnConfig.WriteLine(request.Payload.Password);
+            }
+
+            // Prepare an execution.
             var openvpnConfigurationProcOptions = new ProcessOptions()
             {
-                
-                WorkingDirectory = tempDir
+                Executable = OpenVPNUtils.DetermineBinaryPath(),
+                Arguments = new[] {"--config", openvpnConfig, "--auth-user-pass", openvpnConfigAuthfile, "--auth-retry", "nointeract"},
+                WorkingDirectory = tempDir,
+                InvokeAsSuperuser = true,
+                Monitor = true
             };
+
+            // Run and get a command holder.
+            var commandHolder = _processRunner.Run(openvpnConfigurationProcOptions);
+
+            // Create a descriptor
+            var descriptor = new TaskDescriptor()
+            {
+                Id = GenerateTaskIdentifier(),
+                Status = TaskStatus.Running,
+                Command = commandHolder,
+                Type = TaskType.ConnectToOpenVPNServer,
+                Payload = request.Payload
+            };
+
+
+            // Track
+            _repository.TryAdd(descriptor.Id, descriptor);
+
+            // Return
+            return descriptor;
         }
-        
-        
     }
 }
