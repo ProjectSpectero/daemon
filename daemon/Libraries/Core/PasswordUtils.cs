@@ -36,7 +36,7 @@ namespace Spectero.daemon.Libraries.Core
                 RequiredUniqueChars = specialCharLen,
                 RequireDigit = true,
                 RequireLowercase = true,
-                RequireNonAlphanumeric = true,
+                RequireNonAlphanumeric = specialCharLen != 0,
                 RequireUppercase = true
             });
         }

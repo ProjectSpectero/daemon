@@ -154,6 +154,7 @@ namespace Spectero.daemon.HTTP.Controllers
                 Arguments = new[] {"--config", openvpnConfig, "--auth-user-pass", openvpnConfigAuthfile, "--auth-retry", "nointeract"},
                 WorkingDirectory = tempDir,
                 InvokeAsSuperuser = true,
+                EnableLogging = true,
                 Monitor = true
             };
 

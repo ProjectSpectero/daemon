@@ -65,6 +65,6 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         public bool ThrowOnError = true;
 
         // Should we attach logging instances to it.
-        public bool AttachLogToConsole = false;
+        public bool EnableLogging = false;
     }
 }

@@ -69,13 +69,18 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         }
 
         private void ActuallyLogInfo(string line, CommandHolder holder)
-        {
-            _logger.LogInformation($"{holder.Options.Executable} ({holder.Command.ProcessId} by {holder.Caller.GetType().Name}): {line}");
+        {            
+            _logger.LogInformation($"{holder.Options.Executable} ({holder.Command.ProcessId} by {ResolveCallerName(holder)}): {line}");
         }
 
         private void ActuallyLogError(string line, CommandHolder holder)
         {
-            _logger.LogError($"{holder.Options.Executable} ({holder.Command.ProcessId} by {holder.Caller.GetType().Name}): {line}");
+            _logger.LogError($"{holder.Options.Executable} ({holder.Command.ProcessId} by {ResolveCallerName(holder)}): {line}");
+        }
+
+        private string ResolveCallerName(CommandHolder holder)
+        {
+            return holder?.Caller?.GetType()?.Name ?? "unknown";
         }
 
         private StreamProcessor GetDefaultStreamProcessor()
@@ -96,7 +101,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                 commandHolder.Options.Executable
             );
             
-            if (commandHolder.Options.AttachLogToConsole)
+            if (commandHolder.Options.EnableLogging)
             {
                 var streamProcessor = commandHolder.Options.streamProcessor;
 

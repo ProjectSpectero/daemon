@@ -161,7 +161,7 @@ namespace Spectero.daemon.Libraries.Services.OpenVPN
                     MonitoringInterval = 10,
                     DisposeOnExit = false,
                     InvokeAsSuperuser = true,
-                    AttachLogToConsole = true,
+                    EnableLogging = true,
                     WorkingDirectory = Path.Combine(Program.GetAssemblyLocation(), "3rdParty/OpenVPN")
                 },
                 // The calling object.
