@@ -126,7 +126,7 @@ namespace Spectero.daemon.HTTP.Controllers
 
         private TaskDescriptor ConnectToOpenVPNServer(TaskCreationRequest request)
         {
-            var tempDir = Path.Combine("spectero-openvpn-", Path.GetTempPath(), PasswordUtils.GeneratePassword(8, 0));
+            var tempDir = Path.Combine(Path.GetTempPath(), $"spectero-openvpn-{PasswordUtils.GeneratePassword(8, 0)}");
             if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
 
             // Generate a GUID
