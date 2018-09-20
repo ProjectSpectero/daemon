@@ -22,8 +22,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
 {
     public class StreamProcessor
     {
-        public Action<ILogger<ProcessRunner>, CommandHolder> StandardOutputProcessor;
-        public Action<ILogger<ProcessRunner>, CommandHolder> ErrorOutputProcessor;
+        public Action<string, CommandHolder> StandardOutputProcessor;
+        public Action<string, CommandHolder> ErrorOutputProcessor;
     }
 
     public class ProcessOptions
