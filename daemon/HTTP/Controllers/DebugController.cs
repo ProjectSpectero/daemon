@@ -14,11 +14,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://github.com/ProjectSpectero/daemon/blob/master/LICENSE>.
 */
+
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Medallion.Shell;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -43,7 +45,6 @@ namespace Spectero.daemon.HTTP.Controllers
     [Route("v1/[controller]")]
     public class DebugController : BaseController
     {
-
         private readonly IAuthenticator _authenticator;
         private readonly IDbConnection _db;
         private readonly IEnumerable<IPNetwork> _localNetworks = Utility.GetLocalRanges();
@@ -67,49 +68,82 @@ namespace Spectero.daemon.HTTP.Controllers
             _processRunner = processRunner;
             _portRegistry = portRegistry;
         }
-        
-        
+
+
         [HttpGet("", Name = "Index")]
         public async Task<IActionResult> Index()
         {
             return Ok(_response);
         }
-        
+
         [HttpGet("errors/{type}", Name = "DebugErrorMarshaling")]
         public async Task<IActionResult> DebugErrors(string type)
         {
             switch (type)
             {
-                    case "internal":
-                        throw new InternalError("Testing internal errors...");
-                    
-                    case "disclosable":
-                        throw new DisclosableError();
-                    
-                    case "validation":
-                        throw new ValidationError();
-                    
-                    default:
-                        throw new DisclosableError();
-            }    
-       }
-        
+                case "internal":
+                    throw new InternalError("Testing internal errors...");
+
+                case "disclosable":
+                    throw new DisclosableError();
+
+                case "validation":
+                    throw new ValidationError();
+
+                default:
+                    throw new DisclosableError();
+            }
+        }
+
 
         [HttpGet("network/{type?}", Name = "DebugNetworkDiscovery")]
         public async Task<IActionResult> DebugNetworkDiscovery(string type = "")
         {
             switch (type)
             {
-                    case "ips":
-                        _response.Result = Utility.GetLocalIPs().Select(x => x.ToString()).ToList();
-                        break;
-                    
-                    case "nat":
-                        break;
-                        
-                    default:
-                        _response.Result = Utility.GetLocalRanges(Logger).Select(x => x.ToString()).ToList();
-                        break;
+                case "ips":
+                    _response.Result = Utility.GetLocalIPs().Select(x => x.ToString()).ToList();
+                    break;
+
+                case "nat":
+                    break;
+
+                default:
+                    _response.Result = Utility.GetLocalRanges(Logger).Select(x => x.ToString()).ToList();
+                    break;
+            }
+
+            return Ok(_response);
+        }
+
+        [HttpGet("runas", Name = "TestRunas")]
+        public async Task<IActionResult> TestRunas()
+        {
+            if (AppConfig.isWindows)
+            {
+                try
+                {
+                    // Generate a process template.
+                    var procOptions = new ProcessOptions()
+                    {
+                        Executable = "sfc",
+                        Arguments = new[] {"/scannow"},
+                        InvokeAsSuperuser = true
+                    };
+
+                    // Run the process and see if it works.
+                    _processRunner.Run(procOptions).Command.Wait();
+                }
+                catch (ErrorExitCodeException exception)
+                {
+                    _response.Result = exception;
+                    return StatusCode(503, _response);
+                }
+            }
+            else
+            {
+                _response.Result = "This test case is windows specific.";
+                return StatusCode(503, _response);
             }
 
             return Ok(_response);

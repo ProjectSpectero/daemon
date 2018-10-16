@@ -31,6 +31,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
     {
         private readonly AppConfig _config;
         private readonly ILogger<ProcessRunner> _logger;
+        private readonly ProcessLogger _defaultProcessLogger;
+        
         private List<CommandHolder> _runningCommands = new List<CommandHolder>();
 
         /// <summary>
@@ -43,6 +45,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // Inherit the attributes.
             _config = configMonitor.CurrentValue;
             _logger = logger;
+            _defaultProcessLogger = new ProcessLogger(_logger);
         }
 
         /// <summary>
@@ -149,7 +152,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             }
 
             // Attach Loggers if needed.
-            if (processOptions.AttachLogToConsole) AttachLoggerToCommandHolder(commandHolder, "Start");
+            _defaultProcessLogger.StartLoggingIfEnabled(commandHolder, "Start");
 
             // Check if we should monitor.
             if (commandHolder.Options.Monitor && caller != null)
@@ -226,8 +229,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
                             commandHolder.Command.Process.Start();
 
                             // Attach the logger if needed.
-                            if (commandHolder.Options.AttachLogToConsole)
-                                AttachLoggerToCommandHolder(commandHolder, "Monitor");
+                            _defaultProcessLogger.StartLoggingIfEnabled(commandHolder, "Monitor");
                         }
                     }
                     else
@@ -256,24 +258,14 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
         /// Start tracking a command.
         /// </summary>
         /// <param name="commandHolder"></param>
-        public void Track(CommandHolder commandHolder) => _runningCommands.Add(commandHolder);
-
-        /// <summary>
-        /// Start tracking a list of processes
-        /// </summary>
-        /// <param name="commandHolderList"></param>
-        public void Track(List<CommandHolder> commandHolderList)
-        {
-            foreach (var command in commandHolderList)
-                _runningCommands.Add(command);
-        }
+        private void Track(CommandHolder commandHolder) => _runningCommands.Add(commandHolder);
 
         /// <summary>
         /// Stop tracking a process.
         /// </summary>
         /// <param name="commandHolder"></param>
         /// <returns></returns>
-        public bool Untrack(CommandHolder commandHolder)
+        private bool Untrack(CommandHolder commandHolder)
         {
             // Check to see if the process is already being tracked.
             if (!_runningCommands.Contains(commandHolder)) return false;
@@ -363,7 +355,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             foreach (var commandHolder in _runningCommands)
             {
                 commandHolder.Command.Process.Start();
-                if (commandHolder.Options.AttachLogToConsole) AttachLoggerToCommandHolder(commandHolder, "StartAllTrackedCommands");
+                
+                _defaultProcessLogger.StartLoggingIfEnabled(commandHolder, "StartAllTrackedCommands");
             }
         }
 
@@ -383,47 +376,7 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             // Start them all again.
             StartAllTrackedCommands();
         }
-
-        /// <summary>
-        /// Gets the stream processor for the command holder
-        /// </summary>
-        /// <param name="commandHolder"></param>
-        /// <returns></returns>
-        public StreamProcessor GetStreamProcessor(CommandHolder commandHolder) => commandHolder.Options.streamProcessor;
-
-        /// <summary>
-        /// Reassign the command holder's command with the provided.
-        /// </summary>
-        /// <param name="commandHolder"></param>
-        /// <param name="command"></param>
-        /// <returns></returns>
-        public CommandHolder ReassignCommand(CommandHolder commandHolder, Command command)
-        {
-            commandHolder.Command = command;
-            return commandHolder;
-        }
-
-        /// <summary>
-        /// Function to attach a logging instance to the commandHolder using the classes _logger.
-        /// </summary>
-        private void AttachLoggerToCommandHolder(CommandHolder commandHolder, string parent)
-        {
-            _logger.LogDebug(
-                "{0} Object is attaching logger to command: {1}",
-                parent,
-                commandHolder.Options.Executable
-            );
-            
-            var streamProcessor = GetStreamProcessor(commandHolder);
-
-            // Attach command objects
-            streamProcessor.StandardOutputProcessor = CommandLogger.StandardAction();
-            streamProcessor.ErrorOutputProcessor = CommandLogger.ErrorAction();
-            
-            // Actually begin logging.
-            streamProcessor.StandardOutputProcessor(_logger, commandHolder);
-            streamProcessor.ErrorOutputProcessor(_logger, commandHolder);
-        }
+        
 
         /// <summary>
         /// Throw this when the working directory does not exist.
@@ -434,7 +387,8 @@ namespace Spectero.daemon.Libraries.Core.ProcessRunner
             new Exception($"The WorkingDirectory attribute value provided ({workingDirectory}) did not exist.");
         
         private static string _sudoPath;
-        public static string GetSudoPath()
+
+        private static string GetSudoPath()
         {
             // If the path hasn't previously been called, find it.
             if (_sudoPath == null)

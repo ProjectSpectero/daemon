@@ -59,7 +59,7 @@ namespace Spectero.daemon.Libraries.Core.Firewall.Rule
             {
                 Executable = executable,
                 InvokeAsSuperuser = true,
-                AttachLogToConsole = false,
+                EnableLogging = false,
                 ThrowOnError = true
             };
         }
